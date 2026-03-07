@@ -1,7 +1,10 @@
 <?php require 'middleware/auth.php'; ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en"
+    x-data="{ dark: localStorage.theme === 'dark', loading:false }"
+    x-init="$watch('dark', val => {localStorage.theme = val ? 'dark' : 'light'; document.documentElement.classList.toggle('dark', val)})"
+    :class="{ 'dark': dark }">
 
 <head>
     <meta charset="UTF-8">
@@ -15,84 +18,35 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
 </head>
 
-<body class="bg-gray-100">
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-white transition-colors duration-300">
 
     <div class="flex h-screen">
 
         <!-- SIDEBAR -->
-        <aside class="w-64 bg-gray-900 text-white flex flex-col">
-
-            <div class="p-6 text-2xl font-bold border-b border-gray-700">
-                ☕ RKD Cafe
-            </div>
-
-            <nav class="flex-1 p-4 space-y-2">
-
-                <a href="#" class="flex items-center p-3 rounded-lg hover:bg-gray-700">
-                    <i class="fa-solid fa-gauge mr-3"></i>
-                    Dashboard
-                </a>
-
-                <a href="#" class="flex items-center p-3 rounded-lg hover:bg-gray-700">
-                    <i class="fa-solid fa-mug-hot mr-3"></i>
-                    Menu
-                </a>
-
-                <a href="#" class="flex items-center p-3 rounded-lg hover:bg-gray-700">
-                    <i class="fa-solid fa-cash-register mr-3"></i>
-                    Kasir
-                </a>
-
-                <a href="#" class="flex items-center p-3 rounded-lg hover:bg-gray-700">
-                    <i class="fa-solid fa-chart-line mr-3"></i>
-                    Laporan
-                </a>
-
-                <a href="#" class="flex items-center p-3 rounded-lg hover:bg-gray-700">
-                    <i class="fa-solid fa-users mr-3"></i>
-                    User
-                </a>
-
-            </nav>
-
-            <div class="p-4 border-t border-gray-700">
-                <?php require 'components/sidebar.php'; ?>
-            </div>
-
+        <aside class="w-64 bg-white text-gray-800 flex flex-col dark:bg-gray-800">
+            <?php require 'components/sidebar.php'; ?>
         </aside>
 
         <!-- MAIN CONTENT -->
         <div class="flex-1 flex flex-col">
 
             <!-- NAVBAR -->
-            <header class="bg-white shadow p-4 flex justify-between items-center">
-
-                <h1 class="text-xl font-semibold">
-                    Dashboard
-                </h1>
-
-                <div class="flex items-center space-x-4">
-
-                    <i class="fa-solid fa-bell text-gray-600"></i>
-
-                    <div class="flex items-center space-x-2">
-                        <img src="https://i.pravatar.cc/40" class="w-8 h-8 rounded-full">
-                        <span class="text-sm font-medium">Admin</span>
-                    </div>
-
-                </div>
-
-            </header>
+            <div class="p-4 border-t border-gray-700">
+                <?php require 'components/navbar.php'; ?>
+            </div>
 
             <!-- DASHBOARD CONTENT -->
             <main class="p-6 space-y-6 overflow-y-auto">
 
                 <!-- STATISTIC CARDS -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-14">
 
-                    <div class="bg-white p-6 rounded-xl shadow">
+                    <div class="bg-white p-6 rounded-xl shadow-2xl cursor-pointer dark:bg-gray-800">
                         <div class="flex justify-between items-center">
                             <div>
                                 <p class="text-gray-500 text-sm">Total Sales</p>
@@ -102,7 +56,7 @@
                         </div>
                     </div>
 
-                    <div class="bg-white p-6 rounded-xl shadow">
+                    <div class="bg-white p-6 rounded-xl shadow-2xl cursor-pointer dark:bg-gray-800">
                         <div class="flex justify-between items-center">
                             <div>
                                 <p class="text-gray-500 text-sm">Orders Today</p>
@@ -112,7 +66,7 @@
                         </div>
                     </div>
 
-                    <div class="bg-white p-6 rounded-xl shadow">
+                    <div class="bg-white p-6 rounded-xl shadow-2xl cursor-pointer dark:bg-gray-800">
                         <div class="flex justify-between items-center">
                             <div>
                                 <p class="text-gray-500 text-sm">Menu Items</p>
@@ -122,7 +76,7 @@
                         </div>
                     </div>
 
-                    <div class="bg-white p-6 rounded-xl shadow">
+                    <div class="bg-white p-6 rounded-xl shadow-2xl cursor-pointer dark:bg-gray-800">
                         <div class="flex justify-between items-center">
                             <div>
                                 <p class="text-gray-500 text-sm">Customers</p>
@@ -136,15 +90,15 @@
 
 
                 <!-- RECENT ORDERS TABLE -->
-                <div class="bg-white rounded-xl shadow">
+                <div class="bg-white rounded-xl shadow-xl dark:bg-gray-700">
 
-                    <div class="p-4 border-b font-semibold">
+                    <div class="p-4 border-b font-semibold dark:bg-gray-800">
                         Recent Orders
                     </div>
 
                     <table class="w-full text-sm">
 
-                        <thead class="bg-gray-50">
+                        <thead class="bg-gray-50 dark:bg-gray-700">
                             <tr>
                                 <th class="p-3 text-left">Order ID</th>
                                 <th class="p-3 text-left">Customer</th>

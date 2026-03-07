@@ -1,25 +1,52 @@
 <?php
 
 session_start();
+
+/* VALIDASI CSRF TOKEN */
+if (!isset($_POST['csrf']) || $_POST['csrf'] !== $_SESSION['csrf']) {
+    die("CSRF token tidak valid.");
+}
+
 require '../config/database.php';
 
+/* AMBIL INPUT */
 $username = $_POST['username'];
 $password = $_POST['password'];
 
-$query = "SELECT * FROM users WHERE username='$username'";
-$result = mysqli_query($conn, $query);
+/* PREPARED STATEMENT (ANTI SQL INJECTION) */
+$stmt = $conn->prepare("SELECT * FROM users WHERE username = ?");
+$stmt->bind_param("s", $username);
+$stmt->execute();
 
-$user = mysqli_fetch_assoc($result);
+$result = $stmt->get_result();
+$user = $result->fetch_assoc();
 
+/* VERIFIKASI PASSWORD */
 if ($user && password_verify($password, $user['password'])) {
+
+    /* REGENERATE SESSION (ANTI SESSION FIXATION) */
+    session_regenerate_id(true);
 
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['username'] = $user['username'];
     $_SESSION['role'] = $user['role'];
 
+    /* REMEMBER ME */
+    if (isset($_POST['remember'])) {
+
+        setcookie(
+            "remember_user",
+            $user['id'],
+            time() + (86400 * 30),
+            "/"
+        );
+    }
+
     header("Location: ../index.php");
     exit();
 } else {
 
-    echo "Login gagal";
+    $_SESSION['error'] = "Username atau password salah.";
+    header("Location: login.php");
+    exit();
 }
