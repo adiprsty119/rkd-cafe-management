@@ -1,3 +1,16 @@
+<?php
+
+$userId = $_SESSION['user_id'];
+
+$stmt = $conn->prepare("SELECT COUNT(*) as total FROM notifications WHERE user_id=? AND is_read=0");
+$stmt->bind_param("i", $userId);
+$stmt->execute();
+
+$result = $stmt->get_result();
+$row = $result->fetch_assoc();
+$notificationCount = $row['total'];
+?>
+
 <header class="bg-white dark:bg-gray-800 p-4 flex justify-between items-center shadow-2xl">
 
     <!-- TITLE -->
@@ -112,7 +125,75 @@
         </button>
 
         <!-- NOTIFICATION -->
-        <i class="fa-solid fa-bell text-amber-300 hover:text-amber-400 cursor-pointer"></i>
+        <div x-data="notificationSystem()" x-init="init()" class="relative">
+
+            <button @click="toggle()"
+                class="relative text-amber-300 hover:text-amber-400 cursor-pointer">
+
+                <i class="fa-solid fa-bell text-lg"></i>
+
+                <!-- BADGE -->
+                <span
+                    x-show="count>0"
+                    x-text="count"
+                    class="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1.5 rounded-full">
+                </span>
+
+            </button>
+
+            <!-- DROPDOWN -->
+            <div
+                x-show="open"
+                x-cloak
+                @click.outside="open=false"
+                x-transition.origin.top.right
+                class="absolute -right-28 mt-4 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700">
+
+                <!-- HEADER -->
+                <div class="flex justify-between items-center p-4 border-b dark:border-gray-700">
+
+                    <span class="font-semibold">
+                        Notifikasi
+                    </span>
+
+                    <button
+                        @click.stop="markRead(item.id)"
+                        class="text-xs text-blue-500 hover:underline">
+                        Tandai semua dibaca
+                    </button>
+
+                </div>
+
+                <!-- LIST -->
+                <template x-for="item in notifications" :key="item.id">
+
+                    <a
+                        @click="markRead(item.id)"
+                        class="block px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        :class="item.is_read == 0 ? 'bg-yellow-50 dark:bg-gray-700' : ''">
+
+                        <p class="text-sm font-medium" x-text="item.title"></p>
+
+                        <span class="text-xs text-gray-500" x-text="item.time"></span>
+
+                    </a>
+
+                </template>
+
+                <!-- FOOTER -->
+                <div class="p-3 border-t text-center dark:border-gray-700">
+
+                    <a href="#" class="text-sm text-blue-500 hover:underline">
+
+                        Lihat semua notifikasi
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
 
         <!-- USER PROFILE -->
         <div class="flex items-center space-x-2 cursor-pointer">

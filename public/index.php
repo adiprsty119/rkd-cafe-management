@@ -1,6 +1,6 @@
 <?php
 
-require 'middleware/auth.php';
+require '../middleware/AuthMiddleware.php';
 
 /* ==========================
    LANGUAGE SYSTEM
@@ -15,7 +15,7 @@ if (!in_array($lang, ['id', 'en'])) {
 }
 
 // load translation
-$t = require __DIR__ . "/lang/$lang.php";
+$t = require __DIR__ . "/../resources/lang/$lang.php";
 ?>
 
 <!DOCTYPE html>
@@ -28,7 +28,7 @@ $t = require __DIR__ . "/lang/$lang.php";
     <title><?= $t['site_title'] ?></title>
 
     <!-- Tailwind CSS -->
-    <link href="assets/css/output.css" rel="stylesheet">
+    <link href="/rkd-cafe/public/assets/css/output.css" rel="stylesheet">
 
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -57,7 +57,7 @@ $t = require __DIR__ . "/lang/$lang.php";
         <aside
             :class="sidebarOpen ? 'w-64' : 'w-20'"
             class="bg-white text-gray-800 flex flex-col dark:bg-gray-800 transition-all duration-300">
-            <?php require 'components/sidebar.php'; ?>
+            <?php require '../resources/components/sidebar.php'; ?>
         </aside>
 
         <!-- MAIN CONTENT -->
@@ -65,7 +65,7 @@ $t = require __DIR__ . "/lang/$lang.php";
 
             <!-- NAVBAR -->
             <div class="p-4 border-t border-gray-700">
-                <?php require 'components/navbar.php'; ?>
+                <?php require '../resources/components/navbar.php'; ?>
             </div>
 
             <!-- DASHBOARD CONTENT -->
@@ -212,7 +212,7 @@ $t = require __DIR__ . "/lang/$lang.php";
 
     </div> -->
 
-    <?php require 'components/toast.php'; ?>
+    <?php require '../resources/components/toast.php'; ?>
 
     <?php if (isset($_SESSION['toast'])): ?>
 
@@ -227,6 +227,7 @@ $t = require __DIR__ . "/lang/$lang.php";
     endif; ?>
 
     <script src="assets/js/toast.js"></script>
+    <script src="assets/js/notifications.js"></script>
 
 </body>
 

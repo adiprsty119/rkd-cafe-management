@@ -28,7 +28,7 @@ if (!isset($_SESSION['csrf'])) {
     <title>Login - RKD Cafe</title>
 
     <!-- Tailwind CSS -->
-    <link href="../assets/css/output.css" rel="stylesheet">
+    <link href="/rkd-cafe/public/assets/css/output.css" rel="stylesheet">
 
     <!-- Font Awesome -->
     <link rel="stylesheet"
@@ -174,7 +174,7 @@ if (!isset($_SESSION['csrf'])) {
                         </div>
 
                         <form
-                            action="process_login.php"
+                            action="/rkd-cafe/app/controllers/AuthController.php"
                             method="POST"
                             @submit.prevent="loading=true; $el.submit()">
 
@@ -328,7 +328,7 @@ if (!isset($_SESSION['csrf'])) {
                             <div class="flex-1 h-px bg-gray-300"></div>
                         </div>
 
-                        <form action="process_register.php" method="POST">
+                        <form action="/rkd-cafe/app/controllers/AuthController.php" method="POST">
 
                             <input type="hidden" name="csrf" value="<?= $_SESSION['csrf'] ?>">
 

@@ -58,7 +58,7 @@
 </nav>
 
 <div class="p-4 border-t border-gray-700">
-    <a href="auth/logout.php"
+    <a href="/rkd-cafe/resources/views/auth/logout.php"
         class="flex items-center p-3 rounded-lg hover:bg-red-600 dark:text-white">
 
         <i class="fa-solid fa-right-from-bracket mr-3"></i>
