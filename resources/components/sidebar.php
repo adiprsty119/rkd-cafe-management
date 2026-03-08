@@ -12,36 +12,67 @@ $role = $_SESSION['role'] ?? 'guest';
 
 $menuConfig = [
 
+
     'admin' => [
 
         [
             'title' => $t['dashboard'],
-            'icon'  => 'fa-gauge',
-            'url'   => '/rkd-cafe/resources/views/dashboard/admin.php'
+            'icon' => 'fa-gauge',
+            'url' => '/rkd-cafe/resources/views/dashboard/admin.php'
         ],
 
         [
-            'title' => $t['menu'],
-            'icon'  => 'fa-mug-hot',
-            'url'   => '/rkd-cafe/resources/views/menu/index.php'
+            'title' => 'Menu Management',
+            'icon' => 'fa-mug-hot',
+            'children' => [
+
+                [
+                    'title' => 'Menu List',
+                    'url' => '/rkd-cafe/resources/views/menu/index.php'
+                ],
+
+                [
+                    'title' => 'Categories',
+                    'url' => '/rkd-cafe/resources/views/menu/categories.php'
+                ]
+
+            ]
         ],
 
         [
-            'title' => $t['cashier'],
-            'icon'  => 'fa-cash-register',
-            'url'   => '/rkd-cafe/resources/views/pos/index.php'
+            'title' => 'POS',
+            'icon' => 'fa-cash-register',
+            'children' => [
+
+                [
+                    'title' => 'Cashier',
+                    'url' => '/rkd-cafe/resources/views/pos/index.php'
+                ],
+
+                [
+                    'title' => 'Orders',
+                    'url' => '/rkd-cafe/resources/views/orders/index.php'
+                ]
+
+            ]
         ],
 
         [
-            'title' => $t['reports'],
-            'icon'  => 'fa-chart-line',
-            'url'   => '/rkd-cafe/resources/views/reports/index.php'
-        ],
+            'title' => 'Reports',
+            'icon' => 'fa-chart-line',
+            'children' => [
 
-        [
-            'title' => $t['users'],
-            'icon'  => 'fa-users',
-            'url'   => '/rkd-cafe/resources/views/users/index.php'
+                [
+                    'title' => 'Sales Report',
+                    'url' => '/rkd-cafe/resources/views/reports/sales.php'
+                ],
+
+                [
+                    'title' => 'Revenue',
+                    'url' => '/rkd-cafe/resources/views/reports/revenue.php'
+                ]
+
+            ]
         ]
 
     ],
@@ -57,13 +88,19 @@ $menuConfig = [
         [
             'title' => 'POS',
             'icon'  => 'fa-cash-register',
-            'url'   => '/rkd-cafe/resources/views/pos/index.php'
-        ],
+            'children' => [
 
-        [
-            'title' => 'Orders',
-            'icon'  => 'fa-receipt',
-            'url'   => '/rkd-cafe/resources/views/orders/index.php'
+                [
+                    'title' => 'Cashier',
+                    'url' => '/rkd-cafe/resources/views/pos/index.php'
+                ],
+
+                [
+                    'title' => 'Orders',
+                    'url' => '/rkd-cafe/resources/views/orders/index.php'
+                ]
+
+            ]
         ],
 
         [
@@ -89,21 +126,34 @@ $menuConfig = [
         ],
 
         [
-            'title' => 'Sales Report',
+            'title' => 'Reports',
             'icon'  => 'fa-chart-line',
-            'url'   => '/rkd-cafe/resources/views/reports/sales.php'
+            'children' => [
+
+                [
+                    'title' => 'Sales Report',
+                    'url' => '/rkd-cafe/resources/views/reports/sales.php'
+                ],
+
+                [
+                    'title' => 'Revenue',
+                    'url' => '/rkd-cafe/resources/views/reports/revenue.php'
+                ]
+
+            ]
         ],
 
         [
-            'title' => 'Revenue',
-            'icon'  => 'fa-money-bill-trend-up',
-            'url'   => '/rkd-cafe/resources/views/reports/revenue.php'
-        ],
-
-        [
-            'title' => 'Menu Analytics',
+            'title' => 'Analytics',
             'icon'  => 'fa-chart-pie',
-            'url'   => '/rkd-cafe/resources/views/analytics/menu.php'
+            'children' => [
+
+                [
+                    'title' => 'Menu Analytics',
+                    'url' => '/rkd-cafe/resources/views/analytics/menu.php'
+                ]
+
+            ]
         ],
 
         [
@@ -152,29 +202,115 @@ $menus = $menuConfig[$role] ?? [];
 
     <?php foreach ($menus as $menu): ?>
 
-        <a href="<?= $menu['url'] ?>"
-            class="flex items-center p-3 rounded-lg hover:bg-gray-100 hover:dark:bg-gray-700 <?= activeMenu($menu['url']) ?>">
+        <?php if (isset($menu['children'])): ?>
 
-            <i class="fa-solid <?= $menu['icon'] ?> mr-3"></i>
+            <div x-data="{open:false}" class="relative">
 
-            <span x-show="sidebarOpen" class="ml-3">
-                <?= $menu['title'] ?>
-            </span>
+                <button
+                    @click="open=!open"
+                    class="w-full flex items-center p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
 
-        </a>
+                    <i class="fa-solid <?= $menu['icon'] ?> mr-3"></i>
+
+                    <span x-show="sidebarOpen" class="ml-3 flex-1 text-left">
+                        <?= $menu['title'] ?>
+                    </span>
+
+                    <i x-show="sidebarOpen"
+                        class="fa-solid fa-chevron-down text-xs transition-transform"
+                        :class="{'rotate-180':open}">
+                    </i>
+
+                </button>
+
+                <!-- TOOLTIP -->
+
+                <div
+                    x-show="!sidebarOpen"
+                    x-transition
+                    class="absolute left-16 bg-black text-white text-xs px-2 py-1 rounded shadow-lg whitespace-nowrap">
+
+                    <?= $menu['title'] ?>
+
+                </div>
+
+                <!-- SUBMENU -->
+
+                <div
+                    x-show="open && sidebarOpen"
+                    x-transition
+                    class="ml-8 mt-1 space-y-1">
+
+                    <?php foreach ($menu['children'] as $child): ?>
+
+                        <a
+                            href="<?= $child['url'] ?>"
+                            class="block p-2 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-700 <?= activeMenu($child['url']) ?>">
+
+                            <?= $child['title'] ?>
+
+                        </a>
+
+                    <?php endforeach; ?>
+
+                </div>
+
+            </div>
+
+        <?php else: ?>
+
+            <a
+                href="<?= $menu['url'] ?>"
+                class="relative flex items-center p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 <?= activeMenu($menu['url']) ?>">
+
+                <i class="fa-solid <?= $menu['icon'] ?> mr-3"></i>
+
+                <span x-show="sidebarOpen" class="ml-3">
+                    <?= $menu['title'] ?>
+                </span>
+
+                <!-- TOOLTIP -->
+
+                <div
+                    x-show="!sidebarOpen"
+                    x-transition
+                    class="absolute left-16 bg-black text-white text-xs px-2 py-1 rounded shadow-lg whitespace-nowrap">
+
+                    <?= $menu['title'] ?>
+
+                </div>
+
+            </a>
+
+        <?php endif; ?>
 
     <?php endforeach; ?>
 
-    <!-- SETTINGS -->
 
-    <a href="/rkd-cafe/resources/views/settings/index.php"
-        class="flex items-center p-3 rounded-lg hover:bg-gray-100 hover:dark:bg-gray-700">
+    <!-- ============================= -->
+    <!-- GLOBAL MENU -->
+    <!-- ============================= -->
+
+    <a
+        href="/rkd-cafe/resources/views/settings/index.php"
+        class="relative flex items-center p-3 rounded-lg hover:bg-gray-100 hover:dark:bg-gray-700 <?= activeMenu('index.php') ?>">
 
         <i class="fa-solid fa-gear mr-3"></i>
 
         <span x-show="sidebarOpen" class="ml-3">
             Settings
         </span>
+
+        <!-- TOOLTIP -->
+
+        <div
+            x-show="!sidebarOpen"
+            x-transition
+            class="absolute left-16 bg-black text-white text-xs px-2 py-1 rounded shadow-lg whitespace-nowrap">
+
+            Settings
+
+        </div>
 
     </a>
 
