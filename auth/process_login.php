@@ -10,8 +10,8 @@ if (!isset($_POST['csrf']) || $_POST['csrf'] !== $_SESSION['csrf']) {
 require '../config/database.php';
 
 /* AMBIL INPUT */
-$username = $_POST['username'];
-$password = $_POST['password'];
+$username = trim($_POST['username'] ?? '');
+$password = $_POST['password'] ?? '';
 
 /* PREPARED STATEMENT (ANTI SQL INJECTION) */
 $stmt = $conn->prepare("SELECT * FROM users WHERE username = ?");
@@ -31,6 +31,12 @@ if ($user && password_verify($password, $user['password'])) {
     $_SESSION['username'] = $user['username'];
     $_SESSION['role'] = $user['role'];
 
+    /* TOAST MESSAGE */
+    $_SESSION['toast'] = [
+        "type" => "success",
+        "message" => "Login berhasil, selamat datang!"
+    ];
+
     /* REMEMBER ME */
     if (isset($_POST['remember'])) {
 
@@ -47,6 +53,11 @@ if ($user && password_verify($password, $user['password'])) {
 } else {
 
     $_SESSION['error'] = "Username atau password salah.";
+    $_SESSION['toast'] = [
+        "type" => "error",
+        "message" => "Login gagal, pastikan username dan password benar."
+    ];
+
     header("Location: login.php");
     exit();
 }

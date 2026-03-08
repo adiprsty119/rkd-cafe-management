@@ -1,16 +1,31 @@
-<?php require 'middleware/auth.php'; ?>
+<?php
+
+require 'middleware/auth.php';
+
+/* ==========================
+   LANGUAGE SYSTEM
+========================== */
+
+// bahasa default
+$lang = $_GET['lang'] ?? 'id';
+
+// validasi bahasa
+if (!in_array($lang, ['id', 'en'])) {
+    $lang = 'id';
+}
+
+// load translation
+$t = require __DIR__ . "/lang/$lang.php";
+?>
 
 <!DOCTYPE html>
-<html lang="en"
-    x-data="{ dark: localStorage.theme === 'dark', loading:false }"
-    x-init="$watch('dark', val => {localStorage.theme = val ? 'dark' : 'light'; document.documentElement.classList.toggle('dark', val)})"
-    :class="{ 'dark': dark }">
+<html>
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>RKD Cafe Management</title>
+    <title><?= $t['site_title'] ?></title>
 
     <!-- Tailwind CSS -->
     <link href="assets/css/output.css" rel="stylesheet">
@@ -21,19 +36,32 @@
     <!-- Alpine.js -->
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
+    <style>
+        [x-cloak] {
+            display: none !important;
+        }
+    </style>
+
 </head>
 
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-white transition-colors duration-300">
+<body
+    x-data="{ dark: localStorage.theme === 'dark', loading:false, loadingTheme:false, sidebarOpen:<?= $sidebarCollapsed ? 'false' : 'true' ?> }"
+    @toggle-theme.window="loadingTheme = true; setTimeout(() => {let newTheme = !dark; localStorage.theme = newTheme ? 'dark' : 'light'; location.reload();}, 800)"
+    x-init=" document.documentElement.classList.toggle('dark', dark)"
+    :class="{ 'dark': dark }"
+    class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-white transition-colors duration-300">
 
     <div class="flex h-screen">
 
         <!-- SIDEBAR -->
-        <aside class="w-64 bg-white text-gray-800 flex flex-col dark:bg-gray-800">
+        <aside
+            :class="sidebarOpen ? 'w-64' : 'w-20'"
+            class="bg-white text-gray-800 flex flex-col dark:bg-gray-800 transition-all duration-300">
             <?php require 'components/sidebar.php'; ?>
         </aside>
 
         <!-- MAIN CONTENT -->
-        <div class="flex-1 flex flex-col">
+        <div class="flex-1 flex flex-col min-w-0 transition-all duration-30">
 
             <!-- NAVBAR -->
             <div class="p-4 border-t border-gray-700">
@@ -49,7 +77,7 @@
                     <div class="bg-white p-6 rounded-xl shadow-2xl cursor-pointer dark:bg-gray-800">
                         <div class="flex justify-between items-center">
                             <div>
-                                <p class="text-gray-500 text-sm">Total Sales</p>
+                                <p class="text-gray-500 text-sm"><?= $t['total_sales'] ?></p>
                                 <h2 class="text-2xl font-bold">Rp 8.2 jt</h2>
                             </div>
                             <i class="fa-solid fa-money-bill-wave text-green-500 text-2xl"></i>
@@ -59,7 +87,7 @@
                     <div class="bg-white p-6 rounded-xl shadow-2xl cursor-pointer dark:bg-gray-800">
                         <div class="flex justify-between items-center">
                             <div>
-                                <p class="text-gray-500 text-sm">Orders Today</p>
+                                <p class="text-gray-500 text-sm"><?= $t['orders_today'] ?></p>
                                 <h2 class="text-2xl font-bold">124</h2>
                             </div>
                             <i class="fa-solid fa-receipt text-blue-500 text-2xl"></i>
@@ -69,7 +97,7 @@
                     <div class="bg-white p-6 rounded-xl shadow-2xl cursor-pointer dark:bg-gray-800">
                         <div class="flex justify-between items-center">
                             <div>
-                                <p class="text-gray-500 text-sm">Menu Items</p>
+                                <p class="text-gray-500 text-sm"><?= $t['menu_items'] ?></p>
                                 <h2 class="text-2xl font-bold">36</h2>
                             </div>
                             <i class="fa-solid fa-utensils text-yellow-500 text-2xl"></i>
@@ -79,7 +107,7 @@
                     <div class="bg-white p-6 rounded-xl shadow-2xl cursor-pointer dark:bg-gray-800">
                         <div class="flex justify-between items-center">
                             <div>
-                                <p class="text-gray-500 text-sm">Customers</p>
+                                <p class="text-gray-500 text-sm"><?= $t['customers'] ?></p>
                                 <h2 class="text-2xl font-bold">58</h2>
                             </div>
                             <i class="fa-solid fa-user-group text-purple-500 text-2xl"></i>
@@ -93,18 +121,18 @@
                 <div class="bg-white rounded-xl shadow-xl dark:bg-gray-700">
 
                     <div class="p-4 border-b font-semibold dark:bg-gray-800">
-                        Recent Orders
+                        <?= $t['recent_orders'] ?>
                     </div>
 
                     <table class="w-full text-sm">
 
                         <thead class="bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                <th class="p-3 text-left">Order ID</th>
-                                <th class="p-3 text-left">Customer</th>
-                                <th class="p-3 text-left">Menu</th>
-                                <th class="p-3 text-left">Total</th>
-                                <th class="p-3 text-left">Status</th>
+                                <th class="p-3 text-left"><?= $t['order_id'] ?></th>
+                                <th class="p-3 text-left"><?= $t['customer'] ?></th>
+                                <th class="p-3 text-left"><?= $t['menu'] ?></th>
+                                <th class="p-3 text-left"><?= $t['total'] ?></th>
+                                <th class="p-3 text-left"><?= $t['status'] ?></th>
                             </tr>
                         </thead>
 
@@ -145,6 +173,60 @@
         </div>
 
     </div>
+
+
+    <!-- <div
+        x-show="loadingTheme"
+        x-cloak
+        x-transition.opacity
+        class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 cursor-wait">
+
+        <div class="bg-white dark:bg-gray-800 px-6 py-4 rounded-xl shadow-lg flex items-center gap-3">
+
+            <svg
+                class="animate-spin h-5 w-5 text-yellow-500"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24">
+
+                <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"></circle>
+
+                <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v8z"></path>
+
+            </svg>
+
+            <span class="text-sm font-medium">
+                Mengubah tema...
+            </span>
+
+        </div>
+
+    </div> -->
+
+    <?php require 'components/toast.php'; ?>
+
+    <?php if (isset($_SESSION['toast'])): ?>
+
+        <script>
+            window.toastData = {
+                type: "<?= $_SESSION['toast']['type'] ?>",
+                message: "<?= $_SESSION['toast']['message'] ?>"
+            };
+        </script>
+
+    <?php unset($_SESSION['toast']);
+    endif; ?>
+
+    <script src="assets/js/toast.js"></script>
 
 </body>
 
