@@ -8,6 +8,35 @@ require_once __DIR__ . '/../models/User.php';
 $userModel = new User();
 
 /* ==========================
+   ROLE ACTION
+========================== */
+
+function redirectByRole($role)
+{
+
+    switch ($role) {
+
+        case 'admin':
+            header("Location: /rkd-cafe/resources/views/dashboard/admin.php");
+            break;
+
+        case 'kasir':
+            header("Location: /rkd-cafe/resources/views/dashboard/kasir.php");
+            break;
+
+        case 'owner':
+            header("Location: /rkd-cafe/resources/views/dashboard/owner.php");
+            break;
+
+        default:
+            header("Location: /rkd-cafe/resources/views/auth/login.php");
+            break;
+    }
+
+    exit;
+}
+
+/* ==========================
    ROUTER ACTION
 ========================== */
 
@@ -85,8 +114,7 @@ function login($userModel)
             "message" => "Login berhasil!"
         ];
 
-        header("Location: /rkd-cafe/public/index.php");
-        exit;
+        redirectByRole($user['role']);
     }
 
     $_SESSION['error'] = "Username atau password salah.";
@@ -274,6 +302,6 @@ function callbackGoogle($userModel)
         "message" => "Login dengan Google berhasil!"
     ];
 
-    header("Location: /rkd-cafe/public/index.php");
+    redirectByRole($user['role']);
     exit;
 }
