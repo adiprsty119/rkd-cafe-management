@@ -1,20 +1,129 @@
 <?php
-$role = $_SESSION['role'] ?? '';
-$currentPage = basename($_SERVER['PHP_SELF']);
 
-function activeMenu($page)
-{
-    global $currentPage;
+require_once __DIR__ . '/../../app/helpers/menu_helper.php';
 
-    if ($currentPage === $page) {
-        return "bg-gray-200 dark:bg-gray-700 font-semibold";
-    }
+$role = $_SESSION['role'] ?? 'guest';
 
-    return "";
-}
+/*
+|--------------------------------------------------------------------------
+| RBAC MENU CONFIGURATION
+|--------------------------------------------------------------------------
+*/
+
+$menuConfig = [
+
+    'admin' => [
+
+        [
+            'title' => $t['dashboard'],
+            'icon'  => 'fa-gauge',
+            'url'   => '/rkd-cafe/resources/views/dashboard/admin.php'
+        ],
+
+        [
+            'title' => $t['menu'],
+            'icon'  => 'fa-mug-hot',
+            'url'   => '/rkd-cafe/resources/views/menu/index.php'
+        ],
+
+        [
+            'title' => $t['cashier'],
+            'icon'  => 'fa-cash-register',
+            'url'   => '/rkd-cafe/resources/views/pos/index.php'
+        ],
+
+        [
+            'title' => $t['reports'],
+            'icon'  => 'fa-chart-line',
+            'url'   => '/rkd-cafe/resources/views/reports/index.php'
+        ],
+
+        [
+            'title' => $t['users'],
+            'icon'  => 'fa-users',
+            'url'   => '/rkd-cafe/resources/views/users/index.php'
+        ]
+
+    ],
+
+    'kasir' => [
+
+        [
+            'title' => $t['dashboard'],
+            'icon'  => 'fa-gauge',
+            'url'   => '/rkd-cafe/resources/views/dashboard/kasir.php'
+        ],
+
+        [
+            'title' => 'POS',
+            'icon'  => 'fa-cash-register',
+            'url'   => '/rkd-cafe/resources/views/pos/index.php'
+        ],
+
+        [
+            'title' => 'Orders',
+            'icon'  => 'fa-receipt',
+            'url'   => '/rkd-cafe/resources/views/orders/index.php'
+        ],
+
+        [
+            'title' => $t['menu'],
+            'icon'  => 'fa-mug-hot',
+            'url'   => '/rkd-cafe/resources/views/menu/index.php'
+        ],
+
+        [
+            'title' => 'Customers',
+            'icon'  => 'fa-user-group',
+            'url'   => '/rkd-cafe/resources/views/customers/index.php'
+        ]
+
+    ],
+
+    'owner' => [
+
+        [
+            'title' => $t['dashboard'],
+            'icon'  => 'fa-gauge',
+            'url'   => '/rkd-cafe/resources/views/dashboard/owner.php'
+        ],
+
+        [
+            'title' => 'Sales Report',
+            'icon'  => 'fa-chart-line',
+            'url'   => '/rkd-cafe/resources/views/reports/sales.php'
+        ],
+
+        [
+            'title' => 'Revenue',
+            'icon'  => 'fa-money-bill-trend-up',
+            'url'   => '/rkd-cafe/resources/views/reports/revenue.php'
+        ],
+
+        [
+            'title' => 'Menu Analytics',
+            'icon'  => 'fa-chart-pie',
+            'url'   => '/rkd-cafe/resources/views/analytics/menu.php'
+        ],
+
+        [
+            'title' => 'Customers',
+            'icon'  => 'fa-user-group',
+            'url'   => '/rkd-cafe/resources/views/customers/index.php'
+        ]
+
+    ]
+
+];
+
+$menus = $menuConfig[$role] ?? [];
+
 ?>
 
-<div class="p-6 flex items-center justify-between border-b border-gray-700 dark:text-white transition-all duration-300 ease-in-out">
+<!-- SIDEBAR HEADER -->
+
+<div class="p-6 flex items-center justify-between border-b border-gray-700 dark:text-white">
+
     <span x-show="sidebarOpen" class="text-2xl font-bold">
         ☕ <?= $t['app_name'] ?>
     </span>
@@ -27,169 +136,38 @@ function activeMenu($page)
             headers:{'Content-Type':'application/json'},
             body: JSON.stringify({collapsed: !sidebarOpen})
         })"
+
         class="mr-4 text-xl text-gray-600 dark:text-gray-300 cursor-pointer">
 
         <i class="fa-solid fa-bars"></i>
 
     </button>
+
 </div>
+
+
+<!-- SIDEBAR MENU -->
 
 <nav class="flex-1 p-4 space-y-2 dark:text-white">
 
-    <!-- DASHBOARD (SEMUA ROLE) -->
-    <a href="/rkd-cafe/resources/views/dashboard/<?= $role ?>.php"
-        class="flex items-center p-3 rounded-lg hover:bg-gray-100 hover:dark:bg-gray-700 <?= activeMenu($role . '.php') ?>">
-        <i class="fa-solid fa-gauge mr-3"></i>
-        <span x-show="sidebarOpen" class="ml-3">
-            <?= $t['dashboard'] ?>
-        </span>
-    </a>
+    <?php foreach ($menus as $menu): ?>
 
-    <?php if ($role === 'admin'): ?>
+        <a href="<?= $menu['url'] ?>"
+            class="flex items-center p-3 rounded-lg hover:bg-gray-100 hover:dark:bg-gray-700 <?= activeMenu($menu['url']) ?>">
 
-        <!-- MENU MANAGEMENT -->
-        <a href="#" class="flex items-center p-3 rounded-lg hover:bg-gray-100 hover:dark:bg-gray-700">
-            <i class="fa-solid fa-mug-hot mr-3"></i>
-            <span x-show="sidebarOpen" class="ml-3">
-                <?= $t['menu'] ?>
-            </span>
-        </a>
-
-        <!-- CASHIER -->
-        <a href="#" class="flex items-center p-3 rounded-lg hover:bg-gray-100 hover:dark:bg-gray-700">
-            <i class="fa-solid fa-cash-register mr-3"></i>
-            <span x-show="sidebarOpen" class="ml-3">
-                <?= $t['cashier'] ?>
-            </span>
-        </a>
-
-        <!-- REPORTS -->
-        <a href="#" class="flex items-center p-3 rounded-lg hover:bg-gray-100 hover:dark:bg-gray-700">
-            <i class="fa-solid fa-chart-line mr-3"></i>
-            <span x-show="sidebarOpen" class="ml-3">
-                <?= $t['reports'] ?>
-            </span>
-        </a>
-
-        <!-- USERS -->
-        <a href="#" class="flex items-center p-3 rounded-lg hover:bg-gray-100 hover:dark:bg-gray-700">
-            <i class="fa-solid fa-users mr-3"></i>
-            <span x-show="sidebarOpen" class="ml-3">
-                <?= $t['users'] ?>
-            </span>
-        </a>
-
-    <?php endif; ?>
-
-    <?php if ($role === 'kasir'): ?>
-
-        <!-- POS -->
-        <a href="#"
-            class="flex items-center p-3 rounded-lg hover:bg-gray-100 hover:dark:bg-gray-700">
-
-            <i class="fa-solid fa-cash-register mr-3"></i>
+            <i class="fa-solid <?= $menu['icon'] ?> mr-3"></i>
 
             <span x-show="sidebarOpen" class="ml-3">
-                POS
+                <?= $menu['title'] ?>
             </span>
 
         </a>
 
-        <!-- ORDERS -->
-        <a href="#"
-            class="flex items-center p-3 rounded-lg hover:bg-gray-100 hover:dark:bg-gray-700">
-
-            <i class="fa-solid fa-receipt mr-3"></i>
-
-            <span x-show="sidebarOpen" class="ml-3">
-                Orders
-            </span>
-
-        </a>
-
-        <!-- MENU -->
-        <a href="#"
-            class="flex items-center p-3 rounded-lg hover:bg-gray-100 hover:dark:bg-gray-700">
-
-            <i class="fa-solid fa-mug-hot mr-3"></i>
-
-            <span x-show="sidebarOpen" class="ml-3">
-                <?= $t['menu'] ?>
-            </span>
-
-        </a>
-
-        <!-- CUSTOMERS -->
-        <a href="#"
-            class="flex items-center p-3 rounded-lg hover:bg-gray-100 hover:dark:bg-gray-700">
-
-            <i class="fa-solid fa-user-group mr-3"></i>
-
-            <span x-show="sidebarOpen" class="ml-3">
-                Customers
-            </span>
-
-        </a>
-
-    <?php endif; ?>
-
-    <?php if ($role === 'owner'): ?>
-
-        <!-- SALES REPORT -->
-        <a href="#"
-            class="flex items-center p-3 rounded-lg hover:bg-gray-100 hover:dark:bg-gray-700">
-
-            <i class="fa-solid fa-chart-line mr-3"></i>
-
-            <span x-show="sidebarOpen" class="ml-3">
-                Sales Report
-            </span>
-
-        </a>
-
-
-        <!-- REVENUE -->
-        <a href="#"
-            class="flex items-center p-3 rounded-lg hover:bg-gray-100 hover:dark:bg-gray-700">
-
-            <i class="fa-solid fa-money-bill-trend-up mr-3"></i>
-
-            <span x-show="sidebarOpen" class="ml-3">
-                Revenue
-            </span>
-
-        </a>
-
-
-        <!-- MENU ANALYTICS -->
-        <a href="#"
-            class="flex items-center p-3 rounded-lg hover:bg-gray-100 hover:dark:bg-gray-700">
-
-            <i class="fa-solid fa-chart-pie mr-3"></i>
-
-            <span x-show="sidebarOpen" class="ml-3">
-                Menu Analytics
-            </span>
-
-        </a>
-
-
-        <!-- CUSTOMERS -->
-        <a href="#"
-            class="flex items-center p-3 rounded-lg hover:bg-gray-100 hover:dark:bg-gray-700">
-
-            <i class="fa-solid fa-user-group mr-3"></i>
-
-            <span x-show="sidebarOpen" class="ml-3">
-                Customers
-            </span>
-
-        </a>
-
-    <?php endif; ?>
+    <?php endforeach; ?>
 
     <!-- SETTINGS -->
-    <a href="#"
+
+    <a href="/rkd-cafe/resources/views/settings/index.php"
         class="flex items-center p-3 rounded-lg hover:bg-gray-100 hover:dark:bg-gray-700">
 
         <i class="fa-solid fa-gear mr-3"></i>
@@ -202,14 +180,20 @@ function activeMenu($page)
 
 </nav>
 
+
+<!-- LOGOUT -->
+
 <div class="p-4 border-t border-gray-700">
+
     <a href="/rkd-cafe/resources/views/auth/logout.php"
         class="flex items-center p-3 rounded-lg hover:bg-red-600 dark:text-white">
 
         <i class="fa-solid fa-right-from-bracket mr-3"></i>
+
         <span x-show="sidebarOpen" class="ml-3">
             <?= $t['logout'] ?>
         </span>
 
     </a>
+
 </div>
