@@ -53,7 +53,6 @@ $result = $stmt->get_result();
 $currentUser = $result->fetch_assoc();
 
 /* SIMPAN KE SESSION */
-
 $_SESSION['username'] = $currentUser['username'];
 $_SESSION['role'] = $currentUser['role'];
 $_SESSION['sidebar_collapsed'] = $currentUser['sidebar_collapsed'];

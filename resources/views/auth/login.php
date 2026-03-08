@@ -5,7 +5,7 @@ session_start();
 header("Cache-Control: no-store, no-cache, must-revalidate");
 
 if (isset($_SESSION['user_id'])) {
-    header("Location: ../index.php");
+    header("Location: /rkd-cafe/public/index.php");
     exit();
 }
 
@@ -30,51 +30,15 @@ if (!isset($_SESSION['csrf'])) {
     <!-- Tailwind CSS -->
     <link href="/rkd-cafe/public/assets/css/output.css" rel="stylesheet">
 
+    <!-- Vanila CSS -->
+    <link href="/rkd-cafe/public/assets/css/auth.css" rel="stylesheet">
+
     <!-- Font Awesome -->
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <!-- Alpine.js -->
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
-    <style>
-        [x-cloak] {
-            display: none !important;
-        }
-
-        @keyframes shake {
-
-            0%,
-            100% {
-                transform: translateX(0);
-            }
-
-            25% {
-                transform: translateX(-5px);
-            }
-
-            75% {
-                transform: translateX(5px);
-            }
-        }
-
-        .shake {
-            animation: shake .4s;
-        }
-
-        input[type="password"]::-ms-reveal,
-        input[type="password"]::-ms-clear {
-            display: none;
-        }
-
-        input[type="password"]::-webkit-credentials-auto-fill-button {
-            visibility: hidden;
-            display: none !important;
-            pointer-events: none;
-            position: absolute;
-            right: 0;
-        }
-    </style>
 
 </head>
 
@@ -132,31 +96,9 @@ if (!isset($_SESSION['csrf'])) {
                             Masuk ke Akun
                         </h2>
 
-                        <!-- ERROR -->
-                        <div
-                            x-data="{show:false,message:''}"
-                            x-init="
-                            <?php if (isset($_SESSION['error'])): ?>
-                            message='<?= $_SESSION['error']; ?>';
-                            show=true;
-                            setTimeout(()=>show=false,4000);
-                            <?php unset($_SESSION['error']);
-                            endif; ?>">
-
-                            <div
-                                x-show="show"
-                                x-transition
-                                class="fixed top-6 right-6 bg-red-500 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-2 z-50">
-
-                                <i class="fa-solid fa-circle-exclamation"></i>
-
-                                <span x-text="message"></span>
-
-                            </div>
-
-                        </div>
-
-                        <button type="button"
+                        <button
+                            onclick="window.location.href='/rkd-cafe/app/controllers/AuthController.php?action=loginGoogle'"
+                            type="button"
                             class="w-full border rounded-xl py-4 flex items-center justify-center gap-3 text-lg hover:bg-gray-50 dark:bg-gray-600 dark:hover:bg-gray-700 transition cursor-pointer">
 
                             <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-6">
@@ -174,7 +116,7 @@ if (!isset($_SESSION['csrf'])) {
                         </div>
 
                         <form
-                            action="/rkd-cafe/app/controllers/AuthController.php"
+                            action="/rkd-cafe/app/controllers/AuthController.php?action=login"
                             method="POST"
                             @submit.prevent="loading=true; $el.submit()">
 
@@ -311,7 +253,9 @@ if (!isset($_SESSION['csrf'])) {
                             Buat Akun
                         </h2>
 
-                        <button type="button"
+                        <button
+                            onclick="window.location.href='/rkd-cafe/app/controllers/AuthController.php?action=registerGoogle'"
+                            type="button"
                             class="w-full border rounded-xl py-4 flex items-center justify-center gap-3 text-lg hover:bg-gray-50 dark:bg-gray-600 dark:hover:bg-gray-700 transition cursor-pointer">
 
                             <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-6">
@@ -328,7 +272,7 @@ if (!isset($_SESSION['csrf'])) {
                             <div class="flex-1 h-px bg-gray-300"></div>
                         </div>
 
-                        <form action="/rkd-cafe/app/controllers/AuthController.php" method="POST">
+                        <form action="/rkd-cafe/app/controllers/AuthController.php?action=register" method="POST">
 
                             <input type="hidden" name="csrf" value="<?= $_SESSION['csrf'] ?>">
 
@@ -512,6 +456,21 @@ if (!isset($_SESSION['csrf'])) {
 
     </div>
 
+    <?php require '../../components/toast.php'; ?>
+
+    <?php if (isset($_SESSION['toast'])): ?>
+
+        <script>
+            window.toastData = {
+                type: "<?= $_SESSION['toast']['type'] ?>",
+                message: "<?= $_SESSION['toast']['message'] ?>"
+            };
+        </script>
+
+    <?php unset($_SESSION['toast']);
+    endif; ?>
+
+    <script src="/rkd-cafe/public/assets/js/toast.js"></script>
 </body>
 
 </html>

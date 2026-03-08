@@ -6,7 +6,7 @@
     <button
         @click="sidebarOpen = !sidebarOpen;
 
-        fetch('api/sidebar_state.php',{
+        fetch('/rkd-cafe/api/sidebar_state.php',{
             method:'POST',
             headers:{'Content-Type':'application/json'},
             body: JSON.stringify({collapsed: !sidebarOpen})

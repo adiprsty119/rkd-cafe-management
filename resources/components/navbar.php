@@ -9,6 +9,20 @@ $stmt->execute();
 $result = $stmt->get_result();
 $row = $result->fetch_assoc();
 $notificationCount = $row['total'];
+
+
+$foto = "/rkd-cafe/public/assets/images/user.png";
+
+if (!empty($_SESSION['foto'])) {
+
+    if ($_SESSION['login_method'] === 'google') {
+        $foto = $_SESSION['foto'];
+    } else {
+        $foto = "/rkd-cafe/public/storage/users/" . $_SESSION['foto'];
+    }
+}
+
+$displayName = ucfirst($_SESSION['username']);
 ?>
 
 <header class="bg-white dark:bg-gray-800 p-4 flex justify-between items-center shadow-2xl">
@@ -147,7 +161,7 @@ $notificationCount = $row['total'];
                 x-cloak
                 @click.outside="open=false"
                 x-transition.origin.top.right
-                class="absolute -right-28 mt-4 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700">
+                class="absolute -right-32 mt-4 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700">
 
                 <!-- HEADER -->
                 <div class="flex justify-between items-center p-4 border-b dark:border-gray-700">
@@ -196,11 +210,55 @@ $notificationCount = $row['total'];
         </div>
 
         <!-- USER PROFILE -->
-        <div class="flex items-center space-x-2 cursor-pointer">
-            <img src="https://i.pravatar.cc/40" class="w-8 h-8 rounded-full">
+        <div x-data="{ open:false }"
+            @mouseenter="open=true"
+            @mouseleave="open=false"
+            class="relative flex items-center space-x-2 cursor-pointer">
+
+            <!-- AVATAR -->
+            <img src="<?= $foto ?>"
+                class="w-8 h-8 rounded-full object-cover">
+
+            <!-- USERNAME -->
             <span class="text-sm font-medium">
-                <?= $_SESSION['username']; ?>
+                <?= htmlspecialchars(ucfirst($_SESSION['username'])); ?>
             </span>
+
+            <!-- DROPDOWN -->
+            <div x-show="open"
+                x-transition
+                x-cloak
+                class="absolute -right-4 top-9 w-32 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+
+                <!-- PROFILE -->
+                <a href="/rkd-cafe/public/profile.php"
+                    class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">
+
+                    <i class="fa-solid fa-user text-gray-500"></i>
+                    Profile
+                </a>
+
+                <!-- SETTINGS -->
+                <a href="/rkd-cafe/public/settings.php"
+                    class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">
+
+                    <i class="fa-solid fa-gear text-gray-500"></i>
+                    Settings
+                </a>
+
+                <!-- DIVIDER -->
+                <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+
+                <!-- LOGOUT -->
+                <a href="/rkd-cafe/resources/views/auth/logout.php"
+                    class="flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700">
+
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    Logout
+                </a>
+
+            </div>
+
         </div>
 
     </div>
