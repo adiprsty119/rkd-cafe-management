@@ -36,6 +36,6 @@ $_SESSION['toast'] = [
     "message" => "Logout berhasil."
 ];
 
-/* REDIRECT LOGIN */
-header("Location: /rkd-cafe/resources/views/auth/login.php");
+/* REDIRECT INDEX */
+header("Location: /rkd-cafe/public/index.php");
 exit;

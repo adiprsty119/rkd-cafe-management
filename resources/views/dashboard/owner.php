@@ -59,20 +59,37 @@ $t = require __DIR__ . '/../../lang/' . $lang . '.php';
     :class="{ 'dark': dark }"
     class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-white transition-colors duration-300">
 
-    <div class="flex h-screen">
+    <div class="flex min-h-screen bg-gray-100 dark:bg-gray-900 relative">
 
         <!-- SIDEBAR -->
         <aside
             :class="sidebarOpen ? 'w-64' : 'w-20'"
-            class="bg-white dark:bg-gray-800 transition-all duration-300">
+            class="hidden md:flex flex-col h-screen bg-white dark:bg-gray-800 transition-all duration-300 overflow-x-hidden">
 
             <?php require __DIR__ . '/../../components/sidebar.php'; ?>
 
         </aside>
 
+        <!-- MOBILE SIDEBAR -->
+        <aside
+            x-show="sidebarOpen"
+            x-transition
+            class="fixed inset-y-0 left-0 w-64 bg-white dark:bg-gray-800 z-40 md:hidden">
+
+            <?php require __DIR__ . '/../../components/sidebar.php'; ?>
+
+        </aside>
+
+        <!-- OVERLAY -->
+        <div
+            x-show="sidebarOpen"
+            @click="sidebarOpen=false"
+            class="fixed inset-0 bg-black/40 z-30 md:hidden">
+        </div>
+
 
         <!-- MAIN -->
-        <div class="flex-1 flex flex-col min-w-0">
+        <div class="flex-1 flex flex-col min-w-0 md:ml-0 transition-all duration-300">
 
 
             <!-- NAVBAR -->
@@ -84,11 +101,11 @@ $t = require __DIR__ . '/../../lang/' . $lang . '.php';
 
 
             <!-- DASHBOARD CONTENT -->
-            <main class="p-6 space-y-6 overflow-y-auto">
+            <main class="p-4 md:p-6 space-y-6 overflow-y-auto">
 
 
                 <!-- STATISTIC CARDS -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
 
                     <!-- TOTAL REVENUE -->
                     <div class="bg-white p-6 rounded-xl shadow dark:bg-gray-800">

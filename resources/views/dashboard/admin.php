@@ -51,17 +51,37 @@ $t = require __DIR__ . '/../../lang/' . $lang . '.php';
     :class="{ 'dark': dark }"
     class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-white transition-colors duration-300">
 
-    <div class="flex h-screen">
+    <div class="flex min-h-screen bg-gray-100 dark:bg-gray-900 relative">
 
         <!-- SIDEBAR -->
         <aside
             :class="sidebarOpen ? 'w-64' : 'w-20'"
-            class="bg-white text-gray-800 flex flex-col dark:bg-gray-800 transition-all duration-300">
+            class="hidden md:flex flex-col h-screen bg-white dark:bg-gray-800 transition-all duration-300 overflow-x-hidden">
+
             <?php require __DIR__ . '/../../components/sidebar.php'; ?>
+
         </aside>
 
+        <!-- MOBILE SIDEBAR -->
+        <aside
+            x-show="sidebarOpen"
+            x-transition
+            class="fixed inset-y-0 left-0 w-64 bg-white dark:bg-gray-800 z-40 md:hidden">
+
+            <?php require __DIR__ . '/../../components/sidebar.php'; ?>
+
+        </aside>
+
+        <!-- OVERLAY -->
+        <div
+            x-show="sidebarOpen"
+            @click="sidebarOpen=false"
+            class="fixed inset-0 bg-black/40 z-30 md:hidden">
+        </div>
+
+
         <!-- MAIN CONTENT -->
-        <div class="flex-1 flex flex-col min-w-0 transition-all duration-30">
+        <div class="flex-1 flex flex-col min-w-0 md:ml-0 transition-all duration-300">
 
             <!-- NAVBAR -->
             <div class="p-4 border-t border-gray-700">
@@ -69,10 +89,10 @@ $t = require __DIR__ . '/../../lang/' . $lang . '.php';
             </div>
 
             <!-- DASHBOARD CONTENT -->
-            <main class="p-6 space-y-6 overflow-y-auto">
+            <main class="p-4 md:p-6 space-y-6 overflow-y-auto">
 
                 <!-- STATISTIC CARDS -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-14">
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-14">
 
                     <div class="bg-white p-6 rounded-xl shadow-2xl cursor-pointer dark:bg-gray-800">
                         <div class="flex justify-between items-center">
@@ -118,7 +138,7 @@ $t = require __DIR__ . '/../../lang/' . $lang . '.php';
 
 
                 <!-- RECENT ORDERS TABLE -->
-                <div class="bg-white rounded-xl shadow-xl dark:bg-gray-700">
+                <div class="bg-white rounded-xl shadow-xl dark:bg-gray-700 overflow-x-auto">
 
                     <div class="p-4 border-b font-semibold dark:bg-gray-800">
                         <?= $t['recent_orders'] ?>

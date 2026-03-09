@@ -25,15 +25,27 @@ if (!empty($_SESSION['foto'])) {
 $displayName = ucfirst($_SESSION['username']);
 ?>
 
-<header class="bg-white dark:bg-gray-800 p-4 flex justify-between items-center shadow-2xl">
+<header class="bg-white dark:bg-gray-800 p-4 flex items-center justify-between shadow-2xl">
 
-    <!-- TITLE -->
-    <h1 class="text-xl font-semibold cursor-pointer">
-        <?= $t['dashboard'] ?>
-    </h1>
+    <div class="flex items-center gap-3">
+
+        <button
+            @click="sidebarOpen = !sidebarOpen"
+            class="md:hidden mr-3 text-xl text-gray-600 dark:text-gray-300">
+
+            <i class="fa-solid fa-bars"></i>
+
+        </button>
+
+        <!-- TITLE -->
+        <h1 class="text-xl font-semibold cursor-pointer">
+            <?= $t['dashboard'] ?>
+        </h1>
+
+    </div>
 
     <!-- RIGHT MENU -->
-    <div class="flex items-center space-x-6">
+    <div class="flex items-center space-x-3 md:space-x-6">
 
         <!-- SEARCH -->
         <div class="relative">
@@ -41,7 +53,7 @@ $displayName = ucfirst($_SESSION['username']);
             <input
                 type="text"
                 placeholder="<?= $t['search'] ?>..."
-                class="w-96 px-4 py-2 pr-10 border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 dark:bg-gray-700 dark:text-white">
+                class="w-32 sm:w-48 lg:w-96 px-4 py-2 pr-10 border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 dark:bg-gray-700 dark:text-white">
 
             <i class="fa-solid fa-magnifying-glass absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-amber-300 hover:dark:text-amber-400 cursor-pointer">
             </i>
@@ -115,7 +127,7 @@ $displayName = ucfirst($_SESSION['username']);
 
                     </svg>
 
-                    <span class="text-sm font-medium">
+                    <span class="text-sm font-medium hidden sm:block">
                         Mengubah bahasa...
                     </span>
 
@@ -220,7 +232,7 @@ $displayName = ucfirst($_SESSION['username']);
                 class="w-8 h-8 rounded-full object-cover">
 
             <!-- USERNAME -->
-            <span class="text-sm font-medium">
+            <span class="text-sm font-medium hidden sm:block">
                 <?= htmlspecialchars(ucfirst($_SESSION['username'])); ?>
             </span>
 
