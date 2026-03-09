@@ -99,7 +99,6 @@ $t = require __DIR__ . '/../../lang/' . $lang . '.php';
 
             </div>
 
-
             <!-- DASHBOARD CONTENT -->
             <main class="p-4 md:p-6 space-y-6 overflow-y-auto">
 

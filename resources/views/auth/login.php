@@ -16,8 +16,8 @@ if (!isset($_SESSION['csrf'])) {
 ?>
 <!DOCTYPE html>
 <html lang="id"
-    x-data="{dark: localStorage.theme === 'dark', loading:false, mode:'login'}"
-    x-init="$watch('dark', val => {localStorage.theme = val ? 'dark' : 'light'; document.documentElement.classList.toggle('dark', val)})"
+    x-data="{dark: localStorage.theme === 'dark', loading:false,  mode: localStorage.authMode || 'login'}"
+    x-init="$watch('dark', val => {localStorage.theme = val ? 'dark' : 'light'; document.documentElement.classList.toggle('dark', val)}); $watch('mode', val => {localStorage.authMode = val});"
     :class="{ 'dark': dark }">
 
 <head>
@@ -29,6 +29,11 @@ if (!isset($_SESSION['csrf'])) {
 
     <!-- Tailwind CSS -->
     <link href="/rkd-cafe/public/assets/css/output.css" rel="stylesheet">
+
+    <!-- Animate.js -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
 
     <!-- Vanila CSS -->
     <link href="/rkd-cafe/public/assets/css/auth.css" rel="stylesheet">
@@ -42,13 +47,13 @@ if (!isset($_SESSION['csrf'])) {
 
 </head>
 
-<body class="min-h-screen flex bg-gray-200 dark:bg-gray-900 transition">
+<body class="min-h-screen flex bg-gray-200 dark:bg-gray-900 scroll-smooth transition">
 
-    <div class="flex w-full relative overflow-hidden">
+    <div class="relative flex w-full min-h-screen overflow-hidden">
 
         <!-- IMAGE -->
         <div
-            class="hidden lg:flex w-1/2 bg-cover bg-center transition-all duration-700"
+            class="hidden lg:flex w-1/2 bg-cover bg-center transition-all duration-700 animate__animated animate__fadeInLeft"
             :class="mode === 'login' ? 'order-1' : 'order-2'"
             style="background-image:url('https://images.unsplash.com/photo-1509042239860-f550ce710b93');">
 
@@ -75,7 +80,7 @@ if (!isset($_SESSION['csrf'])) {
                     <button
                         @click="dark=!dark"
                         title="Toggle dark mode"
-                        class="text-gray-600 dark:text-yellow-400 text-xl cursor-pointer">
+                        class="text-gray-600 dark:text-yellow-400 text-xl cursor-pointer transition transform hover:rotate-180 duration-500">
 
                         <i :class="dark ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"></i>
 
@@ -83,14 +88,15 @@ if (!isset($_SESSION['csrf'])) {
 
                 </div>
 
-
                 <!-- CARD -->
                 <div
-                    class="backdrop-blur-xl bg-white/70 dark:bg-gray-800/70 border border-white/40 rounded-2xl p-6 sm:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.15)] transition-all duration-500 ease-in-out <?= isset($_SESSION['error']) ? 'shake' : '' ?>"
+                    class="animate__animated animate__fadeInUp backdrop-blur-xl bg-white/70 dark:bg-gray-800/70 border border-white/40 rounded-2xl p-6 sm:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.15)] dark:shadow-[0_0_35px_rgba(252,211,77,0.35)] hover:dark:shadow-amber-300 transition-all duration-500 ease-in-out <?= isset($_SESSION['error']) ? 'shake' : '' ?>"
                     :class="mode === 'register' ? 'translate-x-4 scale-[1.02]' : ''">
 
                     <!-- LOGIN -->
-                    <div x-show="mode === 'login'" x-transition>
+                    <div x-show="mode === 'login'"
+                        x-transition
+                        x-bind:class="mode==='login' ? 'animate__animated animate__fadeIn' : 'animate__animated animate__fadeOut'">
 
                         <h2 class="text-3xl font-bold text-center mb-8 text-gray-700 dark:text-white">
                             Masuk ke Akun
@@ -99,11 +105,11 @@ if (!isset($_SESSION['csrf'])) {
                         <button
                             onclick="window.location.href='/rkd-cafe/app/controllers/AuthController.php?action=loginGoogle'"
                             type="button"
-                            class="w-full border rounded-xl py-4 flex items-center justify-center gap-3 text-lg hover:bg-gray-50 dark:bg-gray-600 dark:hover:bg-gray-700 transition cursor-pointer">
+                            class="w-full border rounded-xl py-4 flex items-center justify-center gap-3 text-lg hover:bg-gray-50 dark:bg-gray-600 dark:hover:bg-gray-700 transition transform hover:scale-105 cursor-pointer">
 
                             <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-6">
 
-                            <span class="font-medium text-gray-700 dark:text-white">
+                            <span class="font-medium text-gray-700 dark:text-white text-sm sm:text-lg">
                                 Masuk dengan Google
                             </span>
 
@@ -247,7 +253,11 @@ if (!isset($_SESSION['csrf'])) {
 
 
                     <!-- REGISTER -->
-                    <div x-show="mode === 'register'" x-transition>
+                    <div x-show="mode === 'register'"
+                        x-transition
+                        x-bind:class="mode==='register'
+                        ? 'animate__animated animate__fadeIn'
+                        : 'animate__animated animate__fadeOut'">
 
                         <h2 class="text-3xl font-bold text-center mb-8 text-gray-700 dark:text-white">
                             Buat Akun
@@ -348,13 +358,13 @@ if (!isset($_SESSION['csrf'])) {
                                 <!-- STRENGTH BAR -->
                                 <div class="flex gap-1">
 
-                                    <div class="h-2 flex-1 rounded transition-all duration-300"
+                                    <div class="h-2 flex-1 rounded transition-all duration-300 animate__animated animate__fadeIn"
                                         :class="strength >=1 ? 'bg-red-500 scale-x-100' : 'bg-gray-200 dark:bg-gray-600 scale-x-90'"></div>
 
-                                    <div class="h-2 flex-1 rounded transition-all duration-300"
+                                    <div class="h-2 flex-1 rounded transition-all duration-300 animate__animated animate__fadeIn"
                                         :class="strength >=3 ? 'bg-yellow-400 scale-x-100' : 'bg-gray-200 dark:bg-gray-600 scale-x-90'"></div>
 
-                                    <div class="h-2 flex-1 rounded transition-all duration-300"
+                                    <div class="h-2 flex-1 rounded transition-all duration-300 animate__animated animate__fadeIn"
                                         :class="strength >=5 ? 'bg-green-500 scale-x-100' : 'bg-gray-200 dark:bg-gray-600 scale-x-90'"></div>
 
                                 </div>
@@ -438,7 +448,7 @@ if (!isset($_SESSION['csrf'])) {
 
                             <button
                                 @click="mode='login'"
-                                class="text-blue-500 hover:underline cursor-pointer">
+                                class="text-blue-500 hover:underline cursor-pointer transition transform hover:scale-105">
 
                                 Masuk
 
