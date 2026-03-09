@@ -194,43 +194,10 @@ $t = require __DIR__ . '/../../lang/' . $lang . '.php';
 
     </div>
 
-
-    <!-- <div
-        x-show="loadingTheme"
-        x-cloak
-        x-transition.opacity
-        class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 cursor-wait">
-
-        <div class="bg-white dark:bg-gray-800 px-6 py-4 rounded-xl shadow-lg flex items-center gap-3">
-
-            <svg
-                class="animate-spin h-5 w-5 text-yellow-500"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24">
-
-                <circle
-                    class="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    stroke-width="4"></circle>
-
-                <path
-                    class="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8v8z"></path>
-
-            </svg>
-
-            <span class="text-sm font-medium">
-                Mengubah tema...
-            </span>
-
-        </div>
-
-    </div> -->
+    <div
+        id="global-tooltip"
+        class="fixed hidden px-2 py-1 text-xs text-white bg-black rounded shadow-lg whitespace-nowrap z-[9999] pointer-events-none">
+    </div>
 
     <?php require __DIR__ . '/../../components/toast.php'; ?>
 
@@ -248,6 +215,47 @@ $t = require __DIR__ . '/../../lang/' . $lang . '.php';
 
     <script src="/rkd-cafe/public/assets/js/toast.js"></script>
     <script src="/rkd-cafe/public/assets/js/notifications.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+
+            const tooltip = document.getElementById("global-tooltip");
+
+            document.addEventListener("mouseover", (e) => {
+
+                const el = e.target.closest("[data-tooltip]");
+                if (!el) return;
+
+                if (window.innerWidth < 768) return;
+
+                const sidebar = document.querySelector("aside");
+
+                if (!sidebar.classList.contains("w-20")) return;
+
+                tooltip.textContent = el.dataset.tooltip;
+                tooltip.classList.remove("hidden");
+
+            });
+
+            document.addEventListener("mousemove", (e) => {
+
+                if (tooltip.classList.contains("hidden")) return;
+
+                tooltip.style.left = (e.pageX + 12) + "px";
+                tooltip.style.top = (e.pageY - 10) + "px";
+
+            });
+
+            document.addEventListener("mouseout", (e) => {
+
+                if (!e.target.closest("[data-tooltip]")) return;
+
+                tooltip.classList.add("hidden");
+
+            });
+
+
+        });
+    </script>
 
 </body>
 

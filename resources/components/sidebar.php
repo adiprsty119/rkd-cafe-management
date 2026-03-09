@@ -29,11 +29,13 @@ $menuConfig = [
 
                 [
                     'title' => 'Menu List',
+                    'icon' => 'fa-list',
                     'url' => '/rkd-cafe/resources/views/menu/index.php'
                 ],
 
                 [
                     'title' => 'Categories',
+                    'icon' => 'fa-layer-group',
                     'url' => '/rkd-cafe/resources/views/menu/categories.php'
                 ]
 
@@ -47,11 +49,13 @@ $menuConfig = [
 
                 [
                     'title' => 'Cashier',
+                    'icon' => 'fa-computer',
                     'url' => '/rkd-cafe/resources/views/pos/index.php'
                 ],
 
                 [
                     'title' => 'Orders',
+                    'icon' => 'fa-receipt',
                     'url' => '/rkd-cafe/resources/views/orders/index.php'
                 ]
 
@@ -65,11 +69,13 @@ $menuConfig = [
 
                 [
                     'title' => 'Sales Report',
+                    'icon' => 'fa-chart-column',
                     'url' => '/rkd-cafe/resources/views/reports/sales.php'
                 ],
 
                 [
                     'title' => 'Revenue',
+                    'icon' => 'fa-money-bill-trend-up',
                     'url' => '/rkd-cafe/resources/views/reports/revenue.php'
                 ]
 
@@ -93,11 +99,13 @@ $menuConfig = [
 
                 [
                     'title' => 'Cashier',
+                    'icon'  => 'fa-computer',
                     'url' => '/rkd-cafe/resources/views/pos/index.php'
                 ],
 
                 [
                     'title' => 'Orders',
+                    'icon'  => 'fa-receipt',
                     'url' => '/rkd-cafe/resources/views/orders/index.php'
                 ]
 
@@ -133,11 +141,13 @@ $menuConfig = [
 
                 [
                     'title' => 'Sales Report',
+                    'icon'  => 'fa-chart-column',
                     'url' => '/rkd-cafe/resources/views/reports/sales.php'
                 ],
 
                 [
                     'title' => 'Revenue',
+                    'icon'  => 'fa-money-bill-trend-up',
                     'url' => '/rkd-cafe/resources/views/reports/revenue.php'
                 ]
 
@@ -151,6 +161,7 @@ $menuConfig = [
 
                 [
                     'title' => 'Menu Analytics',
+                    'icon'  => 'fa-chart-simple',
                     'url' => '/rkd-cafe/resources/views/analytics/menu.php'
                 ]
 
@@ -179,7 +190,6 @@ $menus = $menuConfig[$role] ?? [];
 </div>
 
 <!-- SIDEBAR HEADER -->
-
 <div class="flex items-center justify-between px-4 py-4 border-b border-gray-200 dark:border-gray-700 dark:text-white">
 
     <span x-show="sidebarOpen" class="text-2xl font-bold">
@@ -208,22 +218,21 @@ $menus = $menuConfig[$role] ?? [];
 
 <!-- SIDEBAR MENU -->
 
-<nav class="flex-1 p-2 md:p-4 space-y-2 dark:text-white overflow-y-auto overflow-x-visible">
+<nav class="flex-1 p-2 md:p-4 space-y-2 dark:text-white overflow-y-auto">
 
     <?php foreach ($menus as $menu): ?>
 
         <?php if (isset($menu['children'])): ?>
 
-            <div x-data="{open: <?= isChildActive($menu['children']) ? 'true' : 'false' ?>, hovered:false}"
-                @mouseenter="hovered=true"
-                @mouseleave="hovered=false"
+            <div x-data="{open: <?= isChildActive($menu['children']) ? 'true' : 'false' ?>}"
                 class="relative">
 
                 <button
                     @click="open=!open"
-                    class="flex items-center w-full gap-3 px-3 py-3 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700">
+                    data-tooltip="<?= $menu['title'] ?>"
+                    class="flex items-center w-full px-3 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
 
-                    <i class="fa-solid <?= $menu['icon'] ?> mr-3"></i>
+                    <i class="fa-solid <?= $menu['icon'] ?> w-5 text-center"></i>
 
                     <span
                         class="ml-3 flex-1 text-left transition-opacity duration-200"
@@ -238,16 +247,6 @@ $menus = $menuConfig[$role] ?? [];
 
                 </button>
 
-                <!-- TOOLTIP -->
-                <div
-                    x-show="!sidebarOpen && hovered"
-                    x-transition.opacity.scale.origin.left
-                    class="hidden md:block absolute left-16 top-1/2 -translate-y-1/2 bg-black text-white text-xs px-2 py-1 rounded shadow-lg whitespace-nowrap pointer-events-none">
-
-                    <?= $menu['title'] ?>
-
-                </div>
-
                 <!-- SUBMENU -->
                 <div
                     x-show="open && sidebarOpen"
@@ -258,9 +257,12 @@ $menus = $menuConfig[$role] ?? [];
 
                         <a
                             href="<?= $child['url'] ?>"
-                            class="block p-2 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-700 <?= activeMenu($child['url']) ?>">
+                            data-tooltip="<?= $child['title'] ?>"
+                            class="flex items-center w-full px-3 py-3 rounded-lg border-l-4 border-transparent hover:bg-gray-100 dark:hover:bg-gray-700 <?= activeMenu($child['url']) ?>">
 
-                            <?= $child['title'] ?>
+                            <i class="fa-solid <?= $child['icon'] ?? 'fa-circle' ?> w-4 text-center"></i>
+
+                            <span class="ml-2"><?= $child['title'] ?></span>
 
                         </a>
 
@@ -274,27 +276,18 @@ $menus = $menuConfig[$role] ?? [];
 
             <a
                 href="<?= $menu['url'] ?>"
-                class="relative flex items-center p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 <?= activeMenu($menu['url']) ?>"
-                x-data="{hovered:false}"
-                @mouseenter="hovered=true"
-                @mouseleave="hovered=false">
+                data-tooltip="<?= $menu['title'] ?>"
+                class="flex items-center w-full px-3 py-3 rounded-lg border-l-4 border-transparent transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 <?= activeMenu($menu['url']) ?>">
 
-                <i class="fa-solid <?= $menu['icon'] ?> mr-3"></i>
+                <i class="fa-solid <?= $menu['icon'] ?> w-5 text-center"></i>
 
-                <span x-show="sidebarOpen" class="ml-3">
+                <span
+                    class="ml-3 flex-1 transition-opacity duration-200"
+                    x-show="sidebarOpen">
+
                     <?= $menu['title'] ?>
+
                 </span>
-
-                <!-- TOOLTIP -->
-
-                <div
-                    x-show="!sidebarOpen && hovered"
-                    x-transition
-                    class="absolute left-full ml-3 top-1/2 -translate-y-1/2 bg-black text-white text-xs px-2 py-1 rounded shadow-lg whitespace-nowrap">
-
-                    <?= $menu['title'] ?>
-
-                </div>
 
             </a>
 
@@ -306,29 +299,18 @@ $menus = $menuConfig[$role] ?? [];
     <!-- ============================= -->
     <!-- GLOBAL MENU -->
     <!-- ============================= -->
-
     <a
         href="/rkd-cafe/resources/views/settings/index.php"
-        x-data="{hovered:false}"
-        @mouseenter="hovered=true"
-        @mouseleave="hovered=false"
-        class="relative flex items-center p-3 rounded-lg hover:bg-gray-100 hover:dark:bg-gray-700 <?= activeMenu('index.php') ?>">
+        data-tooltip="Settings"
+        class="flex items-center w-full px-3 py-3 rounded-lg border-l-4 border-transparent hover:bg-gray-100 dark:hover:bg-gray-700 <?= activeMenu('index.php') ?>">
 
-        <i class="fa-solid fa-gear mr-3"></i>
+        <i class="fa-solid fa-gear w-5 text-center"></i>
 
-        <span x-show="sidebarOpen" class="ml-3">
+        <span
+            class="ml-3 flex-1 transition-opacity duration-200"
+            x-show="sidebarOpen">
             Settings
         </span>
-
-        <!-- TOOLTIP -->
-        <div
-            x-show="!sidebarOpen && hovered"
-            x-transition.opacity.scale.origin.left
-            class="hidden md:block absolute left-full ml-3 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded shadow-lg whitespace-nowrap pointer-events-none z-50">
-
-            Settings
-
-        </div>
 
     </a>
 
@@ -336,16 +318,21 @@ $menus = $menuConfig[$role] ?? [];
 
 
 <!-- LOGOUT -->
+<div class="p-4 border-t border-gray-200 dark:border-gray-700">
 
-<div class="p-4 border-t border-gray-700">
+    <a
+        href="/rkd-cafe/resources/views/auth/logout.php"
+        data-tooltip="Logout"
+        class="flex items-center w-full px-3 py-3 rounded-lg hover:bg-red-600 dark:text-white cursor-pointer">
 
-    <a href="/rkd-cafe/resources/views/auth/logout.php"
-        class="flex items-center p-3 rounded-lg hover:bg-red-600 dark:text-white">
+        <i class="fa-solid fa-right-from-bracket w-5 text-center"></i>
 
-        <i class="fa-solid fa-right-from-bracket mr-3"></i>
+        <span
+            class="ml-3 flex-1 transition-opacity duration-200"
+            x-show="sidebarOpen">
 
-        <span x-show="sidebarOpen" class="ml-3">
             <?= $t['logout'] ?>
+
         </span>
 
     </a>
