@@ -13,6 +13,19 @@ if (!in_array($lang, ['id', 'en'])) {
 }
 
 $t = require __DIR__ . '/../../resources/lang/' . $lang . '.php';
+require_once __DIR__ . '/../../app/helpers/menu_helper.php';
+require_once __DIR__ . '/../../app/helpers/menu_engine.php';
+
+$role = $_SESSION['role'] ?? 'guest';
+
+/* ==========================
+   MENU ENGINE
+========================== */
+
+$menus = getMenusByRole($role);
+$currentMenu = findMenuByRoute($menus);
+$pageTitle = $currentMenu['menu']['title'] ?? 'Dashboard';
+$breadcrumb = generateBreadcrumb($currentMenu);
 
 ?>
 
@@ -24,7 +37,7 @@ $t = require __DIR__ . '/../../resources/lang/' . $lang . '.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title><?= $t['menu_list'] ?? 'Menu List' ?></title>
+    <title><?= $pageTitle ?></title>
 
     <!-- Tailwind -->
     <link href="/rkd-cafe/public/assets/css/output.css" rel="stylesheet">
@@ -91,7 +104,8 @@ $t = require __DIR__ . '/../../resources/lang/' . $lang . '.php';
 
             </div>
 
-
+            <!-- BREADCRUMB NAVIGATION -->
+            <?php require __DIR__ . '/../../resources/components/breadcrumb.php'; ?>
 
             <!-- PAGE CONTENT -->
             <main class="flex-1 p-4 md:p-6 space-y-6 overflow-y-auto">
@@ -100,7 +114,7 @@ $t = require __DIR__ . '/../../resources/lang/' . $lang . '.php';
                 <div class="flex justify-between items-center">
 
                     <div>
-                        <h1 class="text-2xl font-bold"><?= $t['menu_list'] ?? 'Menu List' ?></h1>
+                        <h1 class="text-2xl font-bold"><?= $pageTitle ?></h1>
                         <p class="text-sm text-gray-500"><?= $t['manage_menu'] ?? 'Manage cafe menu items' ?></p>
                     </div>
 

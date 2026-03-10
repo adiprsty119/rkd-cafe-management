@@ -13,7 +13,19 @@ if (!in_array($lang, ['id', 'en'])) {
 }
 
 $t = require __DIR__ . '/../../resources/lang/' . $lang . '.php';
+require_once __DIR__ . '/../../app/helpers/menu_helper.php';
+require_once __DIR__ . '/../../app/helpers/menu_engine.php';
 
+$role = $_SESSION['role'] ?? 'guest';
+
+/* ==========================
+   MENU ENGINE
+========================== */
+
+$menus = getMenusByRole($role);
+$currentMenu = findMenuByRoute($menus);
+$pageTitle = $currentMenu['menu']['title'] ?? 'Dashboard';
+$breadcrumb = generateBreadcrumb($currentMenu);
 ?>
 
 <!DOCTYPE html>
@@ -24,7 +36,7 @@ $t = require __DIR__ . '/../../resources/lang/' . $lang . '.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title><?= $t['cashier'] ?? 'Cashier POS' ?></title>
+    <title><?= $pageTitle ?></title>
 
     <link href="/rkd-cafe/public/assets/css/output.css" rel="stylesheet">
 
@@ -93,7 +105,8 @@ $t = require __DIR__ . '/../../resources/lang/' . $lang . '.php';
 
             </div>
 
-
+            <!-- BREADCRUMB NAVIGATION -->
+            <?php require __DIR__ . '/../../resources/components/breadcrumb.php'; ?>
 
             <!-- POS CONTENT -->
             <main class="flex-1 grid grid-cols-1 lg:grid-cols-3 overflow-hidden">
@@ -102,11 +115,7 @@ $t = require __DIR__ . '/../../resources/lang/' . $lang . '.php';
                 <!-- MENU SECTION -->
                 <div class="lg:col-span-2 p-6 overflow-y-auto space-y-6">
 
-
-                    <h1 class="text-2xl font-bold">
-                        POS Cashier
-                    </h1>
-
+                    <h1 class="text-2xl font-bold"><?= $pageTitle ?></h1>
 
                     <!-- SEARCH -->
                     <input

@@ -281,7 +281,10 @@ $t = require __DIR__ . '/../../lang/' . $lang . '.php';
 
     </div>
 
-
+    <div
+        id="global-tooltip"
+        class="fixed hidden px-2 py-1 text-xs text-white bg-black rounded shadow-lg whitespace-nowrap z-[9999] pointer-events-none">
+    </div>
 
     <?php require __DIR__ . '/../../components/toast.php'; ?>
 
@@ -298,9 +301,9 @@ $t = require __DIR__ . '/../../lang/' . $lang . '.php';
     <?php unset($_SESSION['toast']);
     endif; ?>
 
-
     <script src="/rkd-cafe/public/assets/js/toast.js"></script>
     <script src="/rkd-cafe/public/assets/js/notifications.js"></script>
+    <script src="/rkd-cafe/public/assets/js/sidebar-tooltip.js"></script>
 
 </body>
 

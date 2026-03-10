@@ -2,184 +2,14 @@
 
 require_once __DIR__ . '/../../app/helpers/menu_helper.php';
 require_once __DIR__ . '/../../app/helpers/childmenu_helper.php';
+require_once __DIR__ . '/../../app/helpers/icon_helper.php';
+require_once __DIR__ . '/../../app/helpers/menu_engine.php';
 
 $role = $_SESSION['role'] ?? 'guest';
-
-/*
-|--------------------------------------------------------------------------
-| RBAC MENU CONFIGURATION
-|--------------------------------------------------------------------------
-*/
-
-$menuConfig = [
-
-
-    'admin' => [
-
-        [
-            'title' => $t['dashboard'],
-            'icon' => 'fa-gauge',
-            'url' => '/rkd-cafe/resources/views/dashboard/admin.php'
-        ],
-
-        [
-            'title' => 'Menu Management',
-            'icon' => 'fa-mug-hot',
-            'children' => [
-
-                [
-                    'title' => 'Menu List',
-                    'icon' => 'fa-list',
-                    'url' => '/rkd-cafe/pages/admin/menu_list.php'
-                ],
-
-                [
-                    'title' => 'Categories',
-                    'icon' => 'fa-layer-group',
-                    'url' => '/rkd-cafe/pages/admin/categories.php'
-                ]
-
-            ]
-        ],
-
-        [
-            'title' => 'POS',
-            'icon' => 'fa-cash-register',
-            'children' => [
-
-                [
-                    'title' => 'Cashier',
-                    'icon' => 'fa-computer',
-                    'url' => '/rkd-cafe/pages/admin/cashier.php'
-                ],
-
-                [
-                    'title' => 'Orders',
-                    'icon' => 'fa-receipt',
-                    'url' => '/rkd-cafe/pages/admin/orders.php'
-                ]
-
-            ]
-        ],
-
-        [
-            'title' => 'Reports',
-            'icon' => 'fa-chart-line',
-            'children' => [
-
-                [
-                    'title' => 'Sales Report',
-                    'icon' => 'fa-chart-column',
-                    'url' => '/rkd-cafe/pages/admin/sales_report.php'
-                ],
-
-                [
-                    'title' => 'Revenue',
-                    'icon' => 'fa-money-bill-trend-up',
-                    'url' => '/rkd-cafe/pages/admin/revenue.php'
-                ]
-
-            ]
-        ]
-
-    ],
-
-    'kasir' => [
-
-        [
-            'title' => $t['dashboard'],
-            'icon'  => 'fa-gauge',
-            'url'   => '/rkd-cafe/resources/views/dashboard/kasir.php'
-        ],
-
-        [
-            'title' => 'POS',
-            'icon'  => 'fa-cash-register',
-            'children' => [
-
-                [
-                    'title' => 'Cashier',
-                    'icon'  => 'fa-computer',
-                    'url' => '/rkd-cafe/pages/kasir/cashier.php'
-                ],
-
-                [
-                    'title' => 'Orders',
-                    'icon'  => 'fa-receipt',
-                    'url' => '/rkd-cafe/pages/kasir/orders.php'
-                ]
-
-            ]
-        ],
-
-        [
-            'title' => $t['menu'],
-            'icon'  => 'fa-mug-hot',
-            'url'   => '/rkd-cafe/pages/kasir/menu.php'
-        ],
-
-        [
-            'title' => 'Customers',
-            'icon'  => 'fa-user-group',
-            'url'   => '/rkd-cafe/pages/kasir/customers.php'
-        ]
-
-    ],
-
-    'owner' => [
-
-        [
-            'title' => $t['dashboard'],
-            'icon'  => 'fa-gauge',
-            'url'   => '/rkd-cafe/resources/views/dashboard/owner.php'
-        ],
-
-        [
-            'title' => 'Reports',
-            'icon'  => 'fa-chart-line',
-            'children' => [
-
-                [
-                    'title' => 'Sales Report',
-                    'icon'  => 'fa-chart-column',
-                    'url' => '/rkd-cafe/pages/owner/sales_report.php'
-                ],
-
-                [
-                    'title' => 'Revenue',
-                    'icon'  => 'fa-money-bill-trend-up',
-                    'url' => '/rkd-cafe/pages/owner/revenue.php'
-                ]
-
-            ]
-        ],
-
-        [
-            'title' => 'Analytics',
-            'icon'  => 'fa-chart-pie',
-            'children' => [
-
-                [
-                    'title' => 'Menu Analytics',
-                    'icon'  => 'fa-chart-simple',
-                    'url' => '/rkd-cafe/pages/owner/analytics.php'
-                ]
-
-            ]
-        ],
-
-        [
-            'title' => 'Customers',
-            'icon'  => 'fa-user-group',
-            'url'   => '/rkd-cafe/pages/owner/customers.php'
-        ]
-
-    ]
-
-];
-
+$lang = $_SESSION['lang'] ?? 'en';
+$menuConfig = require __DIR__ . '/../../config/sidebar_menu.php';
 $menus = $menuConfig[$role] ?? [];
-
+$currentMenu = findMenuByRoute($menus);
 ?>
 
 <div
@@ -207,7 +37,8 @@ $menus = $menuConfig[$role] ?? [];
             });
         }"
 
-        class="mr-4 text-xl text-gray-600 dark:text-gray-300 cursor-pointer">
+        class="mr-4 text-xl text-gray-600 dark:text-gray-300 cursor-pointer"
+        :class="!sidebarOpen ? 'ml-4' : ''">
 
         <i class="fa-solid fa-bars"></i>
 
@@ -224,15 +55,15 @@ $menus = $menuConfig[$role] ?? [];
 
         <?php if (isset($menu['children'])): ?>
 
-            <div x-data="{open: <?= isChildActive($menu['children']) ? 'true' : 'false' ?>}"
+            <div x-data="{open: <?= isActivePrefix($menu['prefix'] ?? '') ? 'true' : 'false' ?>}"
                 class="relative">
 
                 <button
                     @click="open=!open"
                     data-tooltip="<?= $menu['title'] ?>"
-                    class="flex items-center w-full px-3 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
+                    class="flex items-center w-full px-3 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer <?= activeParent($menu['prefix'] ?? '') ?>">
 
-                    <i class="fa-solid <?= $menu['icon'] ?> w-5 text-center"></i>
+                    <i class="fa-solid <?= $menu['icon'] ?> w-5 text-center <?= iconSpacing($menu) ?>"></i>
 
                     <span
                         class="ml-3 flex-1 text-left transition-opacity duration-200"
@@ -260,7 +91,7 @@ $menus = $menuConfig[$role] ?? [];
                             data-tooltip="<?= $child['title'] ?>"
                             class="flex items-center w-full px-3 py-3 rounded-lg border-l-4 border-transparent hover:bg-gray-100 dark:hover:bg-gray-700 <?= activeMenu($child['url']) ?>">
 
-                            <i class="fa-solid <?= $child['icon'] ?? 'fa-circle' ?> w-4 text-center"></i>
+                            <i class="fa-solid <?= $child['icon'] ?? 'fa-circle' ?> w-5 text-center"></i>
 
                             <span class="ml-2"><?= $child['title'] ?></span>
 
@@ -306,7 +137,7 @@ $menus = $menuConfig[$role] ?? [];
     <a
         href="<?= $settingsUrl ?>"
         data-tooltip="Settings"
-        class="flex items-center w-full px-3 py-3 rounded-lg border-l-4 border-transparent hover:bg-gray-100 dark:hover:bg-gray-700 <?= activeMenu('settings.php') ?>">
+        class="flex items-center w-full px-3 py-3 rounded-lg border-l-4 border-transparent hover:bg-gray-100 dark:hover:bg-gray-700 <?= activeMenu($settingsUrl) ?>">
 
         <i class="fa-solid fa-gear w-5 text-center"></i>
 
