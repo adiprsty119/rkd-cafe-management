@@ -2,10 +2,16 @@
 
 session_start();
 
-/* HAPUS SEMUA SESSION */
+/* ==========================
+   HAPUS SEMUA SESSION
+========================== */
+
 $_SESSION = [];
 
-/* HAPUS COOKIE SESSION */
+/* ==========================
+   HAPUS COOKIE SESSION
+========================== */
+
 if (ini_get("session.use_cookies")) {
 
     $params = session_get_cookie_params();
@@ -21,13 +27,33 @@ if (ini_get("session.use_cookies")) {
     );
 }
 
-/* HAPUS COOKIE REMEMBER ME */
-setcookie("remember_user", "", time() - 3600, "/");
+/* ==========================
+   HAPUS COOKIE REMEMBER ME
+========================== */
 
-/* DESTROY SESSION */
+if (isset($_COOKIE['remember_user'])) {
+
+    setcookie(
+        "remember_user",
+        "",
+        time() - 3600,
+        "/",
+        "",
+        isset($_SERVER['HTTPS']),
+        true
+    );
+}
+
+/* ==========================
+   DESTROY SESSION
+========================== */
+
 session_destroy();
 
-/* BUAT SESSION BARU UNTUK TOAST */
+/* ==========================
+   SESSION BARU UNTUK TOAST
+========================== */
+
 session_start();
 session_regenerate_id(true);
 
@@ -36,6 +62,9 @@ $_SESSION['toast'] = [
     "message" => "Logout berhasil."
 ];
 
-/* REDIRECT INDEX */
-header("Location: /rkd-cafe/public/index.php");
+/* ==========================
+   REDIRECT
+========================== */
+
+header("Location: /rkd-cafe/resources/views/auth/login.php");
 exit;

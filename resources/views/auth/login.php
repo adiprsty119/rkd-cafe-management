@@ -3,6 +3,10 @@ session_start();
 
 /* MENCEGAH CACHE LOGIN PAGE */
 header("Cache-Control: no-store, no-cache, must-revalidate");
+header("Pragma: no-cache");
+header("X-Frame-Options: SAMEORIGIN");
+header("X-Content-Type-Options: nosniff");
+header("Referrer-Policy: strict-origin-when-cross-origin");
 
 if (isset($_SESSION['user_id'])) {
     header("Location: /rkd-cafe/public/index.php");
@@ -10,9 +14,7 @@ if (isset($_SESSION['user_id'])) {
 }
 
 /* CSRF TOKEN */
-if (!isset($_SESSION['csrf'])) {
-    $_SESSION['csrf'] = bin2hex(random_bytes(32));
-}
+$_SESSION['csrf'] = bin2hex(random_bytes(32));
 ?>
 <!DOCTYPE html>
 <html lang="id"
@@ -183,7 +185,7 @@ if (!isset($_SESSION['csrf'])) {
                             <!-- REMEMBER -->
                             <div class="flex items-center mb-6 mt-4 pl-1.5">
 
-                                <input type="checkbox" name="remember" class="mr-2 cursor-pointer">
+                                <input type="checkbox" name="remember" value="1" class="mr-2 cursor-pointer">
 
                                 <label class="text-sm text-gray-700 dark:text-gray-200">
                                     Ingat saya
@@ -307,31 +309,35 @@ if (!isset($_SESSION['csrf'])) {
 
                             <div
                                 x-data="{
-                                    password:'',
-                                    confirm:'',
-                                    show:false,
+                                password:'',
+                                confirm:'',
+                                show:false,
 
-                                    rules:{
-                                    length:false,
-                                    lower:false,
-                                    upper:false,
-                                    number:false,
-                                    symbol:false
-                                    },
+                                rules:{
+                                length:false,
+                                lower:false,
+                                upper:false,
+                                number:false,
+                                symbol:false
+                                },
 
-                                    check(){
+                                check(){
 
-                                    this.rules.length = this.password.length >= 8
-                                    this.rules.lower = /[a-z]/.test(this.password)
-                                    this.rules.upper = /[A-Z]/.test(this.password)
-                                    this.rules.number = /[0-9]/.test(this.password)
-                                    this.rules.symbol = /[^A-Za-z0-9]/.test(this.password)
+                                this.rules.length = this.password.length >= 8
+                                this.rules.lower = /[a-z]/.test(this.password)
+                                this.rules.upper = /[A-Z]/.test(this.password)
+                                this.rules.number = /[0-9]/.test(this.password)
+                                this.rules.symbol = /[^A-Za-z0-9]/.test(this.password)
 
-                                    },
+                                },
 
-                                    valid(){
-                                    return Object.values(this.rules).every(Boolean) && this.password === this.confirm
-                                    }
+                                strength(){
+                                return Object.values(this.rules).filter(Boolean).length
+                                },
+
+                                valid(){
+                                return Object.values(this.rules).every(Boolean) && this.password === this.confirm
+                                }
 
                                 }"
                                 class="mb-4">
@@ -473,7 +479,7 @@ if (!isset($_SESSION['csrf'])) {
         <script>
             window.toastData = {
                 type: "<?= $_SESSION['toast']['type'] ?>",
-                message: "<?= $_SESSION['toast']['message'] ?>"
+                message: "<?= htmlspecialchars($_SESSION['toast']['message']) ?>"
             };
         </script>
 

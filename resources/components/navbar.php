@@ -1,16 +1,15 @@
 <?php
 
+require_once __DIR__ . '/../../config/database.php';
+
 $userId = $_SESSION['user_id'];
+$stmt = $pdo->prepare("SELECT COUNT(*) as total FROM notifications WHERE user_id = :user_id AND is_read = 0");
+$stmt->execute([
+    'user_id' => $userId
+]);
 
-$stmt = $conn->prepare("SELECT COUNT(*) as total FROM notifications WHERE user_id=? AND is_read=0");
-$stmt->bind_param("i", $userId);
-$stmt->execute();
-
-$result = $stmt->get_result();
-$row = $result->fetch_assoc();
-$notificationCount = $row['total'];
-
-
+$row = $stmt->fetch();
+$notificationCount = $row['total'] ?? 0;
 $foto = "/rkd-cafe/public/assets/images/user.png";
 
 if (!empty($_SESSION['foto'])) {

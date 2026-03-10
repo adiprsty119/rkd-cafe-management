@@ -1,8 +1,13 @@
 <?php
+ini_set('session.use_strict_mode', 1);
+ini_set('session.cookie_httponly', 1);
+ini_set('session.cookie_secure', isset($_SERVER['HTTPS']));
+ini_set('session.cookie_samesite', 'Lax');
 
 session_start();
 
 require_once __DIR__ . '/../../config/env.php';
+require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../models/User.php';
 
 $userModel = new User();
@@ -80,9 +85,45 @@ function validateCSRF()
         !isset($_POST['csrf'], $_SESSION['csrf']) ||
         !hash_equals($_SESSION['csrf'], $_POST['csrf'])
     ) {
+        unset($_SESSION['csrf']);
         http_response_code(403);
         exit("CSRF token tidak valid");
     }
+}
+
+
+/* ==========================
+   BRUTE FORCE PROTECTION
+========================== */
+function isBruteForce($username, $ip)
+{
+    global $pdo;
+
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM login_attempts WHERE username = ? AND ip_address = ? AND attempt_time > (NOW() - INTERVAL 5 MINUTE)");
+
+    $stmt->execute([$username, $ip]);
+
+    return $stmt->fetchColumn() >= 5;
+}
+
+function recordLoginAttempt($username, $ip)
+{
+    global $pdo;
+
+    $stmt = $pdo->prepare("
+        INSERT INTO login_attempts (username, ip_address, attempt_time)
+        VALUES (?, ?, NOW())
+    ");
+
+    $stmt->execute([$username, $ip]);
+}
+
+function clearLoginAttempts($username)
+{
+    global $pdo;
+
+    $stmt = $pdo->prepare("DELETE FROM login_attempts WHERE username=?");
+    $stmt->execute([$username]);
 }
 
 # login()
@@ -96,14 +137,27 @@ function login($userModel)
 
     validateCSRF();
 
-    $username = trim($_POST['username'] ?? '');
+    $username = htmlspecialchars(trim($_POST['username'] ?? ''), ENT_QUOTES);
     $password = $_POST['password'] ?? '';
+    $ip = $_SERVER['REMOTE_ADDR'];
+
+    if (isBruteForce($username, $ip)) {
+
+        $_SESSION['toast'] = [
+            "type" => "error",
+            "message" => "Terlalu banyak percobaan login. Coba lagi dalam 5 menit."
+        ];
+
+        header("Location: /rkd-cafe/resources/views/auth/login.php");
+        exit;
+    }
 
     $user = $userModel->findByUsername($username);
 
     if ($user && password_verify($password, $user['password'])) {
 
         session_regenerate_id(true);
+        clearLoginAttempts($username);
 
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'];
@@ -117,7 +171,7 @@ function login($userModel)
         redirectByRole($user['role']);
     }
 
-    $_SESSION['error'] = "Username atau password salah.";
+    recordLoginAttempt($username, $ip);
 
     $_SESSION['toast'] = [
         "type" => "error",
@@ -141,7 +195,7 @@ function register($userModel)
 
     $name = trim($_POST['fullname'] ?? '');
     $email = trim($_POST['email'] ?? '');
-    $username = trim($_POST['username'] ?? '');
+    $username = htmlspecialchars(trim($_POST['username'] ?? ''), ENT_QUOTES);
     $password = $_POST['password'] ?? '';
     $confirm  = $_POST['confirm_password'] ?? '';
 
@@ -156,11 +210,40 @@ function register($userModel)
         exit;
     }
 
+    /* VALIDASI EMAIL */
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+
+        $_SESSION['toast'] = [
+            "type" => "error",
+            "message" => "Format email tidak valid"
+        ];
+
+        header("Location: /rkd-cafe/resources/views/auth/login.php");
+        exit;
+    }
+
+    /* VALIDASI PASSWORD */
     if (strlen($password) < 8) {
 
         $_SESSION['toast'] = [
             "type" => "error",
             "message" => "Password minimal 8 karakter."
+        ];
+
+        header("Location: /rkd-cafe/resources/views/auth/login.php");
+        exit;
+    }
+
+    /* VALIDASI KOMPLEKSITAS PASSWORD */
+    if (
+        !preg_match('/[A-Z]/', $password) ||
+        !preg_match('/[a-z]/', $password) ||
+        !preg_match('/[0-9]/', $password)
+    ) {
+
+        $_SESSION['toast'] = [
+            "type" => "error",
+            "message" => "Password harus mengandung huruf besar, kecil dan angka"
         ];
 
         header("Location: /rkd-cafe/resources/views/auth/login.php");
@@ -190,9 +273,7 @@ function register($userModel)
     }
 
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-
     $userModel->createUser($name, $username, $email, $hashedPassword);
-
     $_SESSION['toast'] = [
         "type" => "success",
         "message" => "Registrasi berhasil! Silakan login."
@@ -240,7 +321,6 @@ function callbackGoogle($userModel)
     $code = $_GET['code'];
 
     /* EXCHANGE TOKEN */
-
     $token_url = "https://oauth2.googleapis.com/token";
 
     $data = [
@@ -251,16 +331,24 @@ function callbackGoogle($userModel)
         "grant_type" => "authorization_code"
     ];
 
+    /* REQUEST OPTIONS */
     $options = [
         "http" => [
-            "header" => "Content-type: application/x-www-form-urlencoded",
-            "method" => "POST",
-            "content" => http_build_query($data)
+            "header"  => "Content-type: application/x-www-form-urlencoded",
+            "method"  => "POST",
+            "content" => http_build_query($data),
+            "timeout" => 10
         ]
     ];
 
     $context = stream_context_create($options);
     $response = file_get_contents($token_url, false, $context);
+
+    /* ERROR HANDLING */
+    if (!$response) {
+        exit("Google token request gagal");
+    }
+
     $token = json_decode($response, true);
     $access_token = $token['access_token'] ?? null;
 
@@ -269,7 +357,6 @@ function callbackGoogle($userModel)
     }
 
     /* GET USER INFO */
-
     $userinfo = json_decode(
         file_get_contents(
             "https://www.googleapis.com/oauth2/v2/userinfo?access_token=" . $access_token
@@ -283,20 +370,16 @@ function callbackGoogle($userModel)
     $user = $userModel->findByEmail($email);
 
     if (!$user) {
-
-        $username = strtolower(str_replace(' ', '', $name));
-
+        $username = strtolower(preg_replace('/[^a-z0-9]/', '', $name));
+        $username .= rand(100, 999);
         $userModel->createGoogleUser($name, $username, $email, $picture);
     }
 
     $user = $userModel->findByEmail($email);
-
     session_regenerate_id(true);
-
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['username'] = $user['username'];
     $_SESSION['role'] = $user['role'];
-
     $_SESSION['toast'] = [
         "type" => "success",
         "message" => "Login dengan Google berhasil!"

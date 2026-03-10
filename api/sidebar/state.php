@@ -42,10 +42,16 @@ $collapsed = $data['collapsed'] ? 1 : 0;
    UPDATE DATABASE
 ========================== */
 
-$stmt = $conn->prepare("UPDATE users SET sidebar_collapsed=? WHERE id=?");
-$stmt->bind_param("ii", $collapsed, $userId);
+$stmt = $pdo->prepare(
+    "UPDATE users SET sidebar_collapsed = :collapsed WHERE id = :id"
+);
 
-if ($stmt->execute()) {
+$result = $stmt->execute([
+    "collapsed" => $collapsed,
+    "id" => $userId
+]);
+
+if ($result) {
 
     echo json_encode([
         "success" => true,
@@ -54,6 +60,7 @@ if ($stmt->execute()) {
 } else {
 
     http_response_code(500);
+
     echo json_encode([
         "error" => "Database error"
     ]);

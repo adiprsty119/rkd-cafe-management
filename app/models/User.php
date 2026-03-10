@@ -5,12 +5,12 @@ require_once __DIR__ . '/../../config/database.php';
 class User
 {
 
-    private $conn;
+    private $db;
 
     public function __construct()
     {
-        global $conn;
-        $this->conn = $conn;
+        global $pdo;
+        $this->db = $pdo;
     }
 
     /* ==========================
@@ -20,14 +20,15 @@ class User
 
     public function findByUsername($username)
     {
-        $stmt = $this->conn->prepare(
-            "SELECT * FROM users WHERE username = ? LIMIT 1"
+        $stmt = $this->db->prepare(
+            "SELECT * FROM users WHERE username = :username LIMIT 1"
         );
 
-        $stmt->bind_param("s", $username);
-        $stmt->execute();
+        $stmt->execute([
+            'username' => $username
+        ]);
 
-        return $stmt->get_result()->fetch_assoc();
+        return $stmt->fetch();
     }
 
     /* ==========================
@@ -37,14 +38,15 @@ class User
 
     public function findByEmail($email)
     {
-        $stmt = $this->conn->prepare(
-            "SELECT * FROM users WHERE email = ? LIMIT 1"
+        $stmt = $this->db->prepare(
+            "SELECT * FROM users WHERE email = :email LIMIT 1"
         );
 
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
+        $stmt->execute([
+            'email' => $email
+        ]);
 
-        return $stmt->get_result()->fetch_assoc();
+        return $stmt->fetch();
     }
 
     /* ==========================
@@ -54,14 +56,17 @@ class User
     public function createUser($name, $username, $email, $password)
     {
 
-        $stmt = $this->conn->prepare(
+        $stmt = $this->db->prepare(
             "INSERT INTO users (name, username, email, password, role, login_method)
-             VALUES (?, ?, ?, ?, 'admin', 'manual')"
+             VALUES (:name, :username, :email, :password, 'admin', 'manual')"
         );
 
-        $stmt->bind_param("ssss", $name, $username, $email, $password);
-
-        return $stmt->execute();
+        return $stmt->execute([
+            'name' => $name,
+            'username' => $username,
+            'email' => $email,
+            'password' => $password
+        ]);
     }
 
     /* ==========================
@@ -70,15 +75,20 @@ class User
 
     public function createGoogleUser($name, $username, $email, $foto)
     {
+
         $password = password_hash(bin2hex(random_bytes(8)), PASSWORD_DEFAULT);
 
-        $stmt = $this->conn->prepare(
+        $stmt = $this->db->prepare(
             "INSERT INTO users (name, username, email, password, role, login_method, foto)
-         VALUES (?, ?, ?, ?, 'owner', 'google', ?)"
+             VALUES (:name, :username, :email, :password, 'owner', 'google', :foto)"
         );
 
-        $stmt->bind_param("sssss", $name, $username, $email, $password, $foto);
-
-        return $stmt->execute();
+        return $stmt->execute([
+            'name' => $name,
+            'username' => $username,
+            'email' => $email,
+            'password' => $password,
+            'foto' => $foto
+        ]);
     }
 }
