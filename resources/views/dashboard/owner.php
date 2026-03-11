@@ -93,7 +93,7 @@ $t = require __DIR__ . '/../../lang/' . $lang . '.php';
 
 
             <!-- NAVBAR -->
-            <div class="p-4 border-b dark:border-gray-700">
+            <div class="p-4 dark:border-gray-700">
 
                 <?php require __DIR__ . '/../../components/navbar.php'; ?>
 

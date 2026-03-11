@@ -1,11 +1,14 @@
 <?php
 
-// var_dump($_ENV['GOOGLE_CLIENT_ID_WEB']);
-// exit;
-
-function loadEnv($path)
+function loadEnv(string $path): void
 {
-    if (!file_exists($path)) {
+    if (!is_readable($path)) {
+        return;
+    }
+
+    static $loaded = false;
+
+    if ($loaded) {
         return;
     }
 
@@ -15,9 +18,17 @@ function loadEnv($path)
 
         $line = trim($line);
 
+        /* ==========================
+           SKIP COMMENT
+        ========================== */
+
         if ($line === '' || str_starts_with($line, '#')) {
             continue;
         }
+
+        /* ==========================
+           INVALID FORMAT
+        ========================== */
 
         if (!str_contains($line, '=')) {
             continue;
@@ -28,11 +39,69 @@ function loadEnv($path)
         $name = trim($name);
         $value = trim($value);
 
-        if (!array_key_exists($name, $_ENV)) {
+        /* ==========================
+           VALIDATE ENV KEY
+        ========================== */
+
+        if (!preg_match('/^[A-Z0-9_]+$/', $name)) {
+            continue;
+        }
+
+        /* ==========================
+           REMOVE QUOTES
+        ========================== */
+
+        if (
+            (str_starts_with($value, '"') && str_ends_with($value, '"')) ||
+            (str_starts_with($value, "'") && str_ends_with($value, "'"))
+        ) {
+            $value = substr($value, 1, -1);
+        }
+
+        $value = trim($value);
+
+        /* ==========================
+           PARSE BOOLEAN
+        ========================== */
+
+        if (strtolower($value) === 'true') {
+            $value = true;
+        }
+
+        if (strtolower($value) === 'false') {
+            $value = false;
+        }
+
+        /* ==========================
+           PARSE NULL
+        ========================== */
+
+        if (strtolower($value) === 'null') {
+            $value = null;
+        }
+
+        /* ==========================
+           PARSE INTEGER
+        ========================== */
+
+        if (is_numeric($value) && ctype_digit($value)) {
+            $value = (int)$value;
+        }
+
+        /* ==========================
+           SET ENV VARIABLE
+        ========================== */
+
+        if (!isset($_ENV[$name]) && !isset($_SERVER[$name])) {
+
             $_ENV[$name] = $value;
-            putenv("$name=$value");
+            $_SERVER[$name] = $value;
+
+            putenv($name . '=' . (is_bool($value) ? ($value ? 'true' : 'false') : $value));
         }
     }
+
+    $loaded = true;
 }
 
 loadEnv(__DIR__ . '/../.env');

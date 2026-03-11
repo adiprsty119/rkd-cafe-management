@@ -14,7 +14,9 @@ if (isset($_SESSION['user_id'])) {
 }
 
 /* CSRF TOKEN */
-$_SESSION['csrf'] = bin2hex(random_bytes(32));
+if (empty($_SESSION['csrf'])) {
+    $_SESSION['csrf'] = bin2hex(random_bytes(32));
+}
 ?>
 <!DOCTYPE html>
 <html lang="id"

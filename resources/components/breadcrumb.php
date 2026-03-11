@@ -6,7 +6,7 @@
         <a href="/rkd-cafe/resources/views/dashboard/<?= $_SESSION['role'] ?>.php"
             class="flex items-center hover:text-amber-600 transition">
 
-            <i class="fa-solid fa-house text-gray-400 mr-2"></i>
+            <i class="fa-solid fa-house text-gray-400 hover:text-gray-600 mr-2"></i>
 
         </a>
 

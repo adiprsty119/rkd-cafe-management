@@ -1,27 +1,28 @@
 <?php
 
 require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../app/helpers/auth_helper.php';
+require_once __DIR__ . '/../../app/helpers/user_helper.php';
+require_once __DIR__ . '/../../app/helpers/avatar_helper.php';
+require_once __DIR__ . '/../../app/helpers/role_helper.php';
+require_once __DIR__ . '/../../app/helpers/notification_helper.php';
 
-$userId = $_SESSION['user_id'];
-$stmt = $pdo->prepare("SELECT COUNT(*) as total FROM notifications WHERE user_id = :user_id AND is_read = 0");
-$stmt->execute([
-    'user_id' => $userId
-]);
+/* ==========================
+   AUTH VALIDATION
+========================== */
 
-$row = $stmt->fetch();
-$notificationCount = $row['total'] ?? 0;
-$foto = "/rkd-cafe/public/assets/images/user.png";
+$userId = requireLogin();
 
-if (!empty($_SESSION['foto'])) {
+/* ==========================
+   DATA FETCH
+========================== */
 
-    if ($_SESSION['login_method'] === 'google') {
-        $foto = $_SESSION['foto'];
-    } else {
-        $foto = "/rkd-cafe/public/storage/users/" . $_SESSION['foto'];
-    }
-}
+$currentUser = getUserById($pdo, $userId);
+$displayName = getDisplayName($currentUser);
+$foto = getUserAvatar();
+$settingsUrl = getSettingsUrl();
+$notificationCount = getUnreadNotificationCount($pdo, $userId);
 
-$displayName = ucfirst($_SESSION['username']);
 ?>
 
 <header class="bg-white dark:bg-gray-800 p-4 flex items-center justify-between shadow-2xl">
@@ -38,7 +39,7 @@ $displayName = ucfirst($_SESSION['username']);
 
         <!-- TITLE -->
         <h1 class="text-xl font-semibold cursor-pointer">
-            <?= $t['dashboard'] ?>
+            <?= htmlspecialchars($t['dashboard'] ?? 'Dashboard', ENT_QUOTES, 'UTF-8') ?>
         </h1>
 
     </div>
@@ -51,11 +52,10 @@ $displayName = ucfirst($_SESSION['username']);
 
             <input
                 type="text"
-                placeholder="<?= $t['search'] ?>..."
+                placeholder="<?= htmlspecialchars($t['search'] ?? 'Search', ENT_QUOTES, 'UTF-8') ?>..."
                 class="w-32 sm:w-48 lg:w-96 px-4 py-2 pr-10 border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 dark:bg-gray-700 dark:text-white">
 
-            <i class="fa-solid fa-magnifying-glass absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-amber-300 hover:dark:text-amber-400 cursor-pointer">
-            </i>
+            <i class="fa-solid fa-magnifying-glass absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-amber-300 hover:dark:text-amber-400 cursor-pointer"></i>
 
         </div>
 
@@ -98,42 +98,6 @@ $displayName = ucfirst($_SESSION['username']);
 
             </div>
 
-            <div
-                x-show="loadingLang"
-                x-transition.opacity
-                class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-
-                <div class="bg-white dark:bg-gray-800 px-6 py-4 rounded-xl shadow-lg flex items-center gap-3">
-
-                    <svg
-                        class="animate-spin h-5 w-5 text-yellow-500"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24">
-
-                        <circle
-                            class="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            stroke-width="4"></circle>
-
-                        <path
-                            class="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8v8z"></path>
-
-                    </svg>
-
-                    <span class="text-sm font-medium hidden sm:block">
-                        Mengubah bahasa...
-                    </span>
-
-                </div>
-
-            </div>
-
         </div>
 
         <!-- DARK MODE BUTTON -->
@@ -145,19 +109,17 @@ $displayName = ucfirst($_SESSION['username']);
                 <i class="fa-fw transition-transform duration-300" :class="dark ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"></i>
             </span>
 
-            <span class="w-14 text-center" x-text="dark ? '<?= $t['light'] ?>' : '<?= $t['dark'] ?>'">></span>
+            <span class="w-14 text-center" x-text="dark ? '<?= $t['light'] ?>' : '<?= $t['dark'] ?>'"></span>
 
         </button>
 
         <!-- NOTIFICATION -->
         <div x-data="notificationSystem()" x-init="init()" class="relative">
 
-            <button @click="toggle()"
-                class="relative text-amber-300 hover:text-amber-400 cursor-pointer">
+            <button @click="toggle()" class="relative text-amber-300 hover:text-amber-400 cursor-pointer">
 
                 <i class="fa-solid fa-bell text-lg"></i>
 
-                <!-- BADGE -->
                 <span
                     x-show="count>0"
                     x-text="count"
@@ -165,58 +127,6 @@ $displayName = ucfirst($_SESSION['username']);
                 </span>
 
             </button>
-
-            <!-- DROPDOWN -->
-            <div
-                x-show="open"
-                x-cloak
-                @click.outside="open=false"
-                x-transition.origin.top.right
-                class="absolute -right-32 mt-4 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700">
-
-                <!-- HEADER -->
-                <div class="flex justify-between items-center p-4 border-b dark:border-gray-700">
-
-                    <span class="font-semibold">
-                        Notifikasi
-                    </span>
-
-                    <button
-                        @click.stop="markRead(item.id)"
-                        class="text-xs text-blue-500 hover:underline">
-                        Tandai semua dibaca
-                    </button>
-
-                </div>
-
-                <!-- LIST -->
-                <template x-for="item in notifications" :key="item.id">
-
-                    <a
-                        @click="markRead(item.id)"
-                        class="block px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700"
-                        :class="item.is_read == 0 ? 'bg-yellow-50 dark:bg-gray-700' : ''">
-
-                        <p class="text-sm font-medium" x-text="item.title"></p>
-
-                        <span class="text-xs text-gray-500" x-text="item.time"></span>
-
-                    </a>
-
-                </template>
-
-                <!-- FOOTER -->
-                <div class="p-3 border-t text-center dark:border-gray-700">
-
-                    <a href="#" class="text-sm text-blue-500 hover:underline">
-
-                        Lihat semua notifikasi
-
-                    </a>
-
-                </div>
-
-            </div>
 
         </div>
 
@@ -227,12 +137,15 @@ $displayName = ucfirst($_SESSION['username']);
             class="relative flex items-center space-x-2 cursor-pointer">
 
             <!-- AVATAR -->
-            <img src="<?= $foto ?>"
+            <img src="<?= htmlspecialchars($foto, ENT_QUOTES, 'UTF-8') ?>"
+                loading="lazy"
+                alt="User Avatar"
+                referrerpolicy="no-referrer"
                 class="w-8 h-8 rounded-full object-cover">
 
             <!-- USERNAME -->
             <span class="text-sm font-medium hidden sm:block">
-                <?= htmlspecialchars(ucfirst($_SESSION['username'])); ?>
+                <?= htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8') ?>
             </span>
 
             <!-- DROPDOWN -->
@@ -242,31 +155,44 @@ $displayName = ucfirst($_SESSION['username']);
                 class="absolute -right-4 top-9 w-32 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
 
                 <!-- PROFILE -->
-                <a href="/rkd-cafe/public/profile.php"
+                <a href="<?= htmlspecialchars('/rkd-cafe/public/profile.php', ENT_QUOTES, 'UTF-8') ?>"
                     class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">
 
                     <i class="fa-solid fa-user text-gray-500"></i>
-                    Profile
+                    <?= htmlspecialchars($t['profile'] ?? 'Profile', ENT_QUOTES, 'UTF-8') ?>
+
                 </a>
 
                 <!-- SETTINGS -->
-                <a href="/rkd-cafe/public/settings.php"
+                <a href="<?= htmlspecialchars($settingsUrl, ENT_QUOTES, 'UTF-8') ?>"
                     class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">
 
                     <i class="fa-solid fa-gear text-gray-500"></i>
-                    Settings
+                    <?= htmlspecialchars($t['settings'] ?? 'Settings', ENT_QUOTES, 'UTF-8') ?>
+
                 </a>
 
                 <!-- DIVIDER -->
                 <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
 
                 <!-- LOGOUT -->
-                <a href="/rkd-cafe/resources/views/auth/logout.php"
-                    class="flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700">
+                <form method="POST" action="/rkd-cafe/resources/views/auth/logout.php">
 
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                    Logout
-                </a>
+                    <input
+                        type="hidden"
+                        name="csrf_token"
+                        value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+
+                    <button
+                        type="submit"
+                        class="flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left cursor-pointer">
+
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                        <?= htmlspecialchars($t['logout'] ?? 'Logout', ENT_QUOTES, 'UTF-8') ?>
+
+                    </button>
+
+                </form>
 
             </div>
 

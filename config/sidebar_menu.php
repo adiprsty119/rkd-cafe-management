@@ -1,6 +1,10 @@
 <?php
 
 // load translation
+$allowedLang = ['id', 'en'];
+if (!in_array($lang, $allowedLang, true)) {
+    $lang = 'en';
+}
 $t = require __DIR__ . '/../resources/lang/' . $lang . '.php';
 
 

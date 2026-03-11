@@ -128,8 +128,6 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
                 </div>
 
-
-
                 <!-- SEARCH + FILTER -->
                 <div class="flex flex-wrap gap-4">
 

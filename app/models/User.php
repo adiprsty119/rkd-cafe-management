@@ -1,70 +1,141 @@
 <?php
 
-require_once __DIR__ . '/../../config/database.php';
-
 class User
 {
+    private PDO $db;
 
-    private $db;
-
-    public function __construct()
+    public function __construct(PDO $pdo)
     {
-        global $pdo;
         $this->db = $pdo;
     }
 
     /* ==========================
-       FIND USER BY USERNAME
-       (LOGIN MANUAL)
+       VALIDATE USERNAME
     ========================== */
 
-    public function findByUsername($username)
+    private function isValidUsername(string $username): bool
     {
-        $stmt = $this->db->prepare(
-            "SELECT * FROM users WHERE username = :username LIMIT 1"
-        );
+        return preg_match('/^[a-zA-Z0-9_]{3,30}$/', $username);
+    }
+
+    /* ==========================
+       FIND USER BY USERNAME
+    ========================== */
+
+    public function findByUsername(string $username): ?array
+    {
+        if (!$this->isValidUsername($username)) {
+            return null;
+        }
+
+        $stmt = $this->db->prepare("
+            SELECT 
+                id,
+                name,
+                username,
+                email,
+                password,
+                role,
+                login_method,
+                foto,
+                status,
+                locked_until,
+                failed_login_attempts
+            FROM users
+            WHERE username = :username
+            LIMIT 1
+        ");
 
         $stmt->execute([
             'username' => $username
         ]);
 
-        return $stmt->fetch();
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
     /* ==========================
        FIND USER BY EMAIL
-       (LOGIN GOOGLE)
     ========================== */
 
-    public function findByEmail($email)
+    public function findByEmail(string $email): ?array
     {
-        $stmt = $this->db->prepare(
-            "SELECT * FROM users WHERE email = :email LIMIT 1"
-        );
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return null;
+        }
+
+        $stmt = $this->db->prepare("
+            SELECT 
+                id,
+                name,
+                username,
+                email,
+                password,
+                role,
+                login_method,
+                foto,
+                status,
+                locked_until,
+                failed_login_attempts
+            FROM users
+            WHERE email = :email
+            LIMIT 1
+        ");
 
         $stmt->execute([
             'email' => $email
         ]);
 
-        return $stmt->fetch();
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
     /* ==========================
        CREATE USER (MANUAL)
     ========================== */
 
-    public function createUser($name, $username, $email, $password)
-    {
+    public function createUser(
+        string $name,
+        string $username,
+        string $email,
+        string $password
+    ): bool {
 
-        $stmt = $this->db->prepare(
-            "INSERT INTO users (name, username, email, password, role, login_method)
-             VALUES (:name, :username, :email, :password, 'admin', 'manual')"
-        );
+        if (!$this->isValidUsername($username)) {
+            return false;
+        }
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return false;
+        }
+
+        $stmt = $this->db->prepare("
+            INSERT INTO users 
+            (
+                name,
+                username,
+                email,
+                password,
+                role,
+                login_method,
+                status,
+                created_at
+            )
+            VALUES
+            (
+                :name,
+                :username,
+                :email,
+                :password,
+                'kasir',
+                'manual',
+                'active',
+                NOW()
+            )
+        ");
 
         return $stmt->execute([
-            'name' => $name,
-            'username' => $username,
-            'email' => $email,
+            'name' => trim($name),
+            'username' => strtolower($username),
+            'email' => strtolower($email),
             'password' => $password
         ]);
     }
@@ -73,20 +144,57 @@ class User
        CREATE USER GOOGLE
     ========================== */
 
-    public function createGoogleUser($name, $username, $email, $foto)
-    {
+    public function createGoogleUser(
+        string $name,
+        string $username,
+        string $email,
+        string $foto
+    ): bool {
 
-        $password = password_hash(bin2hex(random_bytes(8)), PASSWORD_DEFAULT);
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return false;
+        }
 
-        $stmt = $this->db->prepare(
-            "INSERT INTO users (name, username, email, password, role, login_method, foto)
-             VALUES (:name, :username, :email, :password, 'owner', 'google', :foto)"
+        if (!$this->isValidUsername($username)) {
+            $username = 'user' . rand(1000, 9999);
+        }
+
+        $password = password_hash(
+            bin2hex(random_bytes(32)),
+            PASSWORD_DEFAULT
         );
 
+        $stmt = $this->db->prepare("
+            INSERT INTO users 
+            (
+                name,
+                username,
+                email,
+                password,
+                role,
+                login_method,
+                status,
+                foto,
+                created_at
+            )
+            VALUES
+            (
+                :name,
+                :username,
+                :email,
+                :password,
+                'kasir',
+                'google',
+                'active',
+                :foto,
+                NOW()
+            )
+        ");
+
         return $stmt->execute([
-            'name' => $name,
-            'username' => $username,
-            'email' => $email,
+            'name' => trim($name),
+            'username' => strtolower($username),
+            'email' => strtolower($email),
             'password' => $password,
             'foto' => $foto
         ]);

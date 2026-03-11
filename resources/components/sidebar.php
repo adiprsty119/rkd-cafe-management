@@ -5,11 +5,18 @@ require_once __DIR__ . '/../../app/helpers/childmenu_helper.php';
 require_once __DIR__ . '/../../app/helpers/icon_helper.php';
 require_once __DIR__ . '/../../app/helpers/menu_engine.php';
 
+$allowedRoles = ['admin', 'kasir', 'owner'];
 $role = $_SESSION['role'] ?? 'guest';
+
+if (!in_array($role, $allowedRoles)) {
+    $role = 'guest';
+}
+
 $lang = $_SESSION['lang'] ?? 'en';
 $menuConfig = require __DIR__ . '/../../config/sidebar_menu.php';
 $menus = $menuConfig[$role] ?? [];
 $currentMenu = findMenuByRoute($menus);
+
 ?>
 
 <div
@@ -32,7 +39,7 @@ $currentMenu = findMenuByRoute($menus);
         if(window.innerWidth >= 768){
             fetch('/rkd-cafe/api/sidebar/state.php',{
                 method:'POST',
-                headers:{'Content-Type':'application/json'},
+                headers:{'Content-Type':'application/json', 'X-CSRF-TOKEN': window.csrfToken},
                 body: JSON.stringify({collapsed: !sidebarOpen})
             });
         }"
@@ -60,7 +67,7 @@ $currentMenu = findMenuByRoute($menus);
 
                 <button
                     @click="open=!open"
-                    data-tooltip="<?= $menu['title'] ?>"
+                    data-tooltip="<?= htmlspecialchars($menu['title'], ENT_QUOTES, 'UTF-8') ?>"
                     class="flex items-center w-full px-3 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer <?= activeParent($menu['prefix'] ?? '') ?>">
 
                     <i class="fa-solid <?= $menu['icon'] ?> w-5 text-center <?= iconSpacing($menu) ?>"></i>
@@ -68,7 +75,7 @@ $currentMenu = findMenuByRoute($menus);
                     <span
                         class="ml-3 flex-1 text-left transition-opacity duration-200"
                         :class="sidebarOpen ? 'opacity-100' : 'opacity-0 md:hidden'">
-                        <?= $menu['title'] ?>
+                        <?= htmlspecialchars($menu['title'], ENT_QUOTES, 'UTF-8') ?>
                     </span>
 
                     <i x-show="sidebarOpen"
@@ -107,7 +114,7 @@ $currentMenu = findMenuByRoute($menus);
 
             <a
                 href="<?= $menu['url'] ?>"
-                data-tooltip="<?= $menu['title'] ?>"
+                data-tooltip="<?= htmlspecialchars($menu['title'], ENT_QUOTES, 'UTF-8') ?>"
                 class="flex items-center w-full px-3 py-3 rounded-lg border-l-4 border-transparent transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 <?= activeMenu($menu['url']) ?>">
 
                 <i class="fa-solid <?= $menu['icon'] ?> w-5 text-center"></i>
@@ -116,7 +123,7 @@ $currentMenu = findMenuByRoute($menus);
                     class="ml-3 flex-1 transition-opacity duration-200"
                     x-show="sidebarOpen">
 
-                    <?= $menu['title'] ?>
+                    <?= htmlspecialchars($menu['title'], ENT_QUOTES, 'UTF-8') ?>
 
                 </span>
 
@@ -155,21 +162,29 @@ $currentMenu = findMenuByRoute($menus);
 <!-- LOGOUT -->
 <div class="p-4 border-t border-gray-200 dark:border-gray-700">
 
-    <a
-        href="/rkd-cafe/resources/views/auth/logout.php"
-        data-tooltip="Logout"
-        class="flex items-center w-full px-3 py-3 rounded-lg hover:bg-red-600 dark:text-white cursor-pointer">
+    <form method="POST" action="/rkd-cafe/resources/views/auth/logout.php">
 
-        <i class="fa-solid fa-right-from-bracket w-5 text-center"></i>
+        <input type="hidden"
+            name="csrf_token"
+            value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
 
-        <span
-            class="ml-3 flex-1 transition-opacity duration-200"
-            x-show="sidebarOpen">
+        <button
+            type="submit"
+            data-tooltip="Logout"
+            class="flex items-center w-full px-3 py-3 rounded-lg hover:bg-red-600 dark:text-white cursor-pointer">
 
-            <?= $t['logout'] ?>
+            <i class="fa-solid fa-right-from-bracket w-5 text-center"></i>
 
-        </span>
+            <span
+                class="-ml-24 flex-1 transition-opacity duration-200"
+                x-show="sidebarOpen">
 
-    </a>
+                <?= htmlspecialchars($t['logout'] ?? 'Logout', ENT_QUOTES, 'UTF-8') ?>
+
+            </span>
+
+        </button>
+
+    </form>
 
 </div>
