@@ -620,6 +620,30 @@ function callbackGoogle($userModel)
     $user = $userModel->findByEmail($email);
 
     /* ==========================
+   CACHE GOOGLE AVATAR
+========================== */
+
+    require_once __DIR__ . '/../helpers/avatar_cache.php';
+
+    $avatarPath = cacheGoogleAvatar($picture, $user['id']);
+
+    if ($avatarPath) {
+
+        $stmt = $pdo->prepare("
+        UPDATE users
+        SET foto = :foto
+        WHERE id = :id
+    ");
+
+        $stmt->execute([
+            'foto' => $avatarPath,
+            'id' => $user['id']
+        ]);
+
+        $_SESSION['foto'] = $avatarPath;
+    }
+
+    /* ==========================
        SAFE IP & USER AGENT
     ========================== */
 

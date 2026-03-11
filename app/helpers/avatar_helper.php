@@ -16,25 +16,18 @@ function getUserAvatar(): string
     }
 
     /* ==========================
-       GOOGLE AVATAR
+       GOOGLE AVATAR (URL)
     ========================== */
 
-    if ($method === 'google') {
+    if ($method === 'google' && filter_var($foto, FILTER_VALIDATE_URL)) {
 
-        $url = filter_var($foto, FILTER_VALIDATE_URL);
-
-        if (!$url) {
-            return $default;
-        }
-
-        /* normalize google image size */
-        $url = preg_replace('/=s\d+-c$/', '=s256-c', $url);
+        $url = preg_replace('/=s\d+-c$/', '=s256-c', $foto);
 
         return $url;
     }
 
     /* ==========================
-       LOCAL AVATAR
+       LOCAL AVATAR (CACHED)
     ========================== */
 
     $filename = basename($foto);
@@ -43,5 +36,5 @@ function getUserAvatar(): string
         return $default;
     }
 
-    return "/rkd-cafe/public/storage/users/" . $filename;
+    return "/rkd-cafe/storage/avatars/google/" . $filename;
 }
