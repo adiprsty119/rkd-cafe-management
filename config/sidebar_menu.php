@@ -172,6 +172,18 @@ $menuConfig = [
                     'title' => 'Menu Analytics',
                     'icon'  => 'fa-chart-simple',
                     'url' => '/rkd-cafe/pages/owner/analytics.php'
+                ],
+
+                [
+                    'title' => 'Sales Analytics',
+                    'icon'  => 'fa-chart-line',
+                    'url' => '/rkd-cafe/pages/owner/analytics_sales.php'
+                ],
+
+                [
+                    'title' => 'Customer Analytics',
+                    'icon'  => 'fa-users',
+                    'url' => '/rkd-cafe/pages/owner/analytics_customer.php'
                 ]
 
             ]

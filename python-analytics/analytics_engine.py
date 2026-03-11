@@ -230,3 +230,140 @@ def get_sales_prediction():
         )
 
     return result
+
+
+# =========================
+# SALES HOURLY
+# =========================
+
+
+def get_sales_hourly():
+
+    conn = get_connection()
+
+    query = """
+    SELECT 
+        HOUR(created_at) AS hour,
+        COUNT(id) AS orders,
+        SUM(total) AS revenue
+    FROM orders
+    WHERE status='paid'
+    GROUP BY HOUR(created_at)
+    ORDER BY hour
+    """
+
+    df = pd.read_sql(query, conn)
+
+    conn.close()
+
+    return df.to_dict(orient="records")
+
+
+# =========================
+# SALES DAILY
+# =========================
+
+
+def get_sales_daily():
+
+    conn = get_connection()
+
+    query = """
+    SELECT 
+        DAYNAME(created_at) AS day,
+        COUNT(id) AS orders,
+        SUM(total) AS revenue
+    FROM orders
+    WHERE status='paid'
+    GROUP BY DAYNAME(created_at)
+    ORDER BY FIELD(
+        DAYNAME(created_at),
+        'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'
+    )
+    """
+
+    df = pd.read_sql(query, conn)
+
+    conn.close()
+
+    return df.to_dict(orient="records")
+
+
+# =========================
+# PAYMENT DISTRIBUTION
+# =========================
+
+
+def get_payment_distribution():
+
+    conn = get_connection()
+
+    query = """
+    SELECT 
+        payment_method,
+        COUNT(id) AS orders,
+        SUM(total) AS revenue
+    FROM orders
+    WHERE status='paid'
+    GROUP BY payment_method
+    """
+
+    df = pd.read_sql(query, conn)
+
+    conn.close()
+
+    return df.to_dict(orient="records")
+
+
+# =========================
+# CUSTOMER GROWTH
+# =========================
+
+
+def get_customer_growth():
+
+    conn = get_connection()
+
+    query = """
+    SELECT 
+        DATE(created_at) AS date,
+        COUNT(id) AS new_customers
+    FROM users
+    GROUP BY DATE(created_at)
+    ORDER BY DATE(created_at)
+    """
+
+    df = pd.read_sql(query, conn)
+
+    conn.close()
+
+    return df.to_dict(orient="records")
+
+
+# =========================
+# CUSTOMER LIFETIME VALUE
+# =========================
+
+
+def get_customer_lifetime():
+
+    conn = get_connection()
+
+    query = """
+    SELECT 
+        u.name,
+        COUNT(o.id) AS orders,
+        SUM(o.total) AS total_spend
+    FROM orders o
+    JOIN users u ON u.id = o.user_id
+    WHERE o.status = 'paid'
+    GROUP BY o.user_id
+    ORDER BY total_spend DESC
+    LIMIT 10
+    """
+
+    df = pd.read_sql(query, conn)
+
+    conn.close()
+
+    return df.to_dict(orient="records")

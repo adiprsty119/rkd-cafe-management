@@ -6,6 +6,11 @@ from analytics_engine import (
     get_customer_insight,
     get_product_profit,
     get_sales_prediction,
+    get_sales_hourly,
+    get_sales_daily,
+    get_payment_distribution,
+    get_customer_growth,
+    get_customer_lifetime,
 )
 
 app = Flask(__name__)
@@ -55,6 +60,46 @@ def product_profit():
 def sales_prediction():
 
     data = get_sales_prediction()
+
+    return jsonify(data)
+
+
+@app.route("/sales-hourly")
+def sales_hourly():
+
+    data = get_sales_hourly()
+
+    return jsonify(data)
+
+
+@app.route("/sales-daily")
+def sales_daily():
+
+    data = get_sales_daily()
+
+    return jsonify(data)
+
+
+@app.route("/payment-distribution")
+def payment_distribution():
+
+    data = get_payment_distribution()
+
+    return jsonify(data)
+
+
+@app.route("/customer-growth")
+def customer_growth():
+
+    data = get_customer_growth()
+
+    return jsonify(data)
+
+
+@app.route("/customer-lifetime")
+def customer_lifetime():
+
+    data = get_customer_lifetime()
 
     return jsonify(data)
 
