@@ -233,7 +233,6 @@ if (!empty($customerInsight)) {
     </div>
 
 
-
     <script>
         window.customerAnalytics = {
 

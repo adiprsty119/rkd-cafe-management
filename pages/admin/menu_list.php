@@ -233,26 +233,18 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
                 </div>
 
-
             </main>
 
         </div>
 
     </div>
 
-
-
     <div
         id="global-tooltip"
         class="fixed hidden px-2 py-1 text-xs text-white bg-black rounded shadow-lg whitespace-nowrap z-[9999] pointer-events-none">
     </div>
 
-
-
     <?php require __DIR__ . '/../../resources/components/toast.php'; ?>
-
-
-
     <script src="/rkd-cafe/public/assets/js/toast.js"></script>
     <script src="/rkd-cafe/public/assets/js/notifications.js"></script>
 

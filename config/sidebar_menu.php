@@ -169,7 +169,7 @@ $menuConfig = [
             'children' => [
 
                 [
-                    'title' => 'Menu Analytics',
+                    'title' => 'Performance Analytics',
                     'icon'  => 'fa-chart-simple',
                     'url' => '/rkd-cafe/pages/owner/analytics.php'
                 ],

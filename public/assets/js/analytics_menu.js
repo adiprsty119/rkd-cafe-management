@@ -6,6 +6,8 @@ document.addEventListener("DOMContentLoaded", () => {
     renderCustomerChart(data.customerInsight || []);
     renderProfitChart(data.productProfit || []);
     renderPredictionChart(data.salesPrediction || []);
+    renderCustomerGrowthChart(data.customerGrowth || []);
+    renderPaymentChart(data.paymentDistribution || []);
 
 });
 
@@ -251,5 +253,90 @@ function getLineChartOptions(currency=false){
         }
 
     };
+
+}
+
+/* ==========================
+   CUSTOMER GROWTH
+========================== */
+
+function renderCustomerGrowthChart(customerGrowth){
+
+    if(!document.getElementById("customerGrowthChart")) return;
+
+    const labels = customerGrowth.map(item=>{
+        const date = new Date(item.date);
+        return date.toLocaleDateString("id-ID",{day:"2-digit",month:"short"});
+    });
+
+    const customers = customerGrowth.map(item=>item.new_customers);
+
+    const ctx = document.getElementById("customerGrowthChart").getContext("2d");
+
+    const gradient = ctx.createLinearGradient(0,0,0,300);
+    gradient.addColorStop(0,"rgba(34,197,94,0.45)");
+    gradient.addColorStop(1,"rgba(34,197,94,0)");
+
+    new Chart(ctx,{
+        type:"line",
+        data:{
+            labels,
+            datasets:[{
+                label:"New Customers",
+                data:customers,
+                borderColor:"#22c55e",
+                backgroundColor:gradient,
+                borderWidth:3,
+                tension:0.35,
+                fill:true,
+                pointRadius:4
+            }]
+        },
+        options:getLineChartOptions(false)
+    });
+
+}
+
+/* ==========================
+   PAYMENT DISTRIBUTION
+========================== */
+
+function renderPaymentChart(paymentData){
+
+    if(!document.getElementById("paymentChart")) return;
+
+    const labels = paymentData.map(p=>p.payment_method);
+    const orders = paymentData.map(p=>p.orders);
+
+    const ctx = document.getElementById("paymentChart").getContext("2d");
+
+    new Chart(ctx,{
+        type:"doughnut",
+        data:{
+            labels,
+            datasets:[{
+                data:orders,
+                backgroundColor:[
+                    "#3b82f6",
+                    "#10b981",
+                    "#f59e0b",
+                    "#ef4444",
+                    "#8b5cf6"
+                ],
+                borderWidth:0
+            }]
+        },
+        options:{
+            responsive:true,
+            maintainAspectRatio:false,
+            animation:getAnimation(),
+            plugins:{
+                legend:{
+                    position:"bottom",
+                    labels:{usePointStyle:true}
+                }
+            }
+        }
+    });
 
 }
