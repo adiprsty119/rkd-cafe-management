@@ -75,11 +75,17 @@ $settingsTabs = [
 
     <title><?= $pageTitle ?></title>
 
+    <!-- Tailwind CSS -->
     <link href="/rkd-cafe/public/assets/css/output.css" rel="stylesheet">
 
+    <!-- Vanilla CSS -->
+    <link href="/rkd-cafe/public/assets/css/utilities.css" rel="stylesheet">
+
+    <!-- FontAwesome -->
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
+    <!-- Alpine.js -->
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     <style>
@@ -99,7 +105,7 @@ $settingsTabs = [
     class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-white transition-colors duration-300">
 
 
-    <div class="flex min-h-screen bg-gray-100 dark:bg-gray-900 relative">
+    <div class="flex min-h-screen">
 
 
         <!-- SIDEBAR -->
@@ -134,19 +140,64 @@ $settingsTabs = [
         <!-- MAIN CONTENT -->
         <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
 
+            <!-- =========================
+                HEADER STACK
+            ========================= -->
+            <div id="headerStack" class="sticky top-0 z-50 relative">
 
-            <!-- NAVBAR -->
-            <div class="p-4 border-t border-gray-700">
+                <!-- =========================
+                    NAVBAR
+                ========================= -->
+                <div
+                    id="dashboardNavbar"
+                    class="relative z-50 transition-all duration-300">
 
-                <?php require __DIR__ . '/../../resources/components/navbar.php'; ?>
+                    <div class="w-full px-4 mt-3 transition-all duration-300 bg-gray-100 dark:bg-gray-800">
+                        <?php require __DIR__ . '/../../resources/components/navbar.php'; ?>
+                    </div>
+
+
+                    <!-- =========================
+                        BREADCRUMB INDICATOR
+                    ========================= -->
+                    <div
+                        id="breadcrumbIndicator"
+                        class="absolute left-auto -translate-x-1/2 top-full z-50 opacity-0 translate-y-2 pointer-events-none transition-all ease-out delay-75 duration-300">
+
+                        <button
+                            class="flex items-center ml-16 px-2 py-1 text-sm rounded-sm backdrop-blur-md bg-gray-100 dark:bg-gray-800 shadow-md hover:bg-white/60 active:scale-95 transition cursor-pointer">
+
+                            <i class="fa-solid fa-angle-down animate-bounce"></i>
+
+                        </button>
+
+                    </div>
+
+                </div>
 
             </div>
 
-            <!-- BREADCRUMB NAVIGATION -->
-            <?php require __DIR__ . '/../../resources/components/breadcrumb.php'; ?>
 
-            <!-- SETTINGS CONTENT -->
-            <main class="flex-1 p-4 md:p-6 overflow-y-auto space-y-6">
+            <!-- =========================
+                BREADCRUMB CONTAINER
+            ========================= -->
+            <div
+                id="breadcrumbContainer"
+                class="relative will-change-transform transition-opacity duration-200">
+
+                <div
+                    id="breadcrumbMask"
+                    class="px-4 py-2 overflow-hidden">
+
+                    <?php require __DIR__ . '/../../resources/components/breadcrumb.php'; ?>
+
+                </div>
+
+            </div>
+
+
+            <main id="dashboardScroll"
+                class="flex-1 p-4 md:p-6 overflow-y-auto space-y-6 scrollbar-hide">
 
 
                 <!-- HEADER -->
@@ -331,20 +382,27 @@ $settingsTabs = [
 
     </div>
 
-
+    <script src="/rkd-cafe/public/assets/js/toast.js"></script>
+    <script src="/rkd-cafe/public/assets/js/notifications.js"></script>
+    <script src="/rkd-cafe/public/assets/js/header.js"></script>
 
     <div
         id="global-tooltip"
         class="fixed hidden px-2 py-1 text-xs text-white bg-black rounded shadow-lg whitespace-nowrap z-[9999] pointer-events-none">
     </div>
 
-
-
     <?php require __DIR__ . '/../../resources/components/toast.php'; ?>
+    <?php if (isset($_SESSION['toast'])): ?>
 
+        <script>
+            window.toastData = {
+                type: "<?= $_SESSION['toast']['type'] ?>",
+                message: "<?= $_SESSION['toast']['message'] ?>"
+            }
+        </script>
 
-    <script src="/rkd-cafe/public/assets/js/toast.js"></script>
-    <script src="/rkd-cafe/public/assets/js/notifications.js"></script>
+    <?php unset($_SESSION['toast']);
+    endif; ?>
 
     <script>
         function settingsPage() {

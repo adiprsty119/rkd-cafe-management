@@ -1,0 +1,13 @@
+/* =========================
+   SCROLLBAR UTILITIES
+========================= */
+
+/* Hide scrollbar but keep scrolling */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE & Edge lama */
+  scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}

@@ -60,6 +60,8 @@ $customerGrowth = getCustomerGrowth();
 
     <link href="/rkd-cafe/public/assets/css/output.css" rel="stylesheet">
 
+    <link href="/rkd-cafe/public/assets/css/utilities.css" rel="stylesheet">
+
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
@@ -67,11 +69,6 @@ $customerGrowth = getCustomerGrowth();
 
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-    <style>
-        #breadcrumbContainer {
-            will-change: transform;
-        }
-    </style>
 </head>
 
 <body
@@ -93,50 +90,36 @@ $customerGrowth = getCustomerGrowth();
         <!-- MAIN -->
         <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
 
-            <!-- HEADER STACK -->
-            <div id="headerStack" class="sticky top-0 z-50">
+            <!-- =========================
+                    HEADER STACK
+            ========================= -->
+            <div id="headerStack" class="sticky top-0 z-50 relative">
 
-                <!-- NAVBAR -->
+                <!-- =========================
+                    NAVBAR
+                ========================= -->
                 <div
                     id="dashboardNavbar"
-                    class="relative z-50 backdrop-blur-md transition-all duration-300">
+                    class="relative z-50 transition-all duration-300">
 
-                    <div
-                        class="w-full px-4 mt-3 transition-all duration-300 bg-white/40 dark:bg-gray-900/40">
-
+                    <div class="w-full px-4 mt-3 transition-all duration-300 bg-gray-100 dark:bg-gray-800">
                         <?php require __DIR__ . '/../../resources/components/navbar.php'; ?>
-
                     </div>
 
-                </div>
 
-                <!-- BREADCRUMB MASK -->
-                <div
-                    id="breadcrumbMask"
-                    class="relative overflow-hidden">
-
-                    <!-- INDICATOR -->
+                    <!-- =========================
+                        BREADCRUMB INDICATOR
+                    ========================= -->
                     <div
                         id="breadcrumbIndicator"
-                        class="absolute left-1/2 -translate-x-1/2 top-0 -mt-3 hidden transition-all duration-300">
+                        class="absolute left-auto -translate-x-1/2 top-full z-50 opacity-0 translate-y-2 pointer-events-none transition-all ease-out delay-75 duration-300">
 
                         <button
-                            id="breadcrumbIndicatorBtn"
-                            class="flex items-center gap-1 px-3 py-1 text-xs rounded-full backdrop-blur-md bg-white/40 shadow-md hover:bg-white/60 active:scale-95 transition">
+                            class="flex items-center ml-16 px-2 py-1 text-sm rounded-sm backdrop-blur-md bg-gray-100 dark:bg-gray-800 shadow-md hover:bg-white/60 active:scale-95 transition cursor-pointer">
 
                             <i class="fa-solid fa-angle-down animate-bounce"></i>
-                            Show Breadcrumb
 
                         </button>
-
-                    </div>
-
-                    <!-- BREADCRUMB -->
-                    <div
-                        id="breadcrumbContainer"
-                        class="px-4 py-2 will-change-transform">
-
-                        <?php require __DIR__ . '/../../resources/components/breadcrumb.php'; ?>
 
                     </div>
 
@@ -144,8 +127,27 @@ $customerGrowth = getCustomerGrowth();
 
             </div>
 
+
+
+            <!-- =========================
+                BREADCRUMB CONTAINER
+            ========================= -->
+            <div
+                id="breadcrumbContainer"
+                class="relative will-change-transform transition-opacity duration-200">
+
+                <div
+                    id="breadcrumbMask"
+                    class="px-4 py-2 overflow-hidden">
+
+                    <?php require __DIR__ . '/../../resources/components/breadcrumb.php'; ?>
+
+                </div>
+
+            </div>
+
             <main id="dashboardScroll"
-                class="flex-1 p-4 md:p-6 overflow-y-auto space-y-6">
+                class="flex-1 p-4 md:p-6 overflow-y-auto space-y-6 scrollbar-hide">
 
                 <!-- HEADER -->
 
@@ -419,100 +421,8 @@ $customerGrowth = getCustomerGrowth();
     </script>
 
     <script src="/rkd-cafe/public/assets/js/analytics_menu.js"></script>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-
-            const navbar = document.getElementById("dashboardNavbar");
-            const breadcrumb = document.getElementById("breadcrumbContainer");
-            const scrollContainer = document.getElementById("dashboardScroll");
-            const indicator = document.getElementById("breadcrumbIndicator");
-
-            if (!navbar || !breadcrumb || !scrollContainer) return;
-
-            let breadcrumbLocked = false;
-            let ticking = false;
-
-            const maxMove = 90;
-
-            function clamp(v, min, max) {
-                return Math.min(Math.max(v, min), max);
-            }
-
-            function update() {
-
-                const scrollY = scrollContainer.scrollTop;
-
-                const progress = clamp(scrollY / 120, 0, 1);
-
-                const move = progress * maxMove;
-
-                if (!breadcrumbLocked) {
-
-                    breadcrumb.style.transform =
-                        `translate3d(0,-${move}px,0)`;
-
-                }
-
-                /* navbar glass */
-
-                if (scrollY > 20) {
-
-                    navbar.classList.add(
-                        "backdrop-blur-xl",
-                        "dark:bg-gray-900/70"
-                    );
-
-                } else {
-
-                    navbar.classList.remove(
-                        "backdrop-blur-xl",
-                        "dark:bg-gray-900/70"
-                    );
-
-                }
-
-                /* indicator */
-
-                if (scrollY > 80) {
-
-                    indicator.classList.remove("hidden");
-
-                } else {
-
-                    indicator.classList.add("hidden");
-
-                }
-
-                if (scrollY < 5) {
-                    breadcrumbLocked = false;
-                }
-
-                ticking = false;
-
-            }
-
-            scrollContainer.addEventListener("scroll", () => {
-
-                if (!ticking) {
-                    requestAnimationFrame(update);
-                    ticking = true;
-                }
-
-            });
-
-            indicator.addEventListener("click", () => {
-
-                breadcrumbLocked = true;
-
-                breadcrumb.style.transform = "translate3d(0,0,0)";
-
-                indicator.classList.add("hidden");
-
-            });
-
-        });
-    </script>
+    <script src="/rkd-cafe/public/assets/js/notifications.js"></script>
+    <script src="/rkd-cafe/public/assets/js/header.js"></script>
 
     <div
         id="global-tooltip"
