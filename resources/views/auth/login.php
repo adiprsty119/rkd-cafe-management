@@ -306,35 +306,33 @@ if (empty($_SESSION['csrf'])) {
 
                             <div
                                 x-data="{
-                                password:'',
-                                confirm:'',
-                                show:false,
+                                    password:'',
+                                    confirm:'',
+                                    show:false,
 
-                                rules:{
-                                length:false,
-                                lower:false,
-                                upper:false,
-                                number:false,
-                                symbol:false
-                                },
+                                    rules:{
+                                        length:false,
+                                        lower:false,
+                                        upper:false,
+                                        number:false,
+                                        symbol:false
+                                    },
 
-                                check(){
+                                    check(){
+                                        this.rules.length = this.password.length >= 8
+                                        this.rules.lower = /[a-z]/.test(this.password)
+                                        this.rules.upper = /[A-Z]/.test(this.password)
+                                        this.rules.number = /[0-9]/.test(this.password)
+                                        this.rules.symbol = /[^A-Za-z0-9]/.test(this.password)
+                                    },
 
-                                this.rules.length = this.password.length >= 8
-                                this.rules.lower = /[a-z]/.test(this.password)
-                                this.rules.upper = /[A-Z]/.test(this.password)
-                                this.rules.number = /[0-9]/.test(this.password)
-                                this.rules.symbol = /[^A-Za-z0-9]/.test(this.password)
+                                    strength(){
+                                        return Object.values(this.rules).filter(Boolean).length
+                                    },
 
-                                },
-
-                                strength(){
-                                return Object.values(this.rules).filter(Boolean).length
-                                },
-
-                                valid(){
-                                return Object.values(this.rules).every(Boolean) && this.password === this.confirm
-                                }
+                                    valid(){
+                                        return Object.values(this.rules).every(Boolean) && this.password === this.confirm
+                                    }
 
                                 }"
                                 class="mb-4">
@@ -435,7 +433,8 @@ if (empty($_SESSION['csrf'])) {
                             </div>
 
                             <button
-                                :disabled="!valid()"
+                                type="submit"
+                                :disabled="typeof valid === 'function' ? !valid() : true"
                                 class="w-full bg-green-600 text-white py-3 rounded-xl hover:bg-green-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
 
                                 Registrasi

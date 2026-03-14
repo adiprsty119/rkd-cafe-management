@@ -1,241 +1,524 @@
+/* ==========================
+   GLOBAL CHART REGISTRY
+========================== */
+
+const charts = {};
+
+
+/* ==========================
+   INIT DASHBOARD
+========================== */
+
 document.addEventListener("DOMContentLoaded", () => {
 
     const data = window.analyticsData || {};
-
-    renderSalesChart(data.salesTrend || []);
-    renderCustomerChart(data.customerInsight || []);
-    renderProfitChart(data.productProfit || []);
-    renderPredictionChart(data.salesPrediction || []);
-    renderCustomerGrowthChart(data.customerGrowth || []);
-    renderPaymentChart(data.paymentDistribution || []);
+    renderDashboard(data);
 
 });
 
 
-
 /* ==========================
-   SALES TREND
+   RENDER DASHBOARD
 ========================== */
 
-function renderSalesChart(salesTrend){
+function renderDashboard(data){
 
-    if(!document.getElementById("salesChart")) return;
+    if(!data) return
 
-    const labels = salesTrend.map(item => {
-        const date = new Date(item.date);
-        return date.toLocaleDateString("id-ID",{day:"2-digit",month:"short"});
-    });
+    updateKPI(data.kpi || {})
 
-    const revenue = salesTrend.map(item => item.revenue);
+    renderLineChart(
+        "salesChart",
+        data.salesTrend,
+        "Revenue",
+        "revenue",
+        "#f59e0b",
+        true,
+        {},
+        "Belum ada data penjualan"
+    )
 
-    const ctx = document.getElementById("salesChart").getContext("2d");
+    renderBarChart(
+        "customerChart",
+        data.customerInsight,
+        "Orders",
+        "orders",
+        "#3b82f6",
+        "Belum ada aktivitas pelanggan"
+    )
 
-    const gradient = ctx.createLinearGradient(0,0,0,300);
-    gradient.addColorStop(0,"rgba(245,158,11,0.45)");
-    gradient.addColorStop(1,"rgba(245,158,11,0)");
+    renderHorizontalBarChart(
+        "profitChart",
+        data.productProfit,
+        "Profit",
+        "profit",
+        "#10b981",
+        "Belum ada data profit produk"
+    )
 
-    new Chart(ctx,{
-        type:"line",
-        data:{
-            labels,
-            datasets:[{
-                label:"Revenue",
-                data:revenue,
-                borderColor:"#f59e0b",
-                backgroundColor:gradient,
-                borderWidth:3,
-                tension:0.35,
-                fill:true,
-                pointRadius:5
-            }]
-        },
-        options:getLineChartOptions(true)
-    });
+    renderLineChart(
+        "predictionChart",
+        data.salesPrediction,
+        "Predicted Revenue",
+        "revenue",
+        "#8b5cf6",
+        true,
+        {borderDash:[8,6]},
+        "Belum cukup data untuk prediksi AI"
+    )
+
+    renderLineChart(
+        "customerGrowthChart",
+        data.customerGrowth,
+        "New Customers",
+        "new_customers",
+        "#22c55e",
+        false,
+        {},
+        "Belum ada pertumbuhan pelanggan"
+    )
+
+    renderDoughnutChart(
+        "paymentChart",
+        data.paymentDistribution,
+        "payment_method",
+        "orders",
+        "Belum ada metode pembayaran tercatat"
+    )
 
 }
 
 
-
 /* ==========================
-   CUSTOMER INSIGHT
+   UPDATE KPI CARDS
 ========================== */
 
-function renderCustomerChart(customerInsight){
+function updateKPI(kpi){
 
-    if(!document.getElementById("customerChart")) return;
+    if(!kpi) return
 
-    const labels = customerInsight.map(c=>c.name);
-    const orders = customerInsight.map(c=>c.orders);
+    setText("#kpiRevenue","Rp "+formatNumber(kpi.total_revenue))
+    setText("#kpiOrders",formatNumber(kpi.total_orders))
+    setText("#kpiCustomers",formatNumber(kpi.active_customers))
+    setText("#kpiAvgOrder","Rp "+formatNumber(kpi.avg_order))
 
-    const ctx = document.getElementById("customerChart").getContext("2d");
+}
 
-    const gradient = ctx.createLinearGradient(0,0,0,300);
-    gradient.addColorStop(0,"rgba(59,130,246,0.6)");
-    gradient.addColorStop(1,"rgba(59,130,246,0.1)");
 
-    new Chart(ctx,{
-        type:"bar",
+/* ==========================
+   GENERIC CHART FACTORY
+========================== */
+
+function createChart(id,config){
+
+    const canvas = document.getElementById(id)
+    if(!canvas) return
+
+    resetChartContainer(id)
+
+    if(!config.data.labels.length){
+
+        if(charts[id]){
+            charts[id].destroy()
+            delete charts[id]
+        }
+
+        return
+    }
+
+    const ctx = canvas.getContext("2d")
+
+    if(charts[id]){
+        charts[id].destroy()
+        delete charts[id]
+    }
+    canvas.classList.add("chart-ready")
+    charts[id] = new Chart(ctx,config)
+}
+
+
+/* ==========================
+   GENERAL LINE CHART
+========================== */
+
+function renderLineChart(id,data,label,valueKey,color,currency=false,extra={},emptyMessage="Belum ada data",labelKey="date"){
+
+    if(!data || data.length < 2){
+
+        showChartMessage(
+            id,
+            emptyMessage + " (minimal 2 hari data)"
+        )
+
+        return
+    }
+
+    const labels = data.map(i => labelKey === "date" ? formatDate(i[labelKey]) : i[labelKey])
+    const values = data.map(i => Number(i[valueKey]))
+
+    createChart(id,{
+        type:"line",
+
         data:{
             labels,
             datasets:[{
-                label:"Orders",
-                data:orders,
-                backgroundColor:gradient,
+                label,
+                data:values,
+                borderColor:color,
+                backgroundColor:getGradient(id,color),
+                tension:0.35,
+                borderWidth:3,
+                fill:true,
+                pointRadius:4,
+                ...extra
+            }]
+        },
+
+        options:getLineOptions(currency)
+
+    })
+
+}
+
+
+/* ==========================
+   GENERAL BAR CHART
+========================== */
+
+function renderBarChart(id,data,label,valueKey,color,emptyMessage="Belum ada data"){
+
+    if(!data || !data.length){
+        showChartMessage(id,emptyMessage)
+        return
+    }
+
+    const labels = data.map(i => i.name)
+    const values = data.map(i => Number(i[valueKey]))
+
+    createChart(id,{
+
+        type:"bar",
+
+        data:{
+            labels,
+            datasets:[{
+                label,
+                data:values,
+                backgroundColor:getGradient(id,color),
                 borderRadius:8
             }]
         },
-        options:{
-            responsive:true,
-            maintainAspectRatio:false,
-            animation:getAnimation(),
-            plugins:getLegend(),
-            scales:{
-                y:{
-                    beginAtZero:true,
-                    ticks:{stepSize:1}
-                },
-                x:{grid:{display:false}}
-            }
-        }
-    });
+
+        options:getBarOptions()
+
+    })
 
 }
 
 
-
 /* ==========================
-   PRODUCT PROFIT
+   GENERAL HORIZONTAL BAR
 ========================== */
 
-function renderProfitChart(productProfit){
+function renderHorizontalBarChart(id,data,label,valueKey,color,emptyMessage="Belum ada data"){
 
-    if(!document.getElementById("profitChart")) return;
+    if(!data || !data.length){
+        showChartMessage(id,emptyMessage)
+        return
+    }
 
-    const labels = productProfit.map(p=>p.name);
-    const profit = productProfit.map(p=>p.profit);
+    const labels = data.map(i => i.name)
+    const values = data.map(i => Number(i[valueKey]))
 
-    const ctx = document.getElementById("profitChart").getContext("2d");
+    createChart(id,{
 
-    const gradient = ctx.createLinearGradient(0,0,400,0);
-    gradient.addColorStop(0,"rgba(16,185,129,0.7)");
-    gradient.addColorStop(1,"rgba(16,185,129,0.2)");
-
-    new Chart(ctx,{
         type:"bar",
+
         data:{
             labels,
             datasets:[{
-                label:"Profit",
-                data:profit,
-                backgroundColor:gradient,
+                label,
+                data:values,
+                backgroundColor:getGradientHorizontal(id,color),
                 borderRadius:10
             }]
         },
-        options:{
-            indexAxis:"y",
-            responsive:true,
-            maintainAspectRatio:false,
-            animation:getAnimation(),
-            plugins:getLegend(),
-            scales:{
-                x:{
-                    ticks:{
-                        callback:value=>"Rp "+value.toLocaleString("id-ID")
-                    }
-                },
-                y:{grid:{display:false}}
-            }
-        }
-    });
+
+        options:getHorizontalBarOptions()
+
+    })
 
 }
 
 
-
 /* ==========================
-   SALES PREDICTION
+   GENERAL DOUGHNUT CHART
 ========================== */
 
-function renderPredictionChart(predictionData){
+function renderDoughnutChart(id,data,labelKey,valueKey,emptyMessage="Belum ada data"){
 
-    if(!document.getElementById("predictionChart")) return;
+    if(!data || !data.length){
+        showChartMessage(id,emptyMessage)
+        return
+    }
 
-    const labels = predictionData.map(p=>{
-        const date=new Date(p.date);
-        return date.toLocaleDateString("id-ID",{day:"2-digit",month:"short"});
-    });
+    const labels = data.map(i => i[labelKey])
+    const values = data.map(i => Number(i[valueKey]))
 
-    const revenue = predictionData.map(p=>p.revenue);
+    createChart(id,{
 
-    const ctx = document.getElementById("predictionChart").getContext("2d");
+        type:"doughnut",
 
-    const gradient = ctx.createLinearGradient(0,0,0,300);
-    gradient.addColorStop(0,"rgba(139,92,246,0.45)");
-    gradient.addColorStop(1,"rgba(139,92,246,0)");
-
-    new Chart(ctx,{
-        type:"line",
         data:{
             labels,
             datasets:[{
-                label:"Predicted Revenue",
-                data:revenue,
-                borderColor:"#8b5cf6",
-                backgroundColor:gradient,
-                borderDash:[8,6],
-                borderWidth:3,
-                tension:0.35,
-                fill:true
+                data:values,
+                backgroundColor:[
+                    "#3b82f6",
+                    "#10b981",
+                    "#f59e0b",
+                    "#ef4444",
+                    "#8b5cf6"
+                ]
             }]
         },
-        options:getLineChartOptions(true)
-    });
+
+        options:{
+            responsive:true,
+            maintainAspectRatio:false,
+            plugins:{
+                legend:{
+                    position:"bottom",
+                    labels:{usePointStyle:true}
+                }
+            }
+        }
+
+    })
 
 }
-
 
 
 /* ==========================
-   REUSABLE OPTIONS
+   HELPER FUNCTIONS
 ========================== */
 
-function getAnimation(){
-    return {
-        duration:1200,
-        easing:"easeOutQuart"
-    };
+function setText(selector,value){
+
+    const el = document.querySelector(selector)
+    if(el) el.innerText = value
+
 }
 
-function getLegend(){
-    return {
-        legend:{
-            display:true,
-            labels:{usePointStyle:true}
+
+function formatNumber(num){
+
+    return (num || 0).toLocaleString("id-ID")
+
+}
+
+
+function formatDate(date){
+
+    if(!date) return ""
+
+    const d = new Date(date)
+
+    if(isNaN(d)) return "Invalid"
+
+    return d.toLocaleDateString("id-ID",{
+        day:"2-digit",
+        month:"short"
+    })
+
+}
+
+
+function showChartsLoading(){
+
+    const chartIds = [
+        "salesChart",
+        "customerChart",
+        "predictionChart",
+        "profitChart",
+        "customerGrowthChart",
+        "paymentChart"
+    ]
+
+    chartIds.forEach(id => {
+
+        const canvas = document.getElementById(id)
+        if(!canvas) return
+
+        const container = canvas.parentElement
+
+        // destroy chart lama
+        if(charts[id]){
+            charts[id].destroy()
+            delete charts[id]
         }
-    };
+
+        // HAPUS EMPTY STATE
+        const empty = container.querySelector(".chart-empty")
+        if(empty) empty.remove()
+
+        // HAPUS LOADER LAMA
+        const oldLoader = container.querySelector(".chart-loading")
+        if(oldLoader) oldLoader.remove()
+
+        canvas.style.display = "none"
+
+        const loader = document.createElement("div")
+        loader.className = "chart-loading flex items-center justify-center h-full"
+
+        loader.innerHTML = `
+            <div class="chart-skeleton w-full h-full flex flex-col justify-between px-4 py-4">
+
+                <div class="flex justify-between items-end h-full gap-2">
+
+                    <div class="skeleton-bar h-16 w-3"></div>
+                    <div class="skeleton-bar h-20 w-3"></div>
+                    <div class="skeleton-bar h-10 w-3"></div>
+                    <div class="skeleton-bar h-24 w-3"></div>
+                    <div class="skeleton-bar h-14 w-3"></div>
+                    <div class="skeleton-bar h-28 w-3"></div>
+                    <div class="skeleton-bar h-18 w-3"></div>
+
+                </div>
+
+                <div class="flex justify-between text-[10px] text-gray-400 mt-3 opacity-60">
+                    <span>Loading</span>
+                    <span>Analytics</span>
+                </div>
+
+            </div>
+        `
+
+        container.appendChild(loader)
+
+    })
+
 }
 
-function getLineChartOptions(currency=false){
+
+/* ==========================
+   RESET CHART CONTAINER
+========================== */
+
+function resetChartContainer(id){
+
+    const canvas = document.getElementById(id)
+    if(!canvas) return
+
+    const container = canvas.parentElement
+
+    const msg = container.querySelector(".chart-empty")
+    if(msg) msg.remove()
+
+    const loader = container.querySelector(".chart-loading")
+    if(loader) loader.remove()
+
+    canvas.style.display = "block"
+}
+
+
+/* ==========================
+   EMPTY CHART MESSAGE
+========================== */
+
+function showChartMessage(id,message){
+
+    const canvas = document.getElementById(id)
+    if(!canvas) return
+
+    const container = canvas.parentElement
+
+    // hapus chart lama jika ada
+    if(charts[id]){
+        charts[id].destroy()
+        delete charts[id]
+    }
+
+     // HAPUS LOADER
+    const loader = container.querySelector(".chart-loading")
+    if(loader) loader.remove()
+
+    canvas.style.display = "none"
+
+    let msg = container.querySelector(".chart-empty")
+
+    if(!msg){
+
+        msg = document.createElement("div")
+        msg.className = "chart-empty flex items-center justify-center h-full text-gray-400 text-sm animate-fade-in"
+        container.appendChild(msg)
+
+    }
+
+    msg.innerHTML = `
+        <div class="text-center">
+            <i class="fa-solid fa-chart-line text-gray-300 text-xl mb-2"></i>
+            <div>${message}</div>
+        </div>
+    `
+}
+
+
+/* ==========================
+   GRADIENTS
+========================== */
+
+function getGradient(id,color){
+
+    const canvas = document.getElementById(id)
+    if(!canvas) return color
+
+    const ctx = canvas.getContext("2d")
+    const gradient = ctx.createLinearGradient(0,0,0,300)
+
+    gradient.addColorStop(0,color+"66")
+    gradient.addColorStop(1,color+"00")
+
+    return gradient
+
+}
+
+
+function getGradientHorizontal(id,color){
+
+    const canvas = document.getElementById(id)
+    if(!canvas) return color
+
+    const ctx = canvas.getContext("2d")
+    const gradient = ctx.createLinearGradient(0,0,400,0)
+
+    gradient.addColorStop(0,color+"99")
+    gradient.addColorStop(1,color+"33")
+
+    return gradient
+
+}
+
+
+/* ==========================
+   CHART OPTIONS
+========================== */
+
+function getLineOptions(currency=false){
 
     return{
 
         responsive:true,
         maintainAspectRatio:false,
-        animation:getAnimation(),
+        animation:{duration:900},
 
         plugins:{
-            legend:{
-                display:true,
-                labels:{usePointStyle:true}
-            },
+            legend:{labels:{usePointStyle:true}},
             tooltip:{
                 callbacks:{
-                    label:function(context){
-                        if(currency){
-                            return "Rp "+context.raw.toLocaleString("id-ID");
-                        }
-                        return context.raw;
-                    }
+                    label:c=> currency
+                        ? "Rp "+formatNumber(c.raw)
+                        : c.raw
                 }
             }
         },
@@ -244,99 +527,51 @@ function getLineChartOptions(currency=false){
             y:{
                 beginAtZero:true,
                 ticks:{
-                    callback:value=> currency
-                        ? "Rp "+value.toLocaleString("id-ID")
-                        : value
+                    callback:v=> currency
+                        ? "Rp "+formatNumber(v)
+                        : v
                 }
             },
             x:{grid:{display:false}}
         }
 
-    };
+    }
 
 }
 
-/* ==========================
-   CUSTOMER GROWTH
-========================== */
 
-function renderCustomerGrowthChart(customerGrowth){
+function getBarOptions(){
 
-    if(!document.getElementById("customerGrowthChart")) return;
+    return{
 
-    const labels = customerGrowth.map(item=>{
-        const date = new Date(item.date);
-        return date.toLocaleDateString("id-ID",{day:"2-digit",month:"short"});
-    });
-
-    const customers = customerGrowth.map(item=>item.new_customers);
-
-    const ctx = document.getElementById("customerGrowthChart").getContext("2d");
-
-    const gradient = ctx.createLinearGradient(0,0,0,300);
-    gradient.addColorStop(0,"rgba(34,197,94,0.45)");
-    gradient.addColorStop(1,"rgba(34,197,94,0)");
-
-    new Chart(ctx,{
-        type:"line",
-        data:{
-            labels,
-            datasets:[{
-                label:"New Customers",
-                data:customers,
-                borderColor:"#22c55e",
-                backgroundColor:gradient,
-                borderWidth:3,
-                tension:0.35,
-                fill:true,
-                pointRadius:4
-            }]
-        },
-        options:getLineChartOptions(false)
-    });
-
-}
-
-/* ==========================
-   PAYMENT DISTRIBUTION
-========================== */
-
-function renderPaymentChart(paymentData){
-
-    if(!document.getElementById("paymentChart")) return;
-
-    const labels = paymentData.map(p=>p.payment_method);
-    const orders = paymentData.map(p=>p.orders);
-
-    const ctx = document.getElementById("paymentChart").getContext("2d");
-
-    new Chart(ctx,{
-        type:"doughnut",
-        data:{
-            labels,
-            datasets:[{
-                data:orders,
-                backgroundColor:[
-                    "#3b82f6",
-                    "#10b981",
-                    "#f59e0b",
-                    "#ef4444",
-                    "#8b5cf6"
-                ],
-                borderWidth:0
-            }]
-        },
-        options:{
-            responsive:true,
-            maintainAspectRatio:false,
-            animation:getAnimation(),
-            plugins:{
-                legend:{
-                    position:"bottom",
-                    labels:{usePointStyle:true}
-                }
-            }
+        responsive:true,
+        maintainAspectRatio:false,
+        animation:{duration:900},
+        plugins:{legend:{labels:{usePointStyle:true}}},
+        scales:{
+            y:{beginAtZero:true},
+            x:{grid:{display:false}}
         }
-    });
+
+    }
+
+}
+
+
+function getHorizontalBarOptions(){
+
+    return{
+
+        indexAxis:"y",
+        responsive:true,
+        maintainAspectRatio:false,
+        animation:{duration:900},
+        plugins:{legend:{labels:{usePointStyle:true}}},
+        scales:{
+            x:{ticks:{callback:v=>"Rp "+formatNumber(v)}},
+            y:{grid:{display:false}}
+        }
+
+    }
 
 }

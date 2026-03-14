@@ -1,7 +1,14 @@
 import mysql.connector
 import pandas as pd
 import numpy as np
+
+from statsmodels.tsa.seasonal import seasonal_decompose
 from sklearn.linear_model import LinearRegression
+
+
+# =========================
+# DATABASE CONNECTION
+# =========================
 
 
 def get_connection():
@@ -12,25 +19,69 @@ def get_connection():
 
 
 # =========================
-# DASHBOARD ANALYTICS
+# PERIOD HELPER
 # =========================
 
 
-def get_dashboard_data():
+def get_days(period):
+
+    mapping = {"today": 1, "7days": 7, "30days": 30}
+
+    return mapping.get(period, 1)
+
+
+# =========================
+# QUERY HELPER
+# =========================
+
+
+def query_dataframe(query):
 
     conn = get_connection()
 
-    query = """
-    SELECT total, user_id
-    FROM orders
-    WHERE status = 'paid'
-    """
-
     df = pd.read_sql(query, conn)
 
-    if df.empty:
+    conn.close()
 
-        conn.close()
+    return df
+
+
+# =========================
+# FILL MISSING DATE
+# =========================
+
+
+def fill_missing_dates(df):
+
+    if df.empty:
+        return df
+
+    df["date"] = pd.to_datetime(df["date"])
+
+    df = df.set_index("date").asfreq("D", fill_value=0).reset_index()
+
+    return df
+
+
+# =========================
+# DASHBOARD KPI
+# =========================
+
+
+def get_dashboard_data(period="today"):
+
+    days = get_days(period)
+
+    query = f"""
+    SELECT total, user_id
+    FROM orders
+    WHERE status='paid'
+    AND created_at >= DATE_SUB(NOW(), INTERVAL {days} DAY)
+    """
+
+    df = query_dataframe(query)
+
+    if df.empty:
 
         return {
             "total_revenue": 0,
@@ -39,49 +90,12 @@ def get_dashboard_data():
             "avg_order": 0,
         }
 
-    total_revenue = df["total"].sum()
-    total_orders = len(df)
-    avg_order = df["total"].mean()
-    active_customers = df["user_id"].nunique()
-
-    conn.close()
-
     return {
-        "total_revenue": int(total_revenue),
-        "total_orders": int(total_orders),
-        "active_customers": int(active_customers),
-        "avg_order": int(avg_order),
+        "total_revenue": int(df["total"].sum()),
+        "total_orders": int(len(df)),
+        "active_customers": int(df["user_id"].nunique()),
+        "avg_order": int(df["total"].mean()),
     }
-
-
-# =========================
-# TOP SELLING PRODUCTS
-# =========================
-
-
-def get_top_menu():
-
-    conn = get_connection()
-
-    query = """
-    SELECT 
-        p.name,
-        SUM(oi.qty) AS orders,
-        SUM(oi.subtotal) AS revenue
-    FROM order_items oi
-    JOIN products p ON p.id = oi.product_id
-    JOIN orders o ON o.id = oi.order_id
-    WHERE o.status = 'paid'
-    GROUP BY oi.product_id
-    ORDER BY orders DESC
-    LIMIT 5
-    """
-
-    df = pd.read_sql(query, conn)
-
-    conn.close()
-
-    return df.to_dict(orient="records")
 
 
 # =========================
@@ -89,22 +103,27 @@ def get_top_menu():
 # =========================
 
 
-def get_sales_trend():
+def get_sales_trend(period="today"):
 
-    conn = get_connection()
+    days = get_days(period)
 
-    query = """
+    query = f"""
     SELECT 
-    DATE(created_at) as date,
-    SUM(total) as revenue
+        DATE(created_at) as date,
+        SUM(total) as revenue
     FROM orders
+    WHERE status='paid'
+    AND created_at >= DATE_SUB(NOW(), INTERVAL {days} DAY)
     GROUP BY DATE(created_at)
     ORDER BY DATE(created_at)
     """
 
-    df = pd.read_sql(query, conn)
+    df = query_dataframe(query)
 
-    conn.close()
+    df = fill_missing_dates(df)
+
+    # FIX FORMAT DATE
+    df["date"] = pd.to_datetime(df["date"]).dt.strftime("%Y-%m-%d")
 
     return df.to_dict(orient="records")
 
@@ -114,40 +133,39 @@ def get_sales_trend():
 # =========================
 
 
-def get_customer_insight():
+def get_customer_insight(period="today"):
 
-    conn = get_connection()
+    days = get_days(period)
 
-    query = """
+    query = f"""
     SELECT 
         u.name,
         COUNT(o.id) AS orders,
         SUM(o.total) AS total_spend
     FROM orders o
     JOIN users u ON u.id = o.user_id
-    WHERE o.status = 'paid'
+    WHERE o.status='paid'
+    AND o.created_at >= DATE_SUB(NOW(), INTERVAL {days} DAY)
     GROUP BY o.user_id
     ORDER BY total_spend DESC
     LIMIT 5
     """
 
-    df = pd.read_sql(query, conn)
-
-    conn.close()
+    df = query_dataframe(query)
 
     return df.to_dict(orient="records")
 
 
 # =========================
-# PRODUCT PROFIT ANALYSIS
+# PRODUCT PROFIT
 # =========================
 
 
-def get_product_profit():
+def get_product_profit(period="today"):
 
-    conn = get_connection()
+    days = get_days(period)
 
-    query = """
+    query = f"""
     SELECT 
         p.name,
         SUM(oi.subtotal) AS revenue,
@@ -156,77 +174,224 @@ def get_product_profit():
     FROM order_items oi
     JOIN products p ON p.id = oi.product_id
     JOIN orders o ON o.id = oi.order_id
-    WHERE o.status = 'paid'
+    WHERE o.status='paid'
+    AND o.created_at >= DATE_SUB(NOW(), INTERVAL {days} DAY)
     GROUP BY oi.product_id
     ORDER BY profit DESC
     LIMIT 5
     """
 
-    df = pd.read_sql(query, conn)
+    df = query_dataframe(query)
 
-    conn.close()
+    return df.to_dict(orient="records")
+
+
+# =========================
+# PAYMENT DISTRIBUTION
+# =========================
+
+
+def get_payment_distribution(period="today"):
+
+    days = get_days(period)
+
+    query = f"""
+    SELECT 
+        payment_method,
+        COUNT(id) AS orders,
+        SUM(total) AS revenue
+    FROM orders
+    WHERE status='paid'
+    AND created_at >= DATE_SUB(NOW(), INTERVAL {days} DAY)
+    GROUP BY payment_method
+    """
+
+    df = query_dataframe(query)
+
+    return df.to_dict(orient="records")
+
+
+# =========================
+# CUSTOMER GROWTH
+# =========================
+
+
+def get_customer_growth(period="7days"):
+
+    days = get_days(period)
+
+    query = f"""
+    SELECT 
+        DATE(created_at) AS date,
+        COUNT(id) AS new_customers
+    FROM users
+    WHERE created_at >= DATE_SUB(NOW(), INTERVAL {days} DAY)
+    GROUP BY DATE(created_at)
+    ORDER BY DATE(created_at)
+    """
+
+    df = query_dataframe(query)
+
+    # tidak ada data atau terlalu sedikit
+    if df.empty or len(df) < 2:
+        return []
+
+    df = fill_missing_dates(df)
+
+    df["date"] = pd.to_datetime(df["date"]).dt.strftime("%Y-%m-%d")
+
+    return df.to_dict(orient="records")
+
+
+# =========================
+# TOP MENU
+# =========================
+
+
+def get_top_menu(period="today"):
+
+    days = get_days(period)
+
+    query = f"""
+    SELECT 
+        p.name,
+        SUM(oi.qty) AS orders,
+        SUM(oi.subtotal) AS revenue
+    FROM order_items oi
+    JOIN products p ON p.id = oi.product_id
+    JOIN orders o ON o.id = oi.order_id
+    WHERE o.status='paid'
+    AND o.created_at >= DATE_SUB(NOW(), INTERVAL {days} DAY)
+    GROUP BY oi.product_id
+    ORDER BY orders DESC
+    LIMIT 5
+    """
+
+    df = query_dataframe(query)
 
     return df.to_dict(orient="records")
 
 
 # =========================
 # SALES PREDICTION (AI)
+# Seasonal Decomposition
 # =========================
 
 
-def get_sales_prediction():
+def get_sales_prediction(period="30days"):
 
-    conn = get_connection()
+    days = get_days(period)
 
-    query = """
+    query = f"""
     SELECT 
         DATE(created_at) as date,
         SUM(total) as revenue
     FROM orders
     WHERE status='paid'
+    AND created_at >= DATE_SUB(NOW(), INTERVAL {days} DAY)
     GROUP BY DATE(created_at)
     ORDER BY DATE(created_at)
     """
 
-    df = pd.read_sql(query, conn)
-
-    conn.close()
+    df = query_dataframe(query)
 
     if df.empty:
         return []
 
+    df = fill_missing_dates(df)
+
     df["date"] = pd.to_datetime(df["date"])
+    df = df.sort_values("date")
+    df = df.set_index("date")
 
-    df["day_index"] = np.arange(len(df))
+    revenue = df["revenue"]
 
-    X = df[["day_index"]]
-    y = df["revenue"]
-
-    model = LinearRegression()
-
-    model.fit(X, y)
+    history_len = len(revenue)
 
     future_days = 7
 
-    last_index = df["day_index"].max()
+    # =========================
+    # CASE 1 : DATA SANGAT SEDIKIT
+    # =========================
+    if history_len <= 2:
 
-    future_index = np.arange(last_index + 1, last_index + future_days + 1).reshape(
-        -1, 1
-    )
+        last_value = int(revenue.iloc[-1])
 
-    predictions = model.predict(future_index)
+        forecast = [last_value] * future_days
 
-    future_dates = pd.date_range(df["date"].max(), periods=future_days + 1)[1:]
+    # =========================
+    # CASE 2 : DATA KECIL
+    # Moving Average
+    # =========================
+    elif history_len < 7:
+
+        avg = int(revenue.mean())
+
+        forecast = [avg] * future_days
+
+    # =========================
+    # CASE 3 : DATA MENENGAH
+    # Linear Regression
+    # =========================
+    elif history_len < 14:
+
+        X = np.arange(history_len).reshape(-1, 1)
+
+        model = LinearRegression()
+        model.fit(X, revenue.values)
+
+        future_index = np.arange(history_len, history_len + future_days).reshape(-1, 1)
+
+        forecast = model.predict(future_index)
+        forecast = [max(0, int(v)) for v in forecast]
+
+    # =========================
+    # CASE 4 : DATA BESAR
+    # Seasonal Decomposition
+    # =========================
+    else:
+
+        period = 7
+
+        decomposition = seasonal_decompose(revenue, model="additive", period=period)
+
+        trend = decomposition.trend.bfill().ffill().dropna()
+
+        X = np.arange(len(trend)).reshape(-1, 1)
+
+        model = LinearRegression()
+        model.fit(X, trend)
+
+        future_index = np.arange(len(trend), len(trend) + future_days).reshape(-1, 1)
+
+        forecast_trend = model.predict(future_index)
+
+        seasonal_pattern = decomposition.seasonal.tail(period)
+
+        forecast = []
+
+        for i in range(future_days):
+
+            seasonal_value = seasonal_pattern.iloc[i % period]
+
+            predicted = forecast_trend[i] + seasonal_value
+
+            forecast.append(max(0, int(predicted)))
+
+    # =========================
+    # BUILD RESULT
+    # =========================
+
+    last_date = df.index.max()
+
+    future_dates = pd.date_range(last_date, periods=future_days + 1)[1:]
 
     result = []
 
     for i in range(future_days):
 
         result.append(
-            {
-                "date": future_dates[i].strftime("%Y-%m-%d"),
-                "revenue": int(predictions[i]),
-            }
+            {"date": future_dates[i].strftime("%Y-%m-%d"), "revenue": forecast[i]}
         )
 
     return result
@@ -237,24 +402,23 @@ def get_sales_prediction():
 # =========================
 
 
-def get_sales_hourly():
+def get_sales_hourly(period="today"):
 
-    conn = get_connection()
+    days = get_days(period)
 
-    query = """
+    query = f"""
     SELECT 
         HOUR(created_at) AS hour,
         COUNT(id) AS orders,
         SUM(total) AS revenue
     FROM orders
     WHERE status='paid'
+    AND created_at >= DATE_SUB(NOW(), INTERVAL {days} DAY)
     GROUP BY HOUR(created_at)
     ORDER BY hour
     """
 
-    df = pd.read_sql(query, conn)
-
-    conn.close()
+    df = query_dataframe(query)
 
     return df.to_dict(orient="records")
 
@@ -264,106 +428,54 @@ def get_sales_hourly():
 # =========================
 
 
-def get_sales_daily():
+def get_sales_daily(period="today"):
 
-    conn = get_connection()
+    days = get_days(period)
 
-    query = """
+    query = f"""
     SELECT 
         DAYNAME(created_at) AS day,
         COUNT(id) AS orders,
         SUM(total) AS revenue
     FROM orders
     WHERE status='paid'
+    AND created_at >= DATE_SUB(NOW(), INTERVAL {days} DAY)
     GROUP BY DAYNAME(created_at)
     ORDER BY FIELD(
         DAYNAME(created_at),
-        'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'
+        'Monday','Tuesday','Wednesday','Thursday',
+        'Friday','Saturday','Sunday'
     )
     """
 
-    df = pd.read_sql(query, conn)
-
-    conn.close()
+    df = query_dataframe(query)
 
     return df.to_dict(orient="records")
 
 
 # =========================
-# PAYMENT DISTRIBUTION
+# CUSTOMER LIFETIME
 # =========================
 
 
-def get_payment_distribution():
+def get_customer_lifetime(period="today"):
 
-    conn = get_connection()
+    days = get_days(period)
 
-    query = """
-    SELECT 
-        payment_method,
-        COUNT(id) AS orders,
-        SUM(total) AS revenue
-    FROM orders
-    WHERE status='paid'
-    GROUP BY payment_method
-    """
-
-    df = pd.read_sql(query, conn)
-
-    conn.close()
-
-    return df.to_dict(orient="records")
-
-
-# =========================
-# CUSTOMER GROWTH
-# =========================
-
-
-def get_customer_growth():
-
-    conn = get_connection()
-
-    query = """
-    SELECT 
-        DATE(created_at) AS date,
-        COUNT(id) AS new_customers
-    FROM users
-    GROUP BY DATE(created_at)
-    ORDER BY DATE(created_at)
-    """
-
-    df = pd.read_sql(query, conn)
-
-    conn.close()
-
-    return df.to_dict(orient="records")
-
-
-# =========================
-# CUSTOMER LIFETIME VALUE
-# =========================
-
-
-def get_customer_lifetime():
-
-    conn = get_connection()
-
-    query = """
+    query = f"""
     SELECT 
         u.name,
         COUNT(o.id) AS orders,
         SUM(o.total) AS total_spend
     FROM orders o
     JOIN users u ON u.id = o.user_id
-    WHERE o.status = 'paid'
+    WHERE o.status='paid'
+    AND o.created_at >= DATE_SUB(NOW(), INTERVAL {days} DAY)
     GROUP BY o.user_id
     ORDER BY total_spend DESC
     LIMIT 10
     """
 
-    df = pd.read_sql(query, conn)
-
-    conn.close()
+    df = query_dataframe(query)
 
     return df.to_dict(orient="records")

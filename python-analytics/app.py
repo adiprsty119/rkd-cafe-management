@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from analytics_engine import (
     get_dashboard_data,
     get_top_menu,
@@ -16,52 +16,149 @@ from analytics_engine import (
 app = Flask(__name__)
 
 
+# =========================
+# HELPER
+# =========================
+
+
+def get_period():
+    """
+    Ambil parameter period dari request.
+    Default: today
+    """
+    return request.args.get("period", "today")
+
+
+def response(data):
+    """
+    Standard JSON response
+    """
+    return jsonify(data)
+
+
+# =========================
+# DASHBOARD KPI
+# =========================
+
+
 @app.route("/analytics")
 def analytics():
 
-    data = get_dashboard_data()
+    period = get_period()
 
-    return jsonify(data)
+    data = get_dashboard_data(period)
+
+    return response(data)
+
+
+# =========================
+# TOP MENU
+# =========================
 
 
 @app.route("/top-menu")
 def top_menu():
 
-    data = get_top_menu()
+    period = get_period()
 
-    return jsonify(data)
+    data = get_top_menu(period)
+
+    return response(data)
+
+
+# =========================
+# SALES TREND
+# =========================
 
 
 @app.route("/sales-trend")
 def sales_trend():
 
-    data = get_sales_trend()
+    period = get_period()
 
-    return jsonify(data)
+    data = get_sales_trend(period)
+
+    return response(data)
+
+
+# =========================
+# CUSTOMER INSIGHT
+# =========================
 
 
 @app.route("/customer-insight")
 def customer_insight():
 
-    data = get_customer_insight()
+    period = get_period()
 
-    return jsonify(data)
+    data = get_customer_insight(period)
+
+    return response(data)
+
+
+# =========================
+# PRODUCT PROFIT
+# =========================
 
 
 @app.route("/product-profit")
 def product_profit():
 
-    data = get_product_profit()
+    period = get_period()
+
+    data = get_product_profit(period)
+
+    return response(data)
+
+
+# =========================
+# PAYMENT DISTRIBUTION
+# =========================
+
+
+@app.route("/payment-distribution")
+def payment_distribution():
+
+    period = get_period()
+
+    data = get_payment_distribution(period)
+
+    return response(data)
+
+
+# =========================
+# CUSTOMER GROWTH
+# =========================
+
+
+@app.route("/customer-growth")
+def customer_growth():
+
+    period = request.args.get("period", "7day")
+
+    data = get_customer_growth(period)
 
     return jsonify(data)
+
+
+# =========================
+# SALES PREDICTION (AI)
+# =========================
 
 
 @app.route("/sales-prediction")
 def sales_prediction():
 
-    data = get_sales_prediction()
+    period = get_period()
 
-    return jsonify(data)
+    data = get_sales_prediction(period)
+
+    return response(data)
+
+
+# =========================
+# SALES HOURLY
+# =========================
 
 
 @app.route("/sales-hourly")
@@ -69,7 +166,12 @@ def sales_hourly():
 
     data = get_sales_hourly()
 
-    return jsonify(data)
+    return response(data)
+
+
+# =========================
+# SALES DAILY
+# =========================
 
 
 @app.route("/sales-daily")
@@ -77,23 +179,12 @@ def sales_daily():
 
     data = get_sales_daily()
 
-    return jsonify(data)
+    return response(data)
 
 
-@app.route("/payment-distribution")
-def payment_distribution():
-
-    data = get_payment_distribution()
-
-    return jsonify(data)
-
-
-@app.route("/customer-growth")
-def customer_growth():
-
-    data = get_customer_growth()
-
-    return jsonify(data)
+# =========================
+# CUSTOMER LIFETIME VALUE
+# =========================
 
 
 @app.route("/customer-lifetime")
@@ -101,8 +192,13 @@ def customer_lifetime():
 
     data = get_customer_lifetime()
 
-    return jsonify(data)
+    return response(data)
 
+
+# =========================
+# RUN SERVER
+# =========================
 
 if __name__ == "__main__":
+
     app.run(host="127.0.0.1", port=5001, debug=True)

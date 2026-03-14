@@ -30,21 +30,20 @@ $breadcrumb = generateBreadcrumb($currentMenu);
    ANALYTICS DATA
 ========================== */
 
-$analytics = getDashboardAnalytics();
+$analytics = getDashboardAnalytics("today");
 
 $totalRevenue = $analytics['total_revenue'] ?? 0;
 $totalOrders = $analytics['total_orders'] ?? 0;
 $activeCustomers = $analytics['active_customers'] ?? 0;
 $avgOrder = $analytics['avg_order'] ?? 0;
 
-$topMenu = getTopMenu();
-$salesTrend = getSalesTrend();
-$customerInsight = getCustomerInsight();
-$productProfit = getProductProfit();
-$salesPrediction = getSalesPrediction();
-
-$paymentDistribution = getPaymentDistribution();
-$customerGrowth = getCustomerGrowth();
+$topMenu = getTopMenu("today");
+$salesTrend = getSalesTrend("today");
+$customerInsight = getCustomerInsight("today");
+$productProfit = getProductProfit("today");
+$salesPrediction = getSalesPrediction("today");
+$paymentDistribution = getPaymentDistribution("today");
+$customerGrowth = getCustomerGrowth("today");
 
 ?>
 
@@ -65,8 +64,11 @@ $customerGrowth = getCustomerGrowth();
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script defer src="/rkd-cafe/public/assets/js/notifications.js"></script>
+    <script defer src="/rkd-cafe/public/assets/js/analytics_menu.js"></script>
+    <script defer src="/rkd-cafe/public/assets/js/header.js"></script>
 
+    <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
 </head>
@@ -151,7 +153,9 @@ $customerGrowth = getCustomerGrowth();
 
                 <!-- HEADER -->
 
-                <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div
+                    x-data="analyticsFilter()"
+                    class="flex flex-col md:flex-row md:items-center md:justify-between">
 
                     <div>
                         <h1 class="text-2xl font-bold"><?= $pageTitle ?></h1>
@@ -160,9 +164,32 @@ $customerGrowth = getCustomerGrowth();
 
                     <div class="flex gap-2 mt-3 md:mt-0">
 
-                        <button class="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded">Today</button>
-                        <button class="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded">7 Days</button>
-                        <button class="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded">30 Days</button>
+                        <button
+                            @click="setRange('today')"
+                            class="cursor-pointer"
+                            :class="active==='today'
+                                ? 'px-3 py-1 text-sm bg-blue-600 text-white rounded transition'
+                                : 'px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 transition'">
+                            Today
+                        </button>
+
+                        <button
+                            @click="setRange('7days')"
+                            class="cursor-pointer"
+                            :class="active==='7days'
+                                ? 'px-3 py-1 text-sm bg-blue-600 text-white rounded transition'
+                                : 'px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 transition'">
+                            7 Days
+                        </button>
+
+                        <button
+                            @click="setRange('30days')"
+                            class="cursor-pointer"
+                            :class="active==='30days'
+                                ? 'px-3 py-1 text-sm bg-blue-600 text-white rounded transition'
+                                : 'px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 transition'">
+                            30 Days
+                        </button>
 
                     </div>
 
@@ -183,7 +210,7 @@ $customerGrowth = getCustomerGrowth();
 
                         </div>
 
-                        <h2 class="text-2xl font-bold mt-2">
+                        <h2 id="kpiRevenue" class="text-2xl font-bold mt-2">
                             Rp <?= number_format($totalRevenue, 0, ',', '.') ?>
                         </h2>
 
@@ -200,7 +227,7 @@ $customerGrowth = getCustomerGrowth();
 
                         </div>
 
-                        <h2 class="text-2xl font-bold mt-2"><?= $totalOrders ?></h2>
+                        <h2 id="kpiOrders" class="text-2xl font-bold mt-2"><?= $totalOrders ?></h2>
 
                     </div>
 
@@ -215,7 +242,7 @@ $customerGrowth = getCustomerGrowth();
 
                         </div>
 
-                        <h2 class="text-2xl font-bold mt-2"><?= $activeCustomers ?></h2>
+                        <h2 id="kpiCustomers" class="text-2xl font-bold mt-2"><?= $activeCustomers ?></h2>
 
                     </div>
 
@@ -230,7 +257,7 @@ $customerGrowth = getCustomerGrowth();
 
                         </div>
 
-                        <h2 class="text-2xl font-bold mt-2">
+                        <h2 id="kpiAvgOrder" class="text-2xl font-bold mt-2">
                             Rp <?= number_format($avgOrder, 0, ',', '.') ?>
                         </h2>
 
@@ -361,35 +388,37 @@ $customerGrowth = getCustomerGrowth();
 
                                     <?php $rank = 1; ?>
 
-                                    <?php foreach ($topMenu as $menu): ?>
+                                    <?php if (!empty($topMenu)): ?>
+                                        <?php foreach ($topMenu as $menu): ?>
 
-                                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
 
-                                            <td class="p-4 flex items-center gap-3">
+                                                <td class="p-4 flex items-center gap-3">
 
-                                                <span class="w-7 h-7 flex items-center justify-center rounded-full bg-orange-100 text-orange-600 text-xs font-bold">
+                                                    <span class="w-7 h-7 flex items-center justify-center rounded-full bg-orange-100 text-orange-600 text-xs font-bold">
 
-                                                    <?= $rank ?>
+                                                        <?= $rank ?>
 
-                                                </span>
+                                                    </span>
 
-                                                <?= $menu['name'] ?>
+                                                    <?= $menu['name'] ?>
 
-                                            </td>
+                                                </td>
 
-                                            <td class="p-4"><?= $menu['orders'] ?></td>
+                                                <td class="p-4"><?= $menu['orders'] ?></td>
 
-                                            <td class="p-4">
+                                                <td class="p-4">
 
-                                                Rp <?= number_format($menu['revenue'], 0, ',', '.') ?>
+                                                    Rp <?= number_format($menu['revenue'], 0, ',', '.') ?>
 
-                                            </td>
+                                                </td>
 
-                                        </tr>
+                                            </tr>
 
-                                        <?php $rank++; ?>
+                                            <?php $rank++; ?>
 
-                                    <?php endforeach; ?>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
 
                                 </tbody>
 
@@ -410,6 +439,7 @@ $customerGrowth = getCustomerGrowth();
     <script>
         window.analyticsData = {
 
+            kpi: <?= json_encode($analytics ?? []) ?>,
             salesTrend: <?= json_encode($salesTrend ?? []) ?>,
             customerInsight: <?= json_encode($customerInsight ?? []) ?>,
             productProfit: <?= json_encode($productProfit ?? []) ?>,
@@ -419,10 +449,6 @@ $customerGrowth = getCustomerGrowth();
 
         };
     </script>
-
-    <script src="/rkd-cafe/public/assets/js/analytics_menu.js"></script>
-    <script src="/rkd-cafe/public/assets/js/notifications.js"></script>
-    <script src="/rkd-cafe/public/assets/js/header.js"></script>
 
     <div
         id="global-tooltip"
@@ -442,6 +468,43 @@ $customerGrowth = getCustomerGrowth();
     <?php unset($_SESSION['toast']);
     endif; ?>
 
+    <script>
+        function analyticsFilter() {
+
+            return {
+
+                active: 'today',
+
+                activeClass: 'px-3 py-1 text-sm bg-blue-600 text-white rounded',
+                normalClass: 'px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded',
+
+                async setRange(period) {
+
+                    this.active = period
+
+                    showChartsLoading()
+
+                    try {
+
+                        const res = await fetch(`/rkd-cafe/api/cashier/analytics_range.php?period=${period}`)
+                        const data = await res.json()
+
+                        window.analyticsData = data
+
+                        renderDashboard(data)
+
+                    } catch (e) {
+
+                        console.error("Analytics load error", e)
+
+                    }
+
+                }
+
+            }
+
+        }
+    </script>
 </body>
 
 </html>

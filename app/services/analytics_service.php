@@ -1,30 +1,75 @@
 <?php
 
-function fetchAnalyticsAPI($endpoint)
-{
+/* ==========================
+   BASE CONFIG
+========================== */
 
+function analyticsApiUrl($endpoint, $params = [])
+{
     $url = "http://localhost:5001/" . $endpoint;
 
-    $ch = curl_init();
+    if (!empty($params)) {
+        $url .= "?" . http_build_query($params);
+    }
 
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-    $response = curl_exec($ch);
-
-    curl_close($ch);
-
-    return json_decode($response, true);
+    return $url;
 }
 
 
 /* ==========================
-   DASHBOARD METRICS
+   GENERIC API FETCH
 ========================== */
 
-function getDashboardAnalytics()
+function fetchAnalyticsAPI($endpoint, $params = [])
 {
-    return fetchAnalyticsAPI("analytics");
+
+    $url = analyticsApiUrl($endpoint, $params);
+
+    $ch = curl_init();
+
+    curl_setopt_array($ch, [
+
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 5,
+
+    ]);
+
+    $response = curl_exec($ch);
+
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+    $error = curl_error($ch);
+
+    curl_close($ch);
+
+    if ($error) {
+
+        error_log("Analytics API Curl Error: " . $error);
+
+        return [];
+    }
+
+    if ($httpCode !== 200) {
+
+        error_log("Analytics API HTTP Error: " . $httpCode);
+
+        return [];
+    }
+
+    $data = json_decode($response, true);
+
+    return $data ?? [];
+}
+
+
+/* ==========================
+   DASHBOARD KPI
+========================== */
+
+function getDashboardAnalytics($period = "today")
+{
+    return fetchAnalyticsAPI("analytics", ["period" => $period]);
 }
 
 
@@ -32,9 +77,9 @@ function getDashboardAnalytics()
    TOP MENU
 ========================== */
 
-function getTopMenu()
+function getTopMenu($period = "today")
 {
-    return fetchAnalyticsAPI("top-menu");
+    return fetchAnalyticsAPI("top-menu", ["period" => $period]);
 }
 
 
@@ -42,9 +87,9 @@ function getTopMenu()
    SALES TREND
 ========================== */
 
-function getSalesTrend()
+function getSalesTrend($period = "today")
 {
-    return fetchAnalyticsAPI("sales-trend");
+    return fetchAnalyticsAPI("sales-trend", ["period" => $period]);
 }
 
 
@@ -52,9 +97,9 @@ function getSalesTrend()
    CUSTOMER INSIGHT
 ========================== */
 
-function getCustomerInsight()
+function getCustomerInsight($period = "today")
 {
-    return fetchAnalyticsAPI("customer-insight");
+    return fetchAnalyticsAPI("customer-insight", ["period" => $period]);
 }
 
 
@@ -62,9 +107,9 @@ function getCustomerInsight()
    PRODUCT PROFIT
 ========================== */
 
-function getProductProfit()
+function getProductProfit($period = "today")
 {
-    return fetchAnalyticsAPI("product-profit");
+    return fetchAnalyticsAPI("product-profit", ["period" => $period]);
 }
 
 
@@ -72,9 +117,9 @@ function getProductProfit()
    SALES PREDICTION
 ========================== */
 
-function getSalesPrediction()
+function getSalesPrediction($period = "today")
 {
-    return fetchAnalyticsAPI("sales-prediction");
+    return fetchAnalyticsAPI("sales-prediction", ["period" => $period]);
 }
 
 
@@ -102,9 +147,9 @@ function getSalesDaily()
    PAYMENT DISTRIBUTION
 ========================== */
 
-function getPaymentDistribution()
+function getPaymentDistribution($period = "today")
 {
-    return fetchAnalyticsAPI("payment-distribution");
+    return fetchAnalyticsAPI("payment-distribution", ["period" => $period]);
 }
 
 
@@ -112,14 +157,14 @@ function getPaymentDistribution()
    CUSTOMER GROWTH
 ========================== */
 
-function getCustomerGrowth()
+function getCustomerGrowth($period = "today")
 {
-    return fetchAnalyticsAPI("customer-growth");
+    return fetchAnalyticsAPI("customer-growth", ["period" => $period]);
 }
 
 
 /* ==========================
-   CUSTOMER LIFETIME VALUE
+   CUSTOMER LIFETIME
 ========================== */
 
 function getCustomerLifetime()
