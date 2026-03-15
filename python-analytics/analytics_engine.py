@@ -119,13 +119,15 @@ def get_sales_trend(period="today"):
     """
 
     df = query_dataframe(query)
-
     df = fill_missing_dates(df)
+
+    # generate insight
+    insight = generate_sales_insight(df)
 
     # FIX FORMAT DATE
     df["date"] = pd.to_datetime(df["date"]).dt.strftime("%Y-%m-%d")
 
-    return df.to_dict(orient="records")
+    return {"data": df.to_dict(orient="records"), "insight": insight}
 
 
 # =========================
@@ -153,7 +155,9 @@ def get_customer_insight(period="today"):
 
     df = query_dataframe(query)
 
-    return df.to_dict(orient="records")
+    insight = generate_customer_insight(df)
+
+    return {"data": df.to_dict(orient="records"), "insight": insight}
 
 
 # =========================
@@ -183,7 +187,9 @@ def get_product_profit(period="today"):
 
     df = query_dataframe(query)
 
-    return df.to_dict(orient="records")
+    insight = generate_profit_insight(df)
+
+    return {"data": df.to_dict(orient="records"), "insight": insight}
 
 
 # =========================
@@ -208,7 +214,9 @@ def get_payment_distribution(period="today"):
 
     df = query_dataframe(query)
 
-    return df.to_dict(orient="records")
+    insight = generate_payment_insight(df)
+
+    return {"data": df.to_dict(orient="records"), "insight": insight}
 
 
 # =========================
@@ -232,15 +240,16 @@ def get_customer_growth(period="7days"):
 
     df = query_dataframe(query)
 
-    # tidak ada data atau terlalu sedikit
-    if df.empty or len(df) < 2:
-        return []
+    if df.empty:
+        return {"data": [], "insight": "Belum ada pertumbuhan pelanggan."}
 
     df = fill_missing_dates(df)
 
+    insight = generate_growth_insight(df)
+
     df["date"] = pd.to_datetime(df["date"]).dt.strftime("%Y-%m-%d")
 
-    return df.to_dict(orient="records")
+    return {"data": df.to_dict(orient="records"), "insight": insight}
 
 
 # =========================
@@ -270,6 +279,28 @@ def get_top_menu(period="today"):
     df = query_dataframe(query)
 
     return df.to_dict(orient="records")
+
+
+# =========================
+# SALES PREDICTION INSIGHT
+# =========================
+
+
+def generate_prediction_insight(forecast):
+
+    if not forecast:
+        return "Belum cukup data untuk melakukan prediksi."
+
+    first = forecast[0]
+    last = forecast[-1]
+
+    if last > first:
+        return "Prediksi menunjukkan tren peningkatan penjualan."
+
+    if last < first:
+        return "Prediksi menunjukkan kemungkinan penurunan penjualan."
+
+    return "Prediksi menunjukkan tren penjualan yang stabil."
 
 
 # =========================
@@ -394,7 +425,9 @@ def get_sales_prediction(period="30days"):
             {"date": future_dates[i].strftime("%Y-%m-%d"), "revenue": forecast[i]}
         )
 
-    return result
+    insight = generate_prediction_insight(forecast)
+
+    return {"data": result, "insight": insight}
 
 
 # =========================
@@ -479,3 +512,122 @@ def get_customer_lifetime(period="today"):
     df = query_dataframe(query)
 
     return df.to_dict(orient="records")
+
+
+# =========================
+# SALES INSIGHT
+# =========================
+
+
+def generate_sales_insight(df):
+
+    if df.empty:
+        return "Belum ada data penjualan untuk dianalisis."
+
+    total = df["revenue"].sum()
+
+    last = df["revenue"].iloc[-1]
+    first = df["revenue"].iloc[0]
+
+    growth = 0
+
+    if first > 0:
+        growth = ((last - first) / first) * 100
+
+    if growth > 15:
+        return "Revenue meningkat signifikan dalam periode ini."
+
+    if growth > 5:
+        return "Revenue menunjukkan tren peningkatan."
+
+    if growth < -10:
+        return "Terjadi penurunan penjualan yang cukup tajam."
+
+    return "Penjualan relatif stabil dalam periode ini."
+
+
+# =========================
+# PRODUCT PROFIT INSIGHT
+# =========================
+
+
+def generate_profit_insight(df):
+
+    if df.empty:
+        return "Belum ada data profit produk."
+
+    top = df.iloc[0]
+
+    return f"{top['name']} menghasilkan profit tertinggi."
+
+
+# =========================
+# PAYMENT INSIGHT
+# =========================
+
+
+def generate_payment_insight(df):
+
+    if df.empty:
+        return "Belum ada data pembayaran."
+
+    top = df.sort_values("orders", ascending=False).iloc[0]
+
+    return (
+        f"{top['payment_method']} merupakan metode pembayaran paling banyak digunakan."
+    )
+
+
+# =========================
+# CUSTOMER INSIGHT
+# =========================
+
+
+def generate_customer_insight(df):
+
+    if df.empty:
+        return "Belum ada aktivitas pelanggan."
+
+    top = df.iloc[0]
+
+    return f"{top['name']} memiliki jumlah transaksi tertinggi."
+
+
+# =========================
+# CUSTOMER GROWTH INSIGHT
+# =========================
+def generate_growth_insight(df):
+
+    if df.empty:
+        return "Belum ada pertumbuhan pelanggan."
+
+    growth = df["new_customers"].sum()
+
+    if growth > 0:
+        return f"Terdapat {growth} pelanggan baru dalam periode ini."
+
+    return "Tidak ada pelanggan baru."
+
+
+# =========================
+# BUSINESS INSIGHT SUMMARY
+# =========================
+
+
+def generate_business_insight(period="today"):
+
+    insights = []
+
+    sources = [
+        get_sales_trend(period),
+        get_product_profit(period),
+        get_payment_distribution(period),
+        get_customer_growth(period),
+    ]
+
+    for src in sources:
+        insight = src.get("insight")
+        if insight:
+            insights.append(insight)
+
+    return {"insights": insights}

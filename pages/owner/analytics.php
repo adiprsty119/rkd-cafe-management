@@ -9,7 +9,6 @@ if (!in_array($lang, ['id', 'en'])) {
 }
 
 $t = require __DIR__ . '/../../resources/lang/' . $lang . '.php';
-
 require_once __DIR__ . '/../../app/helpers/menu_helper.php';
 require_once __DIR__ . '/../../app/helpers/menu_engine.php';
 require_once __DIR__ . '/../../app/services/analytics_service.php';
@@ -45,6 +44,10 @@ $salesPrediction = getSalesPrediction("today");
 $paymentDistribution = getPaymentDistribution("today");
 $customerGrowth = getCustomerGrowth("today");
 
+$businessInsight = getBusinessInsight("today") ?? [
+    "insights" => []
+];
+
 ?>
 
 <!DOCTYPE html>
@@ -71,6 +74,15 @@ $customerGrowth = getCustomerGrowth("today");
     <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
+    <style>
+        .chart-card {
+            transition: all .25s ease;
+        }
+
+        .chart-card:hover {
+            transform: translateY(-2px);
+        }
+    </style>
 </head>
 
 <body
@@ -196,6 +208,30 @@ $customerGrowth = getCustomerGrowth("today");
                 </div>
 
 
+                <!-- BUSINESS INSIGHT PANEL -->
+                <div id="businessInsightPanel"
+                    class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl shadow p-6">
+
+                    <div class="flex items-center gap-3 mb-3">
+
+                        <div class="bg-white/20 px-2 py-1 rounded text-xs font-semibold">
+                            AI
+                        </div>
+
+                        <i class="fa-solid fa-brain"></i>
+
+                        <h2 class="font-semibold text-lg">
+                            Business Insight
+                        </h2>
+
+                    </div>
+
+                    <div id="businessInsightList" class="grid md:grid-cols-2 gap-3 mt-4"></div>
+
+                </div>
+
+
+
                 <!-- KPI SECTION -->
 
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -269,39 +305,28 @@ $customerGrowth = getCustomerGrowth("today");
 
                 <!-- CHARTS -->
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
 
-                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
+                    <?php
+                    $title = "Sales Trend";
+                    $chartId = "salesChart";
+                    $insight = $salesTrend['insight'] ?? '';
+                    require __DIR__ . '/../../resources/components/chart-card.php';
+                    ?>
 
-                        <h2 class="font-semibold mb-4">Sales Trend</h2>
+                    <?php
+                    $title = "Customer Insight";
+                    $chartId = "customerChart";
+                    $insight = $customerInsight['insight'] ?? '';
+                    require __DIR__ . '/../../resources/components/chart-card.php';
+                    ?>
 
-                        <div class="h-64">
-                            <canvas id="salesChart"></canvas>
-                        </div>
-
-                    </div>
-
-
-                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
-
-                        <h2 class="font-semibold mb-4">Customer Insight</h2>
-
-                        <div class="h-64">
-                            <canvas id="customerChart"></canvas>
-                        </div>
-
-                    </div>
-
-
-                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
-
-                        <h2 class="font-semibold mb-4">Sales Prediction (AI)</h2>
-
-                        <div class="h-64">
-                            <canvas id="predictionChart"></canvas>
-                        </div>
-
-                    </div>
+                    <?php
+                    $title = "Sales Prediction (AI)";
+                    $chartId = "predictionChart";
+                    $insight = $salesPrediction['insight'] ?? '';
+                    require __DIR__ . '/../../resources/components/chart-card.php';
+                    ?>
 
                 </div>
 
@@ -311,26 +336,19 @@ $customerGrowth = getCustomerGrowth("today");
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
+                    <?php
+                    $title = "Product Profit Analysis";
+                    $chartId = "profitChart";
+                    $insight = $productProfit['insight'] ?? '';
+                    require __DIR__ . '/../../resources/components/chart-card.php';
+                    ?>
 
-                        <h2 class="font-semibold mb-4">Product Profit Analysis</h2>
-
-                        <div class="h-64">
-                            <canvas id="profitChart"></canvas>
-                        </div>
-
-                    </div>
-
-
-                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
-
-                        <h2 class="font-semibold mb-4">Customer Growth</h2>
-
-                        <div class="h-64">
-                            <canvas id="customerGrowthChart"></canvas>
-                        </div>
-
-                    </div>
+                    <?php
+                    $title = "Customer Growth";
+                    $chartId = "customerGrowthChart";
+                    $insight = $customerGrowth['insight'] ?? '';
+                    require __DIR__ . '/../../resources/components/chart-card.php';
+                    ?>
 
                 </div>
 
@@ -339,19 +357,12 @@ $customerGrowth = getCustomerGrowth("today");
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
                     <!-- PAYMENT ANALYTICS -->
-                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
-
-                        <h2 class="font-semibold mb-4">
-                            Payment Distribution
-                        </h2>
-
-                        <div class="h-64">
-                            <canvas id="paymentChart"></canvas>
-                        </div>
-
-                    </div>
-
-
+                    <?php
+                    $title = "Payment Distribution";
+                    $chartId = "paymentChart";
+                    $insight = $paymentDistribution['insight'] ?? '';
+                    require __DIR__ . '/../../resources/components/chart-card.php';
+                    ?>
 
                     <!-- TOP SELLING MENU -->
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow">
@@ -436,6 +447,9 @@ $customerGrowth = getCustomerGrowth("today");
 
     </div>
 
+    <!-- overlay -->
+    <div id="chartOverlay" class="chart-overlay hidden"></div>
+
     <script>
         window.analyticsData = {
 
@@ -445,7 +459,9 @@ $customerGrowth = getCustomerGrowth("today");
             productProfit: <?= json_encode($productProfit ?? []) ?>,
             salesPrediction: <?= json_encode($salesPrediction ?? []) ?>,
             paymentDistribution: <?= json_encode($paymentDistribution ?? []) ?>,
-            customerGrowth: <?= json_encode($customerGrowth ?? []) ?>
+            customerGrowth: <?= json_encode($customerGrowth ?? []) ?>,
+
+            businessInsight: <?= json_encode($businessInsight ?? []) ?>
 
         };
     </script>

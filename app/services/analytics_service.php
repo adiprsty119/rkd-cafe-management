@@ -38,7 +38,6 @@ function fetchAnalyticsAPI($endpoint, $params = [])
     $response = curl_exec($ch);
 
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-
     $error = curl_error($ch);
 
     curl_close($ch);
@@ -46,20 +45,31 @@ function fetchAnalyticsAPI($endpoint, $params = [])
     if ($error) {
 
         error_log("Analytics API Curl Error: " . $error);
-
         return [];
     }
 
     if ($httpCode !== 200) {
 
         error_log("Analytics API HTTP Error: " . $httpCode);
-
         return [];
     }
 
     $data = json_decode($response, true);
 
     return $data ?? [];
+}
+
+
+/* ==========================
+   NORMALIZE ANALYTICS
+========================== */
+
+function normalizeAnalytics($response)
+{
+    return [
+        "data" => $response["data"] ?? [],
+        "insight" => $response["insight"] ?? ""
+    ];
 }
 
 
@@ -89,7 +99,8 @@ function getTopMenu($period = "today")
 
 function getSalesTrend($period = "today")
 {
-    return fetchAnalyticsAPI("sales-trend", ["period" => $period]);
+    $response = fetchAnalyticsAPI("sales-trend", ["period" => $period]);
+    return normalizeAnalytics($response);
 }
 
 
@@ -99,7 +110,8 @@ function getSalesTrend($period = "today")
 
 function getCustomerInsight($period = "today")
 {
-    return fetchAnalyticsAPI("customer-insight", ["period" => $period]);
+    $response = fetchAnalyticsAPI("customer-insight", ["period" => $period]);
+    return normalizeAnalytics($response);
 }
 
 
@@ -109,7 +121,8 @@ function getCustomerInsight($period = "today")
 
 function getProductProfit($period = "today")
 {
-    return fetchAnalyticsAPI("product-profit", ["period" => $period]);
+    $response = fetchAnalyticsAPI("product-profit", ["period" => $period]);
+    return normalizeAnalytics($response);
 }
 
 
@@ -119,8 +132,47 @@ function getProductProfit($period = "today")
 
 function getSalesPrediction($period = "today")
 {
-    return fetchAnalyticsAPI("sales-prediction", ["period" => $period]);
+    $response = fetchAnalyticsAPI("sales-prediction", ["period" => $period]);
+    return normalizeAnalytics($response);
 }
+
+
+/* ==========================
+   PAYMENT DISTRIBUTION
+========================== */
+
+function getPaymentDistribution($period = "today")
+{
+    $response = fetchAnalyticsAPI("payment-distribution", ["period" => $period]);
+    return normalizeAnalytics($response);
+}
+
+
+/* ==========================
+   CUSTOMER GROWTH
+========================== */
+
+function getCustomerGrowth($period = "today")
+{
+    $response = fetchAnalyticsAPI("customer-growth", ["period" => $period]);
+    return normalizeAnalytics($response);
+}
+
+
+/* ==========================
+   BUSINESS INSIGHT
+========================== */
+
+function getBusinessInsight($period = "today")
+{
+    $response = fetchAnalyticsAPI("business-insight", ["period" => $period]);
+
+    return [
+        "insights" => $response["insights"] ?? []
+    ];
+}
+
+
 
 
 /* ==========================
@@ -140,26 +192,6 @@ function getSalesHourly()
 function getSalesDaily()
 {
     return fetchAnalyticsAPI("sales-daily");
-}
-
-
-/* ==========================
-   PAYMENT DISTRIBUTION
-========================== */
-
-function getPaymentDistribution($period = "today")
-{
-    return fetchAnalyticsAPI("payment-distribution", ["period" => $period]);
-}
-
-
-/* ==========================
-   CUSTOMER GROWTH
-========================== */
-
-function getCustomerGrowth($period = "today")
-{
-    return fetchAnalyticsAPI("customer-growth", ["period" => $period]);
 }
 
 

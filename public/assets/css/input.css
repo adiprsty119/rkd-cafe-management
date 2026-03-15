@@ -1,4 +1,211 @@
 @import "tailwindcss";
 
+/* define layers explicitly */
+@layer base {
+}
+@layer components {
+}
+@layer utilities {
+}
+
 /* enable dark mode variant */
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* ==========================
+   CHART SKELETON LOADER
+========================== */
+
+.skeleton-bar {
+  background: linear-gradient(
+    90deg,
+    rgba(229, 231, 235, 0.6) 25%,
+    rgba(209, 213, 219, 0.9) 50%,
+    rgba(229, 231, 235, 0.6) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+.dark .skeleton-bar {
+  background: linear-gradient(
+    90deg,
+    rgba(75, 85, 99, 0.6) 25%,
+    rgba(107, 114, 128, 0.9) 50%,
+    rgba(75, 85, 99, 0.6) 75%
+  );
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ==========================
+   CHART FADE ANIMATION
+========================== */
+
+canvas {
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+canvas.chart-ready {
+  opacity: 1;
+}
+
+/* ==========================
+   CHART FULLSCREEN MODE
+========================== */
+
+.chart-fullscreen {
+  position: fixed;
+  inset: 4vh 4vw;
+  z-index: 9999;
+
+  background: white;
+  border-radius: 14px;
+
+  box-shadow: 0 40px 120px rgba(0, 0, 0, 0.35);
+
+  display: flex;
+  flex-direction: column;
+}
+
+.dark .chart-fullscreen {
+  background: #1f2937;
+}
+
+.chart-card {
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ==========================
+   CHART OVERLAY
+========================== */
+
+.chart-overlay {
+  position: fixed;
+  inset: 0;
+
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+
+  z-index: 9998;
+}
+
+/* ==========================
+   CHART SKELETON LOADER
+========================== */
+
+.skeleton-bar {
+  background: linear-gradient(
+    90deg,
+    rgba(229, 231, 235, 0.6) 25%,
+    rgba(209, 213, 219, 0.9) 50%,
+    rgba(229, 231, 235, 0.6) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+.dark .skeleton-bar {
+  background: linear-gradient(
+    90deg,
+    rgba(75, 85, 99, 0.6) 25%,
+    rgba(107, 114, 128, 0.9) 50%,
+    rgba(75, 85, 99, 0.6) 75%
+  );
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ==========================
+   CHART FADE ANIMATION
+========================== */
+
+canvas {
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+canvas.chart-ready {
+  opacity: 1;
+}
+
+/* ==========================
+   CHART FULLSCREEN MODE
+========================== */
+
+.chart-fullscreen {
+  position: fixed;
+  inset: 4vh 4vw;
+  z-index: 9999;
+
+  background: white;
+  border-radius: 14px;
+
+  box-shadow: 0 40px 120px rgba(0, 0, 0, 0.35);
+
+  display: flex;
+  flex-direction: column;
+}
+
+.dark .chart-fullscreen {
+  background: #1f2937;
+}
+
+.chart-card {
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ==========================
+   CHART OVERLAY
+========================== */
+
+.chart-overlay {
+  position: fixed;
+  inset: 0;
+
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+
+  z-index: 9998;
+}
+
+/* ==========================
+   INSIGHT COMPONENT
+========================== */
+
+@layer components {
+  .insight-card {
+    @apply flex items-start gap-3 p-4 rounded-xl
+  bg-white/10 backdrop-blur-md border border-white/20
+  transition-all duration-300
+  hover:bg-white/20 hover:-translate-y-0.5 hover:shadow-lg
+  hover:scale-[1.01];
+  }
+
+  .insight-icon {
+    @apply w-9 h-9 flex items-center justify-center
+  rounded-lg bg-white/20 text-white shrink-0;
+
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
+  }
+
+  .insight-badge {
+    @apply text-[11px] px-2 py-0.5 rounded-md font-semibold;
+  }
+}

@@ -17,7 +17,7 @@ $period = $_GET['period'] ?? 'today';
 $allowed = ['today', '7days', '30days'];
 
 if (!in_array($period, $allowed)) {
-    $period = 'today';
+   $period = 'today';
 }
 
 
@@ -27,15 +27,21 @@ if (!in_array($period, $allowed)) {
 
 $data = [
 
-    "kpi" => getDashboardAnalytics($period) ?? [],
+   "kpi" => getDashboardAnalytics($period),
 
-    "salesTrend" => getSalesTrend($period) ?? [],
-    "customerInsight" => getCustomerInsight($period) ?? [],
-    "productProfit" => getProductProfit($period) ?? [],
-    "salesPrediction" => getSalesPrediction($period) ?? [],
+   "salesTrend" => getSalesTrend($period),
 
-    "paymentDistribution" => getPaymentDistribution($period) ?? [],
-    "customerGrowth" => getCustomerGrowth($period) ?? []
+   "customerInsight" => getCustomerInsight($period),
+
+   "productProfit" => getProductProfit($period),
+
+   "salesPrediction" => getSalesPrediction($period),
+
+   "paymentDistribution" => getPaymentDistribution($period),
+
+   "customerGrowth" => getCustomerGrowth($period),
+
+   "businessInsight" => getBusinessInsight($period)
 
 ];
 
@@ -45,12 +51,12 @@ $data = [
 ========================== */
 
 header('Content-Type: application/json; charset=utf-8');
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Pragma: no-cache");
+header("Expires: 0");
 
 echo json_encode(
-
-    $data,
-
-    JSON_UNESCAPED_UNICODE |
-        JSON_NUMERIC_CHECK
-
+   $data,
+   JSON_UNESCAPED_UNICODE |
+      JSON_NUMERIC_CHECK
 );

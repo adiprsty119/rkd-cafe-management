@@ -11,6 +11,7 @@ from analytics_engine import (
     get_payment_distribution,
     get_customer_growth,
     get_customer_lifetime,
+    generate_business_insight,
 )
 
 app = Flask(__name__)
@@ -193,6 +194,14 @@ def customer_lifetime():
     data = get_customer_lifetime()
 
     return response(data)
+
+
+@app.route("/business-insight")
+def business_insight():
+
+    period = request.args.get("period", "today")
+
+    return jsonify(generate_business_insight(period))
 
 
 # =========================
