@@ -806,17 +806,23 @@ function renderBusinessInsight(data){
         return
     }
 
-    insights.forEach(text => {
+    insights.forEach((item, index) => {
+
+        // backward compatibility
+        const text = typeof item === "string" ? item : item.text
 
         const icon = getInsightIcon(text)
         const category = getInsightCategory(text)
+        const priority = getInsightPriority(text)
 
         const card = document.createElement("div")
-        card.className = "insight-card"
+        card.className = "insight-card animate-fade-in"
+
+        card.style.animationDelay = `${index * 80}ms`
 
         card.innerHTML = `
 
-            <div class="insight-icon">
+            <div class="insight-icon ${priority.bg}">
                 <i class="${icon}"></i>
             </div>
 
@@ -826,6 +832,10 @@ function renderBusinessInsight(data){
 
                     <span class="insight-badge ${category.color}">
                         ${category.label}
+                    </span>
+
+                    <span class="text-[10px] opacity-70">
+                        ${priority.label}
                     </span>
 
                 </div>
@@ -848,7 +858,7 @@ function getInsightCategory(text){
 
     text = text.toLowerCase()
 
-    if(text.includes("penjualan") || text.includes("revenue"))
+    if(text.includes("revenue") || text.includes("penjualan"))
         return {label:"Sales", color:"bg-yellow-400/30 text-yellow-100"}
 
     if(text.includes("profit"))
@@ -859,6 +869,9 @@ function getInsightCategory(text){
 
     if(text.includes("pelanggan") || text.includes("customer"))
         return {label:"Customer", color:"bg-purple-400/30 text-purple-100"}
+
+    if(text.includes("jam") || text.includes("hour"))
+        return {label:"Traffic", color:"bg-blue-400/30 text-blue-100"}
 
     return {label:"Insight", color:"bg-white/30 text-white"}
 }
@@ -882,4 +895,26 @@ function getInsightIcon(text){
 
     return "fa-solid fa-lightbulb"
 
+}
+
+function getInsightPriority(text){
+
+    text = text.toLowerCase()
+
+    if(text.includes("meningkat") || text.includes("growth"))
+        return {
+            label:"positive",
+            bg:"bg-green-500/20"
+        }
+
+    if(text.includes("menurun") || text.includes("turun"))
+        return {
+            label:"warning",
+            bg:"bg-red-500/20"
+        }
+
+    return {
+        label:"info",
+        bg:"bg-white/10"
+    }
 }

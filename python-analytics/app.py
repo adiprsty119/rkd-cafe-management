@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, request
+import pandas as pd
 from analytics_engine import (
     get_dashboard_data,
     get_top_menu,
@@ -201,7 +202,15 @@ def business_insight():
 
     period = request.args.get("period", "today")
 
-    return jsonify(generate_business_insight(period))
+    data = generate_business_insight(period)
+
+    return jsonify(
+        {
+            "insights": data.get("insights", []),
+            "generated_at": pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "engine": "RKD AI Analytics v2",
+        }
+    )
 
 
 # =========================

@@ -526,24 +526,30 @@ def generate_sales_insight(df):
 
     total = df["revenue"].sum()
 
-    last = df["revenue"].iloc[-1]
     first = df["revenue"].iloc[0]
+    last = df["revenue"].iloc[-1]
 
-    growth = 0
+    growth = trend_percentage(first, last)
 
-    if first > 0:
-        growth = ((last - first) / first) * 100
+    avg_daily = int(df["revenue"].mean())
 
-    if growth > 15:
-        return "Revenue meningkat signifikan dalam periode ini."
+    peak_day = df.loc[df["revenue"].idxmax()]
 
-    if growth > 5:
-        return "Revenue menunjukkan tren peningkatan."
+    peak_date = pd.to_datetime(peak_day["date"]).strftime("%d %b %Y")
 
-    if growth < -10:
-        return "Terjadi penurunan penjualan yang cukup tajam."
+    if growth > 10:
+        trend_text = f"Revenue meningkat {growth}% dalam periode ini."
+    elif growth < -10:
+        trend_text = f"Revenue menurun {abs(growth)}% dibanding awal periode."
+    else:
+        trend_text = "Revenue relatif stabil dalam periode ini."
 
-    return "Penjualan relatif stabil dalam periode ini."
+    return (
+        f"{trend_text} "
+        f"Total revenue mencapai {rupiah(total)}. "
+        f"Rata-rata penjualan harian sekitar {rupiah(avg_daily)}."
+        f"Puncak penjualan terjadi pada {peak_date}."
+    )
 
 
 # =========================
@@ -556,9 +562,16 @@ def generate_profit_insight(df):
     if df.empty:
         return "Belum ada data profit produk."
 
+    total_profit = df["profit"].sum()
+
     top = df.iloc[0]
 
-    return f"{top['name']} menghasilkan profit tertinggi."
+    share = percent(top["profit"], total_profit)
+
+    return (
+        f"{top['name']} menghasilkan profit tertinggi "
+        f"dengan kontribusi {share}% dari total profit produk."
+    )
 
 
 # =========================
@@ -571,11 +584,13 @@ def generate_payment_insight(df):
     if df.empty:
         return "Belum ada data pembayaran."
 
+    total_orders = df["orders"].sum()
+
     top = df.sort_values("orders", ascending=False).iloc[0]
 
-    return (
-        f"{top['payment_method']} merupakan metode pembayaran paling banyak digunakan."
-    )
+    share = percent(top["orders"], total_orders)
+
+    return f"{top['payment_method']} mendominasi {share}% transaksi pembayaran."
 
 
 # =========================
@@ -590,23 +605,54 @@ def generate_customer_insight(df):
 
     top = df.iloc[0]
 
-    return f"{top['name']} memiliki jumlah transaksi tertinggi."
+    return (
+        f"{top['name']} merupakan pelanggan paling aktif "
+        f"dengan {top['orders']} transaksi dan total belanja Rp{int(top['total_spend']):,}."
+    )
 
 
 # =========================
 # CUSTOMER GROWTH INSIGHT
 # =========================
+
+
 def generate_growth_insight(df):
 
     if df.empty:
         return "Belum ada pertumbuhan pelanggan."
 
-    growth = df["new_customers"].sum()
+    total = int(df["new_customers"].sum())
 
-    if growth > 0:
-        return f"Terdapat {growth} pelanggan baru dalam periode ini."
+    peak = df.loc[df["new_customers"].idxmax()]
 
-    return "Tidak ada pelanggan baru."
+    peak_date = pd.to_datetime(peak["date"]).strftime("%d %b %Y")
+
+    return (
+        f"Dalam periode ini terdapat {total} pelanggan baru. "
+        f"Puncak pendaftaran terjadi pada {peak_date} "
+        f"dengan {peak['new_customers']} pelanggan."
+    )
+
+
+# =========================
+# HELPER ANALYTICS
+# =========================
+
+
+def percent(part, whole):
+    if whole == 0:
+        return 0
+    return round((part / whole) * 100, 1)
+
+
+def trend_percentage(first, last):
+    if first == 0:
+        return 0
+    return round(((last - first) / first) * 100, 1)
+
+
+def rupiah(n):
+    return "Rp {:,}".format(int(n)).replace(",", ".")
 
 
 # =========================
@@ -618,16 +664,31 @@ def generate_business_insight(period="today"):
 
     insights = []
 
-    sources = [
-        get_sales_trend(period),
-        get_product_profit(period),
-        get_payment_distribution(period),
-        get_customer_growth(period),
-    ]
+    sales = get_sales_trend(period)
+    profit = get_product_profit(period)
+    payment = get_payment_distribution(period)
+    growth = get_customer_growth(period)
 
-    for src in sources:
-        insight = src.get("insight")
-        if insight:
-            insights.append(insight)
+    for src in [sales, profit, payment, growth]:
+
+        text = src.get("insight")
+
+        if text and text not in insights:
+            insights.append(text)
 
     return {"insights": insights}
+
+
+# =========================
+# HOURLY INSIGHT
+# =========================
+def generate_hourly_insight(df):
+
+    if df.empty:
+        return None
+
+    peak = df.loc[df["orders"].idxmax()]
+
+    hour = int(peak["hour"])
+
+    return f"Puncak transaksi terjadi pada jam {hour:02d}:00 dengan {peak['orders']} transaksi."

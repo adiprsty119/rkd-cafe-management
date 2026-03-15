@@ -1,13 +1,5 @@
 @import "tailwindcss";
 
-/* define layers explicitly */
-@layer base {
-}
-@layer components {
-}
-@layer utilities {
-}
-
 /* enable dark mode variant */
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -123,15 +115,6 @@ canvas.chart-ready {
   );
 }
 
-@keyframes skeleton-shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
-
 /* ==========================
    CHART FADE ANIMATION
 ========================== */
@@ -196,6 +179,8 @@ canvas.chart-ready {
   transition-all duration-300
   hover:bg-white/20 hover:-translate-y-0.5 hover:shadow-lg
   hover:scale-[1.01];
+
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
   }
 
   .insight-icon {
@@ -207,5 +192,22 @@ canvas.chart-ready {
 
   .insight-badge {
     @apply text-[11px] px-2 py-0.5 rounded-md font-semibold;
+  }
+}
+
+@keyframes fadeInInsight {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeInInsight 0.35s ease forwards;
   }
 }

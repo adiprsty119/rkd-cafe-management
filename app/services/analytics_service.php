@@ -168,7 +168,9 @@ function getBusinessInsight($period = "today")
     $response = fetchAnalyticsAPI("business-insight", ["period" => $period]);
 
     return [
-        "insights" => $response["insights"] ?? []
+        "insights" => $response["insights"] ?? [],
+        "generated_at" => $response["generated_at"] ?? null,
+        "engine" => $response["engine"] ?? null
     ];
 }
 
