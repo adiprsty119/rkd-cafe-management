@@ -5,6 +5,8 @@ header('Content-Type: application/json');
 
 require __DIR__ . '/../../config/database.php';
 
+$pdo = getPDO();
+
 try {
 
     if (!isset($_SESSION['user_id'])) {

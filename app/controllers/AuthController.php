@@ -82,6 +82,22 @@ switch ($action) {
         callbackGoogle($userModel);
         break;
 
+    case 'findAccount':
+        findAccount($userModel);
+        break;
+
+    case 'verifyCode':
+        verifyCode($userModel);
+        break;
+
+    case 'resetPassword':
+        resetPassword($userModel);
+        break;
+
+    case 'resendOtp':
+        resendOtp($userModel);
+        break;
+
     default:
         http_response_code(404);
         exit("Action not found");
@@ -686,4 +702,371 @@ function callbackGoogle($userModel)
     ];
 
     redirectByRole($user['role']);
+}
+
+
+/* ==========================
+   FIND ACCOUNT
+========================== */
+
+function findAccount($userModel)
+{
+
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        http_response_code(405);
+        exit("Method not allowed");
+    }
+
+    validateCSRF();
+    unset($_SESSION['csrf']);
+
+    if (!isset($_POST['form_time'])) {
+        exit("Invalid request");
+    }
+
+    if (time() - (int)$_POST['form_time'] < 1) {
+        exit;
+    }
+
+    if (!empty($_POST['website'])) {
+        exit;
+    }
+
+    global $pdo;
+
+    require_once __DIR__ . '/../services/MailService.php';
+
+    $username = trim($_POST['username'] ?? '');
+    $email    = trim($_POST['email'] ?? '');
+
+    if ($username === '' || $email === '') {
+
+        $_SESSION['toast'] = [
+            "type" => "error",
+            "message" => "Username dan email wajib diisi."
+        ];
+
+        header("Location: /rkd-cafe/resources/views/auth/forgot_password.php");
+        exit;
+    }
+
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+
+        $_SESSION['toast'] = [
+            "type" => "error",
+            "message" => "Format email tidak valid."
+        ];
+
+        header("Location: /rkd-cafe/resources/views/auth/forgot_password.php");
+        exit;
+    }
+
+    $user = $userModel->findByUsername($username);
+
+    if (!$user || strtolower($user['email']) !== strtolower($email)) {
+
+        $_SESSION['toast'] = [
+            "type" => "success",
+            "message" => "Jika akun ditemukan, kode verifikasi akan dikirim."
+        ];
+
+        header("Location: /rkd-cafe/resources/views/auth/forgot_password.php");
+        exit;
+    }
+
+    $code = random_int(100000, 999999);
+
+    $stmt = $pdo->prepare("
+        SELECT id 
+        FROM password_resets
+        WHERE user_id=? 
+        AND expires_at > NOW()
+        LIMIT 1
+    ");
+
+    $stmt->execute([$user['id']]);
+
+    if ($stmt->fetch()) {
+
+        $_SESSION['toast'] = [
+            "type" => "error",
+            "message" => "Kode OTP masih berlaku. Tunggu hingga kadaluarsa."
+        ];
+
+        header("Location: /rkd-cafe/resources/views/auth/forgot_password.php");
+        exit;
+    }
+
+    $stmt = $pdo->prepare("
+        SELECT COUNT(*)
+        FROM password_resets
+        WHERE user_id=? 
+        AND created_at > DATE_SUB(NOW(), INTERVAL 1 MINUTE)
+    ");
+
+    $stmt->execute([$user['id']]);
+
+    if ($stmt->fetchColumn() >= 5) {
+
+        $_SESSION['toast'] = [
+            "type" => "error",
+            "message" => "Terlalu banyak permintaan reset password."
+        ];
+
+        header("Location: /rkd-cafe/resources/views/auth/forgot_password.php");
+        exit;
+    }
+
+    $pdo->prepare("DELETE FROM password_resets WHERE user_id=? AND expires_at < NOW()")->execute([$user['id']]);
+
+    $stmt = $pdo->prepare("
+        INSERT INTO password_resets (user_id, otp_code, attempts, expires_at)
+        VALUES (?, ?, 0, DATE_ADD(NOW(), INTERVAL 3 MINUTE))
+    ");
+
+    $stmt->execute([
+        $user['id'],
+        password_hash($code, PASSWORD_DEFAULT)
+    ]);
+
+    $_SESSION['reset_user_id'] = $user['id'];
+
+    $subject = "Kode Verifikasi Reset Password - RKD Cafe";
+
+    $htmlBody = "
+        <h2>RKD Cafe</h2>
+        <p>Halo <b>{$user['username']}</b></p>
+        <p>Kode OTP Anda:</p>
+        <h1>{$code}</h1>
+        <p>Berlaku selama 3 menit</p>
+    ";
+
+    if (!sendEmailMessage($subject, $user['email'], $htmlBody)) {
+
+        error_log("Failed sending OTP to: " . $user['email']);
+
+        $_SESSION['toast'] = [
+            "type" => "error",
+            "message" => "Gagal mengirim email."
+        ];
+
+        header("Location: /rkd-cafe/resources/views/auth/forgot_password.php");
+        exit;
+    }
+
+    if (headers_sent($file, $line)) {
+        die("Headers already sent in $file on line $line");
+    }
+
+    session_write_close();
+
+    header("Location: /rkd-cafe/resources/views/auth/verify_code.php");
+    exit;
+}
+
+
+/* ==========================
+   VERIFY CODE
+========================== */
+
+function verifyCode($userModel)
+{
+
+    // error_reporting(E_ALL);
+    // ini_set('display_errors', 1);
+
+    global $pdo;
+
+    header('Content-Type: application/json');
+
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        echo json_encode(["message" => "Method not allowed"]);
+        exit;
+    }
+
+    $code = trim($_POST['verification_code'] ?? '');
+
+    // var_dump($code);
+    // exit;
+
+    if (!$code) {
+        echo json_encode(["message" => "Kode wajib diisi"]);
+        exit;
+    }
+
+    $user_id = $_SESSION['reset_user_id'] ?? null;
+
+    // var_dump($_SESSION);
+    // exit;
+
+    if (!$user_id) {
+        echo json_encode(["message" => "Session reset tidak ditemukan"]);
+        exit;
+    }
+
+    $stmt = $pdo->prepare("
+        SELECT *
+        FROM password_resets
+        WHERE user_id=?
+        AND expires_at > NOW()
+        ORDER BY created_at DESC
+        LIMIT 1
+    ");
+
+    $stmt->execute([$user_id]);
+    $otp = $stmt->fetch();
+
+    // var_dump($otp);
+    // exit;
+
+    if (!$otp) {
+        echo json_encode(["message" => "OTP tidak ditemukan"]);
+        exit;
+    }
+
+    if ($otp['attempts'] >= 5) {
+        echo json_encode(["message" => "Terlalu banyak percobaan OTP"]);
+        exit;
+    }
+
+    if (strtotime($otp['expires_at']) < time()) {
+        echo json_encode(["message" => "OTP kadaluarsa"]);
+        exit;
+    }
+
+    // var_dump($otp['expires_at']);
+    // var_dump(time());
+    // exit;
+
+    if (!password_verify($code, $otp['otp_code'])) {
+
+        $pdo->prepare("
+            UPDATE password_resets
+            SET attempts = attempts + 1
+            WHERE id=?
+        ")->execute([$otp['id']]);
+
+        echo json_encode(["message" => "Kode OTP salah"]);
+        exit;
+    }
+
+    // var_dump($code);
+    // var_dump($otp['otp_code']);
+    // var_dump(password_verify($code, $otp['otp_code']));
+    // exit;
+
+    $token = bin2hex(random_bytes(32));
+    $hashed = hash('sha256', $token);
+
+    $pdo->prepare("
+        UPDATE password_resets
+        SET reset_token=?
+        WHERE id=?
+    ")->execute([$hashed, $otp['id']]);
+
+    echo json_encode([
+        "redirect_url" => "/rkd-cafe/resources/views/auth/reset_password.php?token=" . $token
+    ]);
+}
+
+
+/* ==========================
+   RESET PASSWORD
+========================== */
+
+function resetPassword($userModel)
+{
+    global $pdo;
+
+    $data = json_decode(file_get_contents("php://input"), true);
+
+    $token = $data['reset_token'] ?? '';
+    $password = $data['password'] ?? '';
+    $confirm = $data['confirm_password'] ?? '';
+
+    if (!$token || !$password || !$confirm) {
+        echo json_encode(["error" => "Semua data harus diisi"]);
+        exit;
+    }
+
+    if ($password !== $confirm) {
+        echo json_encode(["error" => "Password tidak cocok"]);
+        exit;
+    }
+
+    $hashedToken = hash('sha256', $token);
+
+    $stmt = $pdo->prepare("
+        SELECT *
+        FROM password_resets
+        WHERE reset_token=?
+        AND expires_at > NOW()
+        LIMIT 1
+    ");
+
+    $stmt->execute([$hashedToken]);
+    $row = $stmt->fetch();
+
+    if (!$row) {
+        echo json_encode(["error" => "Token tidak valid"]);
+        exit;
+    }
+
+    $hash = password_hash($password, PASSWORD_DEFAULT);
+
+    $pdo->prepare("
+        UPDATE users
+        SET password=?
+        WHERE id=?
+    ")->execute([$hash, $row['user_id']]);
+
+    $pdo->prepare("
+        DELETE FROM password_resets
+        WHERE id=?
+    ")->execute([$row['id']]);
+
+    echo json_encode(["message" => "Password berhasil diubah"]);
+}
+
+
+/* ==========================
+   RESEND OTP CODE
+========================== */
+
+function resendOtp($userModel)
+{
+    global $pdo;
+
+    require_once __DIR__ . '/../services/MailService.php';
+
+    $user_id = $_SESSION['reset_user_id'] ?? null;
+
+    if (!$user_id) {
+        echo json_encode(["success" => false, "message" => "Session tidak ditemukan"]);
+        exit;
+    }
+
+    $user = $userModel->findById($user_id);
+
+    if (!$user) {
+        echo json_encode(["success" => false, "message" => "User tidak ditemukan"]);
+        exit;
+    }
+
+    $code = random_int(100000, 999999);
+
+    $pdo->prepare("
+        INSERT INTO password_resets (user_id,otp_code,attempts,expires_at)
+        VALUES (?, ?, 0, DATE_ADD(NOW(),INTERVAL 3 MINUTE))
+    ")->execute([
+        $user_id,
+        password_hash($code, PASSWORD_DEFAULT)
+    ]);
+
+    $subject = "Kode OTP Reset Password";
+    $body = "<h2>$code</h2><p>Berlaku 3 menit</p>";
+
+    sendEmailMessage($subject, $user['email'], $body);
+
+    echo json_encode(["success" => true]);
 }

@@ -1,0 +1,15 @@
+type User {
+  id: ID
+  name: String
+  username: String
+  email: String
+  role: String
+}
+
+type SearchResult {
+  users: [User]
+}
+
+type Query {
+  search(keyword: String!): SearchResult
+}

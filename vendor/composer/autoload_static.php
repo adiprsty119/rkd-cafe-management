@@ -26,6 +26,14 @@ class ComposerStaticInit040ad41ba55a80bce89eb7151189be3a
             'Symfony\\Polyfill\\Mbstring\\' => 26,
             'Symfony\\Polyfill\\Ctype\\' => 23,
         ),
+        'P' => 
+        array (
+            'PHPMailer\\PHPMailer\\' => 20,
+        ),
+        'G' => 
+        array (
+            'GraphQL\\' => 8,
+        ),
     );
 
     public static $prefixDirsPsr4 = array (
@@ -40,6 +48,14 @@ class ComposerStaticInit040ad41ba55a80bce89eb7151189be3a
         'Symfony\\Polyfill\\Ctype\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-ctype',
+        ),
+        'PHPMailer\\PHPMailer\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/phpmailer/phpmailer/src',
+        ),
+        'GraphQL\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/webonyx/graphql-php/src',
         ),
     );
 

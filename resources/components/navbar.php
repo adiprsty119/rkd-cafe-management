@@ -7,6 +7,8 @@ require_once __DIR__ . '/../../app/helpers/avatar_helper.php';
 require_once __DIR__ . '/../../app/helpers/role_helper.php';
 require_once __DIR__ . '/../../app/helpers/notification_helper.php';
 
+$pdo = getPDO();
+
 /* ==========================
    AUTH VALIDATION
 ========================== */
@@ -52,11 +54,17 @@ $notificationCount = getUnreadNotificationCount($pdo, $userId);
 
             <input
                 type="text"
+                id="searchInput"
                 placeholder="<?= htmlspecialchars($t['search'] ?? 'Search', ENT_QUOTES, 'UTF-8') ?>..."
                 class="w-32 sm:w-48 lg:w-96 px-4 py-2 pr-10 border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 dark:bg-gray-700 dark:text-white">
 
             <i class="fa-solid fa-magnifying-glass absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-amber-300 hover:dark:text-amber-400 cursor-pointer"></i>
 
+            <!-- SEARCH RESULT -->
+            <div
+                id="searchResults"
+                class="absolute left-0 right-0 mt-2 bg-white dark:bg-gray-800 border rounded-lg shadow-lg hidden z-50">
+            </div>
         </div>
 
         <!-- LANGUAGE BUTTON -->

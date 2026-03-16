@@ -1,5 +1,7 @@
 {
     "require": {
-        "twig/twig": "^3.23"
+        "twig/twig": "^3.23",
+        "phpmailer/phpmailer": "^7.0",
+        "webonyx/graphql-php": "^15.31"
     }
 }

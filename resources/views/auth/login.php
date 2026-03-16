@@ -46,7 +46,7 @@ if (empty($_SESSION['csrf'])) {
 
 </head>
 
-<body class="min-h-screen flex bg-gray-200 dark:bg-gray-900 scroll-smooth transition">
+<body class="min-h-screen flex scroll-smooth bg-gradient-to-br from-gray-200 via-gray-100 to-gray-300 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition">
 
     <div class="relative flex w-full min-h-screen overflow-hidden">
 
@@ -192,8 +192,14 @@ if (empty($_SESSION['csrf'])) {
 
                             <div class="mb-6">
 
-                                <a href="#" class="text-blue-500 text-sm hover:underline">
-                                    Lupa password?
+                                <a
+                                    href="/rkd-cafe/resources/views/auth/forgot_password.php"
+                                    class="flex items-center gap-1 text-blue-500 text-sm hover:text-blue-600 hover:underline transition">
+
+                                    <i class="fa-solid fa-key text-xs"></i>
+
+                                    <span>Lupa password?</span>
+
                                 </a>
 
                             </div>
@@ -281,7 +287,40 @@ if (empty($_SESSION['csrf'])) {
                             <div class="flex-1 h-px bg-gray-300"></div>
                         </div>
 
-                        <form action="/rkd-cafe/app/controllers/AuthController.php?action=register" method="POST">
+                        <form
+                            action="/rkd-cafe/app/controllers/AuthController.php?action=register"
+                            method="POST"
+
+                            x-data="{
+                                password:'',
+                                confirm:'',
+                                showPassword:false,
+                                showConfirm:false,
+
+                                rules:{
+                                    length:false,
+                                    lower:false,
+                                    upper:false,
+                                    number:false,
+                                    symbol:false
+                                },
+
+                                check(){
+                                    this.rules.length = this.password.length >= 8
+                                    this.rules.lower = /[a-z]/.test(this.password)
+                                    this.rules.upper = /[A-Z]/.test(this.password)
+                                    this.rules.number = /[0-9]/.test(this.password)
+                                    this.rules.symbol = /[^A-Za-z0-9]/.test(this.password)
+                                },
+
+                                strength(){
+                                    return Object.values(this.rules).filter(Boolean).length
+                                },
+
+                                valid(){
+                                    return Object.values(this.rules).every(Boolean) && this.password === this.confirm
+                                }
+                            }">
 
                             <input type="hidden" name="csrf" value="<?= $_SESSION['csrf'] ?>">
 
@@ -290,152 +329,106 @@ if (empty($_SESSION['csrf'])) {
                                 placeholder="Nama Lengkap"
                                 required
                                 autofocus
-                                class="w-full border rounded-xl px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
+                                class="w-full border rounded-xl px-4 py-3 mb-4 focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
 
                             <input type="email"
                                 name="email"
                                 placeholder="Email"
                                 required
-                                class="w-full border rounded-xl px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
+                                class="w-full border rounded-xl px-4 py-3 mb-4 focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
 
                             <input type="text"
                                 name="username"
                                 placeholder="Username"
                                 required
-                                class="w-full border rounded-xl px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
-
-                            <div
-                                x-data="{
-                                    password:'',
-                                    confirm:'',
-                                    show:false,
-
-                                    rules:{
-                                        length:false,
-                                        lower:false,
-                                        upper:false,
-                                        number:false,
-                                        symbol:false
-                                    },
-
-                                    check(){
-                                        this.rules.length = this.password.length >= 8
-                                        this.rules.lower = /[a-z]/.test(this.password)
-                                        this.rules.upper = /[A-Z]/.test(this.password)
-                                        this.rules.number = /[0-9]/.test(this.password)
-                                        this.rules.symbol = /[^A-Za-z0-9]/.test(this.password)
-                                    },
-
-                                    strength(){
-                                        return Object.values(this.rules).filter(Boolean).length
-                                    },
-
-                                    valid(){
-                                        return Object.values(this.rules).every(Boolean) && this.password === this.confirm
-                                    }
-
-                                }"
-                                class="mb-4">
-
-                                <!-- PASSWORD INPUT -->
-                                <div class="relative">
-                                    <input
-                                        :type="show ? 'text' : 'password'"
-                                        name="password"
-                                        x-model="password"
-                                        @input="check()"
-                                        placeholder="Password"
-                                        required
-                                        class="w-full border rounded-xl px-4 py-3 mb-1 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
-
-                                    <i
-                                        @click="show=!show"
-                                        title="Tampilkan password"
-                                        class="fa-solid absolute right-4 top-4 cursor-pointer text-gray-600 hover:scale-110 transition duration-200 dark:text-white"
-                                        :class="show ? 'fa-eye-slash text-blue-500':'fa-eye text-gray-500'">
-                                    </i>
-                                </div>
-
-                                <!-- STRENGTH BAR -->
-                                <div class="flex gap-1">
-
-                                    <div class="h-2 flex-1 rounded transition-all duration-300 animate__animated animate__fadeIn"
-                                        :class="strength >=1 ? 'bg-red-500 scale-x-100' : 'bg-gray-200 dark:bg-gray-600 scale-x-90'"></div>
-
-                                    <div class="h-2 flex-1 rounded transition-all duration-300 animate__animated animate__fadeIn"
-                                        :class="strength >=3 ? 'bg-yellow-400 scale-x-100' : 'bg-gray-200 dark:bg-gray-600 scale-x-90'"></div>
-
-                                    <div class="h-2 flex-1 rounded transition-all duration-300 animate__animated animate__fadeIn"
-                                        :class="strength >=5 ? 'bg-green-500 scale-x-100' : 'bg-gray-200 dark:bg-gray-600 scale-x-90'"></div>
-
-                                </div>
+                                class="w-full border rounded-xl px-4 py-3 mb-4 focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
 
 
-                                <!-- RULE CHECKLIST -->
-                                <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs mb-4">
+                            <!-- PASSWORD -->
+                            <div class="relative">
 
-                                    <span :class="rules.length ? 'text-green-500' : 'text-gray-400'">
-                                        ✓ 8 karakter
-                                    </span>
+                                <input
+                                    :type="showPassword ? 'text' : 'password'"
+                                    name="password"
+                                    x-model="password"
+                                    @input="check()"
+                                    placeholder="Password"
+                                    required
+                                    class="w-full border rounded-xl px-4 py-3 mb-1 focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
 
-                                    <span :class="rules.lower ? 'text-green-500' : 'text-gray-400'">
-                                        ✓ huruf kecil
-                                    </span>
-
-                                    <span :class="rules.upper ? 'text-green-500' : 'text-gray-400'">
-                                        ✓ huruf besar
-                                    </span>
-
-                                    <span :class="rules.number ? 'text-green-500' : 'text-gray-400'">
-                                        ✓ angka
-                                    </span>
-
-                                    <span :class="rules.symbol ? 'text-green-500' : 'text-gray-400'">
-                                        ✓ simbol
-                                    </span>
-
-                                </div>
-
-
-                                <!-- CONFIRM PASSWORD -->
-                                <div class="relative">
-                                    <input
-                                        :type="show ? 'text' : 'password'"
-                                        name="confirm_password"
-                                        x-model="confirm"
-                                        placeholder="Konfirmasi Password"
-                                        required
-                                        class="w-full border rounded-xl px-4 py-3 mb-1 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
-                                    <i
-                                        @click="show=!show"
-                                        title="Tampilkan password"
-                                        class="fa-solid absolute right-4 top-4 cursor-pointer text-gray-600 hover:scale-110 transition duration-200 dark:text-white"
-                                        :class="show ? 'fa-eye-slash text-blue-500':'fa-eye text-gray-500'">
-                                    </i>
-
-                                </div>
-                                <p
-                                    x-show="confirm && confirm !== password"
-                                    class="text-red-500 text-xs">
-
-                                    Password tidak cocok
-
-                                </p>
-
-                                <p
-                                    x-show="confirm && confirm === password"
-                                    class="text-green-500 text-xs">
-
-                                    Password cocok ✓
-
-                                </p>
+                                <i
+                                    @click="showPassword=!showPassword"
+                                    class="fa-solid absolute right-4 top-4 cursor-pointer"
+                                    :class="showPassword ? 'fa-eye-slash text-blue-500':'fa-eye text-gray-500'">
+                                </i>
 
                             </div>
 
+
+                            <!-- STRENGTH BAR -->
+                            <div class="flex gap-1 mb-2">
+
+                                <div class="h-2 flex-1 rounded"
+                                    :class="strength() >=1 ? 'bg-red-500' : 'bg-gray-200 dark:bg-gray-600'"></div>
+
+                                <div class="h-2 flex-1 rounded"
+                                    :class="strength() >=3 ? 'bg-yellow-400' : 'bg-gray-200 dark:bg-gray-600'"></div>
+
+                                <div class="h-2 flex-1 rounded"
+                                    :class="strength() >=5 ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-600'"></div>
+
+                            </div>
+
+
+                            <!-- RULE CHECKLIST -->
+                            <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs mb-4">
+
+                                <span :class="rules.length ? 'text-green-500' : 'text-gray-400'">✓ 8 karakter</span>
+
+                                <span :class="rules.lower ? 'text-green-500' : 'text-gray-400'">✓ huruf kecil</span>
+
+                                <span :class="rules.upper ? 'text-green-500' : 'text-gray-400'">✓ huruf besar</span>
+
+                                <span :class="rules.number ? 'text-green-500' : 'text-gray-400'">✓ angka</span>
+
+                                <span :class="rules.symbol ? 'text-green-500' : 'text-gray-400'">✓ simbol</span>
+
+                            </div>
+
+
+                            <!-- CONFIRM PASSWORD -->
+                            <div class="relative">
+
+                                <input
+                                    :type="showConfirm ? 'text' : 'password'"
+                                    name="confirm_password"
+                                    x-model="confirm"
+                                    placeholder="Konfirmasi Password"
+                                    required
+                                    class="w-full border rounded-xl px-4 py-3 mb-1 focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
+
+                                <i
+                                    @click="showConfirm=!showConfirm"
+                                    class="fa-solid absolute right-4 top-4 cursor-pointer"
+                                    :class="showConfirm ? 'fa-eye-slash text-blue-500':'fa-eye text-gray-500'">
+                                </i>
+
+                            </div>
+
+
+                            <p x-show="confirm && confirm !== password" class="text-red-500 text-xs">
+                                Password tidak cocok
+                            </p>
+
+                            <p x-show="confirm && confirm === password" class="text-green-500 text-xs">
+                                Password cocok ✓
+                            </p>
+
+
                             <button
                                 type="submit"
-                                :disabled="typeof valid === 'function' ? !valid() : true"
-                                class="w-full bg-green-600 text-white py-3 rounded-xl hover:bg-green-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+                                :disabled="!valid()"
+                                class="w-full bg-green-600 text-white py-3 rounded-xl hover:bg-green-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed mt-4">
 
                                 Registrasi
 

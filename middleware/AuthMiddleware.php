@@ -4,6 +4,8 @@ session_start();
 
 require_once __DIR__ . '/../config/database.php';
 
+$pdo = getPDO(); // ← TAMBAHKAN BARIS INI
+
 /* ==========================
    AUTO LOGIN VIA REMEMBER TOKEN
 ========================== */
