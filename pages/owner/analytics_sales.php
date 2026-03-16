@@ -58,15 +58,24 @@ $paymentDistribution = getPaymentDistribution();
 
     <title><?= $pageTitle ?></title>
 
+    <!-- Tailwind CSS -->
     <link href="/rkd-cafe/public/assets/css/output.css" rel="stylesheet">
+
+    <!-- Vanila CSS -->
     <link href="/rkd-cafe/public/assets/css/utilities.css" rel="stylesheet">
 
+    <!-- Font Awesome -->
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+    <!-- Alpine.js -->
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <!-- Global Seacrh [global-search.js] -->
+    <script defer src="/rkd-cafe/public/assets/js/global-search.js"></script>
 
     <style>
         [x-cloak] {

@@ -3,6 +3,8 @@
 session_start();
 require '../../config/database.php';
 
+$pdo = getPDO(); // ← TAMBAHKAN BARIS INI
+
 /* ==========================
    AUTH VALIDATION
 ========================== */

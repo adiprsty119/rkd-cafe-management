@@ -36,6 +36,7 @@ $t = require __DIR__ . '/../../lang/' . $lang . '.php';
     <!-- Alpine.js -->
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
+    <!-- Global Seacrh [global-search.js] -->
     <script defer src="/rkd-cafe/public/assets/js/global-search.js"></script>
 
     <style>

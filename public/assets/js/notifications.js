@@ -7,6 +7,15 @@ document.addEventListener("alpine:init", () => {
         count: 0,
         polling: null,
 
+        icon(type) {
+
+            if(type === "order") return "fa-receipt"
+            if(type === "stock") return "fa-box"
+            if(type === "report") return "fa-chart-line"
+
+            return "fa-bell"
+        },
+
         toggle() {
 
             this.open = !this.open

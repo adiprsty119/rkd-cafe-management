@@ -3,6 +3,8 @@ session_start();
 
 require_once __DIR__ . '/../../../config/database.php';
 
+$pdo = getPDO(); // ← TAMBAHKAN BARIS INI
+
 if (!isset($_SESSION['reset_user_id'])) {
 
     header("Location: /rkd-cafe/resources/views/auth/forgot_password.php");

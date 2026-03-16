@@ -124,17 +124,124 @@ $notificationCount = getUnreadNotificationCount($pdo, $userId);
         <!-- NOTIFICATION -->
         <div x-data="notificationSystem()" x-init="init()" class="relative">
 
-            <button @click="toggle()" class="relative text-amber-300 hover:text-amber-400 cursor-pointer">
+            <!-- ICON -->
+            <button
+                @click="toggle()"
+                class="relative p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition cursor-pointer">
 
-                <i class="fa-solid fa-bell text-lg"></i>
+                <i
+                    class="fa-solid fa-bell text-lg text-yellow-400 hover:text-yellow-300"
+                    :class="count > 0 ? 'bell-alert' : ''">
+                </i>
 
                 <span
                     x-show="count>0"
                     x-text="count"
-                    class="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1.5 rounded-full">
+                    class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] px-1.5 py-[1px] rounded-full shadow">
                 </span>
 
             </button>
+
+
+            <!-- DROPDOWN -->
+            <div
+                x-show="open"
+                x-transition.origin.top.right
+                @click.outside="open=false"
+                class="absolute right-0 mt-3 w-96 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50">
+
+                <!-- HEADER -->
+                <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+
+                    <h3 class="font-semibold text-gray-800 dark:text-white">
+                        Notifications
+                    </h3>
+
+                    <button
+                        @click="markAllRead()"
+                        class="text-xs text-blue-500 hover:text-blue-600 font-medium cursor-pointer">
+
+                        Mark all read
+
+                    </button>
+
+                </div>
+
+
+                <!-- LIST -->
+                <div class="max-h-96 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700">
+
+                    <template x-for="n in notifications" :key="n.id">
+
+                        <div
+                            @click="markRead(n.id)"
+                            class="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition cursor-pointer">
+
+                            <!-- ICON -->
+                            <div class="flex-shrink-0 w-9 h-9 rounded-lg bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+
+                                <i
+                                    :class="'fa-solid ' + icon(n.type)"
+                                    class="fa-solid fa-bell text-blue-500 text-sm">
+                                </i>
+
+                            </div>
+
+                            <!-- CONTENT -->
+                            <div class="flex-1 min-w-0">
+
+                                <div class="flex items-center justify-between">
+
+                                    <div class="flex items-center gap-2">
+
+                                        <!-- UNREAD DOT -->
+                                        <div
+                                            x-show="!n.is_read"
+                                            class="w-2 h-2 bg-blue-500 rounded-full">
+                                        </div>
+
+                                        <p
+                                            class="text-sm font-semibold text-gray-800 dark:text-white"
+                                            x-text="n.title">
+                                        </p>
+
+                                    </div>
+
+                                    <span
+                                        class="text-xs text-gray-400"
+                                        x-text="n.time">
+                                    </span>
+
+                                </div>
+
+                                <p
+                                    class="text-xs text-gray-500 mt-1"
+                                    x-text="n.message">
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                    </template>
+
+                </div>
+
+
+                <!-- FOOTER -->
+                <div class="text-center py-3 border-t border-gray-100 dark:border-gray-700">
+
+                    <a
+                        href="/rkd-cafe/public/notifications.php"
+                        class="text-sm font-medium text-blue-500 hover:text-blue-600">
+
+                        View all notifications
+
+                    </a>
+
+                </div>
+
+            </div>
 
         </div>
 
