@@ -2,30 +2,18 @@
 
 function searchGlobal($pdo, $keyword)
 {
-    $keyword = "%" . strtolower($keyword) . "%";
 
-    $stmt = $pdo->prepare("
-        SELECT
-            id,
-            name,
-            username,
-            email,
-            role
-        FROM users
-        WHERE
-            LOWER(name) LIKE :keyword
-            OR LOWER(username) LIKE :keyword
-            OR LOWER(email) LIKE :keyword
-        LIMIT 10
-    ");
+    $url = "http://localhost:8082/search?keyword=" . urlencode($keyword);
 
-    $stmt->bindParam(':keyword', $keyword, PDO::PARAM_STR);
+    $response = file_get_contents($url);
 
-    $stmt->execute();
+    if (!$response) {
+        return [
+            "users" => [],
+            "menu" => [],
+            "orders" => []
+        ];
+    }
 
-    $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    return [
-        "users" => $users
-    ];
+    return json_decode($response, true);
 }

@@ -23,24 +23,39 @@ $pdo = getPDO();
 
 $userType = new ObjectType([
     'name' => 'User',
-    'fields' => function () {
-        return [
-            'id' => Type::id(),
-            'name' => Type::string(),
-            'username' => Type::string(),
-            'email' => Type::string(),
-            'role' => Type::string(),
-        ];
-    }
+    'fields' => [
+        'id' => Type::id(),
+        'name' => Type::string(),
+        'username' => Type::string(),
+        'role' => Type::string(),
+    ]
+]);
+
+$menuType = new ObjectType([
+    'name' => 'Menu',
+    'fields' => [
+        'id' => Type::id(),
+        'name' => Type::string(),
+        'price' => Type::float(),
+    ]
+]);
+
+$orderType = new ObjectType([
+    'name' => 'Order',
+    'fields' => [
+        'id' => Type::id(),
+        'order_code' => Type::string(),
+        'total' => Type::float(),
+    ]
 ]);
 
 $searchResultType = new ObjectType([
     'name' => 'SearchResult',
-    'fields' => function () use ($userType) {
-        return [
-            'users' => Type::listOf($userType)
-        ];
-    }
+    'fields' => [
+        'users' => Type::listOf($userType),
+        'menu' => Type::listOf($menuType),
+        'orders' => Type::listOf($orderType)
+    ]
 ]);
 
 /* =========================
@@ -61,14 +76,15 @@ $queryType = new ObjectType([
             'resolve' => function ($root, $args) use ($pdo) {
 
                 try {
-
                     return searchGlobal($pdo, $args['keyword']);
                 } catch (Throwable $e) {
 
                     error_log($e->getMessage());
 
                     return [
-                        "users" => []
+                        "users" => [],
+                        "menu" => [],
+                        "orders" => []
                     ];
                 }
             }
@@ -86,7 +102,7 @@ $schema = new Schema([
 ]);
 
 /* =========================
-   READ REQUEST
+   REQUEST
 ========================= */
 
 $rawInput = file_get_contents('php://input');

@@ -2,12 +2,25 @@ type User {
   id: ID
   name: String
   username: String
-  email: String
   role: String
+}
+
+type Menu {
+  id: ID
+  name: String
+  price: Float
+}
+
+type Order {
+  id: ID
+  order_code: String
+  total: Float
 }
 
 type SearchResult {
   users: [User]
+  menu: [Menu]
+  orders: [Order]
 }
 
 type Query {

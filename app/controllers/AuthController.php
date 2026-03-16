@@ -20,6 +20,8 @@ require_once __DIR__ . '/../../config/env.php';
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../models/User.php';
 
+$pdo = getPDO();
+
 $userModel = new User($pdo);
 
 
