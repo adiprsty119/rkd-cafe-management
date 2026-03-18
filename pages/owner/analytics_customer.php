@@ -20,6 +20,7 @@ require_once __DIR__ . '/../../app/helpers/menu_engine.php';
 require_once __DIR__ . '/../../app/services/analytics_service.php';
 
 $role = $_SESSION['role'] ?? 'guest';
+$sidebarCollapsed = $_SESSION['sidebar_collapsed'] ?? 0;
 
 /* ==========================
    MENU ENGINE
@@ -32,13 +33,26 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
 
 /* ==========================
+   PERIOD CONTROL
+========================== */
+
+$period = $_GET['period'] ?? 'today';
+
+if (!in_array($period, ['today', '7days', '30days'])) {
+    $period = 'today';
+}
+
+
+/* ==========================
    CUSTOMER ANALYTICS ENGINE
 ========================== */
 
-$customerInsight = getCustomerInsight();
-$customerGrowth = getCustomerGrowth();
-$customerLifetime = getCustomerLifetime();
-
+$customerInsight = getCustomerInsight($period);
+$customerGrowth = getCustomerGrowth($period);
+$customerLifetime = getCustomerLifetime($period);
+// $customerRepeat = getCustomerRepeat($period);
+// $customerFrequency = getCustomerFrequency($period);
+// $topCustomers = getTopCustomers($period);
 $totalCustomers = count($customerInsight);
 
 $avgSpend = 0;
@@ -53,6 +67,14 @@ if (!empty($customerInsight)) {
     $avgOrders = $totalOrders / $totalCustomers;
 }
 
+$businessInsight = getBusinessInsight($period) ?? [
+    "insights" => []
+];
+
+$insights = $businessInsight['insights'] ?? [];
+$activeCustomers = count(array_filter($customerInsight, function ($c) {
+    return ($c['orders'] ?? 0) > 0;
+}));
 ?>
 
 <!DOCTYPE html>
@@ -84,10 +106,19 @@ if (!empty($customerInsight)) {
     <!-- Global Seacrh [global-search.js] -->
     <script defer src="/rkd-cafe/public/assets/js/global-search.js"></script>
 
+    <style>
+        .chart-card {
+            transition: all .25s ease;
+        }
+
+        .chart-card:hover {
+            transform: translateY(-2px);
+        }
+    </style>
 </head>
 
 <body
-    x-data="{ dark: localStorage.theme === 'dark', sidebarOpen:true }"
+    x-data="{ dark: localStorage.theme === 'dark', sidebarOpen:<?= isset($sidebarCollapsed) && $sidebarCollapsed ? 'false' : 'true' ?> }"
     x-init="document.documentElement.classList.toggle('dark', dark)"
     :class="{ 'dark': dark }"
     class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-white transition-colors duration-300">
@@ -167,26 +198,78 @@ if (!empty($customerInsight)) {
                 class="flex-1 p-4 md:p-6 overflow-y-auto space-y-6 scrollbar-hide">
 
                 <!-- HEADER -->
+                <div class="flex flex-col mb-12 md:flex-row md:items-center md:justify-between gap-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm px-6 py-5">
 
-                <div>
+                    <!-- LEFT -->
+                    <div class="flex items-center gap-4">
 
-                    <h1 class="text-2xl font-bold"><?= $pageTitle ?></h1>
+                        <!-- PAGE ICON -->
+                        <div class="w-11 h-11 flex items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-500/20">
 
-                    <p class="text-sm text-gray-500">
-                        Customer behavior and loyalty insights
-                    </p>
+                            <i class="fa-solid fa-chart-pie text-indigo-600 dark:text-indigo-400"></i>
+
+                        </div>
+
+                        <!-- TITLE -->
+                        <div>
+
+                            <h1 class="text-xl md:text-2xl font-semibold tracking-tight">
+                                <?= htmlspecialchars($pageTitle) ?>
+                            </h1>
+
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                <?= $t['customer_analytics_desc'] ?? 'Customer behavior and loyalty insights' ?>
+                            </p>
+
+                        </div>
+
+                    </div>
 
                 </div>
 
+                <!-- BUSINESS INSIGHT PANEL -->
+                <div class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl shadow p-6">
 
+                    <div class="flex items-center gap-3 mb-3">
+
+                        <div class="bg-white/20 px-2 py-1 rounded text-xs font-semibold">
+                            AI
+                        </div>
+
+                        <i class="fa-solid fa-brain"></i>
+
+                        <h2 class="font-semibold text-lg">
+                            Customer Insight
+                        </h2>
+
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-3 mt-4">
+
+                        <?php foreach ($insights as $ins): ?>
+                            <div class="bg-white/10 px-4 py-3 rounded-lg text-sm">
+                                <?= $ins['message'] ?? '' ?>
+                            </div>
+                        <?php endforeach; ?>
+
+                    </div>
+
+                </div>
 
                 <!-- KPI -->
 
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
 
+                    <!-- TOTAL CUSTOMERS -->
                     <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
 
-                        <p class="text-gray-500 text-sm">Total Customers</p>
+                        <div class="flex items-center justify-between">
+
+                            <p class="text-gray-500 text-sm">Total Customers</p>
+
+                            <i class="fa-solid fa-users text-blue-500"></i>
+
+                        </div>
 
                         <h2 class="text-2xl font-bold mt-2">
                             <?= $totalCustomers ?>
@@ -195,20 +278,34 @@ if (!empty($customerInsight)) {
                     </div>
 
 
+                    <!-- ACTIVE CUSTOMERS -->
                     <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
 
-                        <p class="text-gray-500 text-sm">Active Customers</p>
+                        <div class="flex items-center justify-between">
+
+                            <p class="text-gray-500 text-sm">Active Customers</p>
+
+                            <i class="fa-solid fa-user-check text-green-500"></i>
+
+                        </div>
 
                         <h2 class="text-2xl font-bold mt-2">
-                            <?= $totalCustomers ?>
+                            <?= $activeCustomers ?>
                         </h2>
 
                     </div>
 
 
+                    <!-- AVERAGE SPEND -->
                     <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
 
-                        <p class="text-gray-500 text-sm">Average Spend</p>
+                        <div class="flex items-center justify-between">
+
+                            <p class="text-gray-500 text-sm">Average Spend</p>
+
+                            <i class="fa-solid fa-wallet text-yellow-500"></i>
+
+                        </div>
 
                         <h2 class="text-2xl font-bold mt-2">
                             Rp <?= number_format($avgSpend, 0, ',', '.') ?>
@@ -217,9 +314,16 @@ if (!empty($customerInsight)) {
                     </div>
 
 
+                    <!-- AVERAGE ORDERS -->
                     <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
 
-                        <p class="text-gray-500 text-sm">Average Orders</p>
+                        <div class="flex items-center justify-between">
+
+                            <p class="text-gray-500 text-sm">Average Orders</p>
+
+                            <i class="fa-solid fa-cart-shopping text-purple-500"></i>
+
+                        </div>
 
                         <h2 class="text-2xl font-bold mt-2">
                             <?= number_format($avgOrders, 1) ?>
@@ -229,59 +333,56 @@ if (!empty($customerInsight)) {
 
                 </div>
 
-
-
                 <!-- CHARTS -->
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
 
                     <!-- CUSTOMER GROWTH -->
-
-                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
-
-                        <h2 class="font-semibold mb-4 flex items-center gap-2">
-                            <i class="fa-solid fa-user-plus text-indigo-500"></i>
-                            Customer Growth
-                        </h2>
-
-                        <div class="h-64">
-                            <canvas id="customerGrowthChart"></canvas>
-                        </div>
-
-                    </div>
-
+                    <?php
+                    $title = "Customer Growth";
+                    $chartId = "customerGrowthChart";
+                    $insight = $customerGrowth['insight'] ?? '';
+                    require __DIR__ . '/../../resources/components/chart-card.php';
+                    ?>
 
                     <!-- CUSTOMER ORDERS -->
+                    <?php
+                    $title = "Customer Orders";
+                    $chartId = "customerOrdersChart";
+                    $insight = $customerInsight['insight'] ?? '';
+                    require __DIR__ . '/../../resources/components/chart-card.php';
+                    ?>
 
-                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+                    <!-- CUSTOMER LIFETIME -->
+                    <?php
+                    $title = "Customer Lifetime Value";
+                    $chartId = "customerLifetimeChart";
+                    $insight = $customerLifetime['insight'] ?? '';
+                    require __DIR__ . '/../../resources/components/chart-card.php';
+                    ?>
 
-                        <h2 class="font-semibold mb-4 flex items-center gap-2">
-                            <i class="fa-solid fa-users text-green-500"></i>
-                            Customer Orders
-                        </h2>
+                    <!-- REPEAT VS NEW -->
+                    <?php
+                    $title = "Repeat vs New Customers";
+                    $chartId = "customerRepeatChart";
+                    $insight = $customerRepeat['insight'] ?? '';
+                    require __DIR__ . '/../../resources/components/chart-card.php';
+                    ?>
 
-                        <div class="h-64">
-                            <canvas id="customerOrdersChart"></canvas>
-                        </div>
+                    <!-- ORDER FREQUENCY -->
+                    <?php
+                    $title = "Order Frequency";
+                    $chartId = "customerFrequencyChart";
+                    $insight = $customerFrequency['insight'] ?? '';
+                    require __DIR__ . '/../../resources/components/chart-card.php';
+                    ?>
 
-                    </div>
-
-                </div>
-
-
-
-                <!-- CUSTOMER LIFETIME VALUE -->
-
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
-
-                    <h2 class="font-semibold mb-4 flex items-center gap-2">
-                        <i class="fa-solid fa-coins text-yellow-500"></i>
-                        Customer Lifetime Value
-                    </h2>
-
-                    <div class="h-72">
-                        <canvas id="customerLifetimeChart"></canvas>
-                    </div>
+                    <!-- TOP CUSTOMERS -->
+                    <?php
+                    $title = "Top Customers";
+                    $chartId = "topCustomersChart";
+                    $insight = $topCustomers['insight'] ?? '';
+                    require __DIR__ . '/../../resources/components/chart-card.php';
+                    ?>
 
                 </div>
 
@@ -298,6 +399,9 @@ if (!empty($customerInsight)) {
             customerInsight: <?= json_encode($customerInsight ?? []) ?>,
             customerGrowth: <?= json_encode($customerGrowth ?? []) ?>,
             customerLifetime: <?= json_encode($customerLifetime ?? []) ?>
+            customerRepeat: <?= json_encode($customerRepeat ?? []) ?>,
+            customerFrequency: <?= json_encode($customerFrequency ?? []) ?>,
+            topCustomers: <?= json_encode($topCustomers ?? []) ?>
 
         };
     </script>
@@ -306,6 +410,7 @@ if (!empty($customerInsight)) {
     <script src="/rkd-cafe/public/assets/js/analytics_customer.js"></script>
     <script src="/rkd-cafe/public/assets/js/notifications.js"></script>
     <script src="/rkd-cafe/public/assets/js/header.js"></script>
+    <script src="/rkd-cafe/public/assets/js/sidebar-tooltip.js"></script>
 
     <div
         id="global-tooltip"

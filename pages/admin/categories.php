@@ -17,6 +17,7 @@ require_once __DIR__ . '/../../app/helpers/menu_helper.php';
 require_once __DIR__ . '/../../app/helpers/menu_engine.php';
 
 $role = $_SESSION['role'] ?? 'guest';
+$sidebarCollapsed = $_SESSION['sidebar_collapsed'] ?? 0;
 
 /* ==========================
    MENU ENGINE
@@ -65,7 +66,7 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
 
 <body
-    x-data="{ dark: localStorage.theme === 'dark', loading:false, loadingTheme:false, sidebarOpen:true }"
+    x-data="{ dark: localStorage.theme === 'dark', loading:false, loadingTheme:false, sidebarOpen:<?= isset($sidebarCollapsed) && $sidebarCollapsed ? 'false' : 'true' ?> }"
     @toggle-theme.window="loadingTheme = true; setTimeout(() => {let newTheme = !dark; localStorage.theme = newTheme ? 'dark' : 'light'; location.reload();}, 800)"
     x-init="document.documentElement.classList.toggle('dark', dark)"
     :class="{ 'dark': dark }"
@@ -168,24 +169,48 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
 
                 <!-- HEADER -->
-                <div class="flex justify-between items-center">
+                <div class="flex flex-col mb-12 md:flex-row md:items-center md:justify-between gap-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm px-6 py-5">
 
-                    <div>
-                        <h1 class="text-2xl font-bold"><?= $pageTitle ?></h1>
-                        <p class="text-sm text-gray-500"><?= $t['manage_categories'] ?? 'Manage menu categories' ?></p>
+                    <!-- LEFT -->
+                    <div class="flex items-center gap-4">
+
+                        <!-- PAGE ICON -->
+                        <div class="w-11 h-11 flex items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-500/20">
+
+                            <i class="fa-solid fa-layer-group text-amber-600 dark:text-amber-400"></i>
+
+                        </div>
+
+                        <!-- TITLE -->
+                        <div>
+
+                            <h1 class="text-xl md:text-2xl font-semibold tracking-tight">
+                                <?= htmlspecialchars($pageTitle) ?>
+                            </h1>
+
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                <?= $t['manage_categories'] ?? 'Manage menu categories' ?>
+                            </p>
+
+                        </div>
+
                     </div>
 
-                    <button
-                        class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg shadow">
+                    <!-- RIGHT ACTION -->
+                    <div class="flex items-center gap-3">
 
-                        <i class="fa-solid fa-plus mr-2"></i>
-                        <?= $t['add_category'] ?? 'Add Category' ?>
+                        <button
+                            class="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg shadow-sm text-sm transition cursor-pointer">
 
-                    </button>
+                            <i class="fa-solid fa-plus"></i>
+
+                            <?= $t['add_category'] ?? 'Add Category' ?>
+
+                        </button>
+
+                    </div>
 
                 </div>
-
-
 
                 <!-- SEARCH -->
                 <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow">
@@ -297,6 +322,7 @@ $breadcrumb = generateBreadcrumb($currentMenu);
     <script src="/rkd-cafe/public/assets/js/toast.js"></script>
     <script src="/rkd-cafe/public/assets/js/notifications.js"></script>
     <script src="/rkd-cafe/public/assets/js/header.js"></script>
+    <script src="/rkd-cafe/public/assets/js/sidebar-tooltip.js"></script>
 
     <div
         id="global-tooltip"

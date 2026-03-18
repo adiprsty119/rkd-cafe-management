@@ -19,6 +19,7 @@ require_once __DIR__ . '/../../app/helpers/menu_helper.php';
 require_once __DIR__ . '/../../app/helpers/menu_engine.php';
 
 $role = $_SESSION['role'] ?? 'guest';
+$sidebarCollapsed = $_SESSION['sidebar_collapsed'] ?? 0;
 
 /* ==========================
    MENU ENGINE
@@ -66,7 +67,7 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
 
 <body
-    x-data="{ dark: localStorage.theme === 'dark', loading:false, loadingTheme:false, sidebarOpen:true, openAdd:false }"
+    x-data="{ dark: localStorage.theme === 'dark', loading:false, loadingTheme:false, sidebarOpen:<?= isset($sidebarCollapsed) && $sidebarCollapsed ? 'false' : 'true' ?>, openAdd:false }"
     @toggle-theme.window="loadingTheme = true; setTimeout(() => {let newTheme = !dark; localStorage.theme = newTheme ? 'dark' : 'light'; location.reload();}, 800)"
     x-init="document.documentElement.classList.toggle('dark', dark)"
     :class="{ 'dark': dark }"
@@ -170,26 +171,47 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
 
                 <!-- HEADER -->
-                <div class="flex justify-between items-center">
+                <div class="flex flex-col mb-12 md:flex-row md:items-center md:justify-between gap-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm px-6 py-5">
 
-                    <div>
+                    <!-- LEFT -->
+                    <div class="flex items-center gap-4">
 
-                        <h1 class="text-2xl font-bold"><?= $pageTitle ?></h1>
+                        <!-- PAGE ICON -->
+                        <div class="w-11 h-11 flex items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-500/20">
 
-                        <p class="text-sm text-gray-500">
-                            Customer management
-                        </p>
+                            <i class="fa-solid fa-user-group text-purple-600 dark:text-purple-400"></i>
+
+                        </div>
+
+                        <!-- TITLE -->
+                        <div>
+
+                            <h1 class="text-xl md:text-2xl font-semibold tracking-tight">
+                                <?= htmlspecialchars($pageTitle) ?>
+                            </h1>
+
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                <?= $t['customer_management'] ?? 'Customer management' ?>
+                            </p>
+
+                        </div>
 
                     </div>
 
-                    <button
-                        @click="openAdd=true"
-                        class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded">
+                    <!-- RIGHT ACTION -->
+                    <div class="flex items-center gap-3">
 
-                        <i class="fa-solid fa-plus mr-2"></i>
-                        Add Customer
+                        <button
+                            @click="openAdd=true"
+                            class="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg shadow-sm text-sm transition cursor-pointer">
 
-                    </button>
+                            <i class="fa-solid fa-plus"></i>
+
+                            <?= $t['add_customer'] ?? 'Add Customer' ?>
+
+                        </button>
+
+                    </div>
 
                 </div>
 
@@ -386,6 +408,7 @@ $breadcrumb = generateBreadcrumb($currentMenu);
     <script src="/rkd-cafe/public/assets/js/toast.js"></script>
     <script src="/rkd-cafe/public/assets/js/notifications.js"></script>
     <script src="/rkd-cafe/public/assets/js/header.js"></script>
+    <script src="/rkd-cafe/public/assets/js/sidebar-tooltip.js"></script>
 
     <div
         id="global-tooltip"

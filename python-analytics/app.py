@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 import pandas as pd
-from analytics_engine import (
+from performance_analytics_engine import (
     get_dashboard_data,
     get_top_menu,
     get_sales_trend,
@@ -136,7 +136,7 @@ def payment_distribution():
 @app.route("/customer-growth")
 def customer_growth():
 
-    period = request.args.get("period", "7day")
+    period = request.args.get("period", "7days")
 
     data = get_customer_growth(period)
 

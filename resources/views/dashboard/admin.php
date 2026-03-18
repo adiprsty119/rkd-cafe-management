@@ -16,6 +16,20 @@ if (!in_array($lang, ['id', 'en'])) {
 
 // load translation
 $t = require __DIR__ . '/../../lang/' . $lang . '.php';
+require_once __DIR__ . '/../../../app/helpers/menu_helper.php';
+require_once __DIR__ . '/../../../app/helpers/menu_engine.php';
+
+$role = $_SESSION['role'] ?? 'guest';
+$sidebarCollapsed = $_SESSION['sidebar_collapsed'] ?? 0;
+
+/* ==========================
+   MENU ENGINE
+========================== */
+
+$menus = getMenusByRole($role);
+$currentMenu = findMenuByRoute($menus);
+$pageTitle = $currentMenu['menu']['title'] ?? 'Dashboard';
+$breadcrumb = generateBreadcrumb($currentMenu);
 ?>
 
 <!DOCTYPE html>
@@ -86,13 +100,115 @@ $t = require __DIR__ . '/../../lang/' . $lang . '.php';
         <!-- MAIN CONTENT -->
         <div class="flex-1 flex flex-col min-w-0 md:ml-0 transition-all duration-300">
 
-            <!-- NAVBAR -->
-            <div class="p-4 border-t border-gray-700">
-                <?php require __DIR__ . '/../../components/navbar.php'; ?>
+            <!-- =========================
+                    HEADER STACK
+            ========================= -->
+            <div id="headerStack" class="sticky top-0 z-50 relative">
+
+                <!-- =========================
+                    NAVBAR
+                ========================= -->
+                <div
+                    id="dashboardNavbar"
+                    class="relative z-50 transition-all duration-300">
+
+                    <div class="w-full px-4 mt-3 transition-all duration-300 bg-gray-100 dark:bg-gray-800">
+                        <?php require __DIR__ . '/../../components/navbar.php'; ?>
+                    </div>
+
+
+                    <!-- =========================
+                        BREADCRUMB INDICATOR
+                    ========================= -->
+                    <div
+                        id="breadcrumbIndicator"
+                        class="absolute left-auto -translate-x-1/2 top-full z-50 opacity-0 translate-y-2 pointer-events-none transition-all ease-out delay-75 duration-300">
+
+                        <button
+                            class="flex items-center ml-16 px-2 py-1 text-sm rounded-sm backdrop-blur-md bg-gray-100 dark:bg-gray-800 shadow-md hover:bg-white/60 active:scale-95 transition cursor-pointer">
+
+                            <i class="fa-solid fa-angle-down animate-bounce"></i>
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- =========================
+                BREADCRUMB CONTAINER
+            ========================= -->
+            <div
+                id="breadcrumbContainer"
+                class="relative will-change-transform transition-opacity duration-200">
+
+                <div
+                    id="breadcrumbMask"
+                    class="px-4 py-2 overflow-hidden">
+
+                    <?php require __DIR__ . '/../../components/breadcrumb.php'; ?>
+
+                </div>
+
             </div>
 
             <!-- DASHBOARD CONTENT -->
-            <main class="p-4 md:p-6 space-y-6 overflow-y-auto">
+            <main id="dashboardScroll"
+                class="flex-1 p-4 md:p-6 overflow-y-auto space-y-6 scrollbar-hide">
+
+                <!-- HEADER -->
+                <div
+                    class="flex flex-col mb-12 md:flex-row md:items-center md:justify-between gap-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm px-6 py-5 mb-8">
+
+                    <!-- LEFT -->
+                    <div class="flex items-center gap-4">
+
+                        <!-- ICON -->
+                        <div class="w-11 h-11 flex items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-500/20">
+
+                            <i class="fa-solid fa-chart-line text-blue-600 dark:text-blue-400"></i>
+
+                        </div>
+
+                        <!-- TITLE -->
+                        <div>
+
+                            <h1 class="text-xl md:text-2xl font-semibold tracking-tight">
+                                <?= htmlspecialchars($pageTitle ?? ($t['dashboard'] ?? 'Dashboard')) ?>
+                            </h1>
+
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                <?= $t['dashboard_overview'] ?? 'Overview of your cafe performance today' ?>
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <!-- RIGHT ACTION -->
+                    <div
+                        x-data="{loading:false}"
+                        class="flex items-center gap-3">
+
+                        <button
+                            @click="loading=true; setTimeout(()=>window.location.reload(),400)"
+                            class="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition cursor-pointer">
+
+                            <i
+                                class="fa-solid fa-rotate"
+                                :class="loading ? 'animate-spin' : ''"></i>
+
+                            <span x-text="loading ? 'Refreshing...' : 'Refresh'"></span>
+
+                        </button>
+
+                    </div>
+
+                </div>
 
                 <!-- STATISTIC CARDS -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-14">
@@ -215,6 +331,10 @@ $t = require __DIR__ . '/../../lang/' . $lang . '.php';
 
     <?php unset($_SESSION['toast']);
     endif; ?>
+
+    <script>
+        window.csrfToken = "<?= $_SESSION['csrf_token'] ?? '' ?>";
+    </script>
 
     <script src="/rkd-cafe/public/assets/js/toast.js"></script>
     <script src="/rkd-cafe/public/assets/js/notifications.js"></script>

@@ -11,9 +11,10 @@ if (!in_array($lang, ['id', 'en'])) {
 $t = require __DIR__ . '/../../resources/lang/' . $lang . '.php';
 require_once __DIR__ . '/../../app/helpers/menu_helper.php';
 require_once __DIR__ . '/../../app/helpers/menu_engine.php';
-require_once __DIR__ . '/../../app/services/analytics_service.php';
+require_once __DIR__ . '/../../app/services/performance_analytics_service.php';
 
 $role = $_SESSION['role'] ?? 'guest';
+$sidebarCollapsed = $_SESSION['sidebar_collapsed'] ?? 0;
 
 /* ==========================
    MENU ENGINE
@@ -72,7 +73,7 @@ $businessInsight = getBusinessInsight("today") ?? [
 
     <!-- Notifications | Analytics Menu | Header -->
     <script defer src="/rkd-cafe/public/assets/js/notifications.js"></script>
-    <script defer src="/rkd-cafe/public/assets/js/analytics_menu.js"></script>
+    <script defer src="/rkd-cafe/public/assets/js/performance_analytics.js"></script>
     <script defer src="/rkd-cafe/public/assets/js/header.js"></script>
 
     <!-- Chart.js -->
@@ -92,12 +93,29 @@ $businessInsight = getBusinessInsight("today") ?? [
         .chart-card:hover {
             transform: translateY(-2px);
         }
+
+        .analytics-float-enter {
+            transform: translateY(20px);
+            opacity: 0;
+        }
+
+        .analytics-float-active {
+            transform: translateY(0);
+            opacity: 1;
+        }
     </style>
 </head>
 
 <body
-    x-data="{dark:localStorage.theme==='dark',sidebarOpen:true}"
-    x-init="document.documentElement.classList.toggle('dark',dark)"
+    x-data="{
+        dark: localStorage.theme==='dark',
+        sidebarOpen:<?= isset($sidebarCollapsed) && $sidebarCollapsed ? 'false' : 'true' ?>,
+        ...analyticsFilter()
+    }"
+    x-init="
+        document.documentElement.classList.toggle('dark', dark);
+        initObserver();
+    "
     :class="{ 'dark': dark }"
     class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-white transition">
 
@@ -170,48 +188,76 @@ $businessInsight = getBusinessInsight("today") ?? [
 
             </div>
 
-            <main id="dashboardScroll"
+            <main
+                id="dashboardScroll"
                 class="flex-1 p-4 md:p-6 overflow-y-auto space-y-6 scrollbar-hide">
 
                 <!-- HEADER -->
-
                 <div
-                    x-data="analyticsFilter()"
-                    class="flex flex-col md:flex-row md:items-center md:justify-between">
+                    class="flex flex-col mb-12 md:flex-row md:items-center md:justify-between gap-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm px-6 py-5">
 
-                    <div>
-                        <h1 class="text-2xl font-bold"><?= $pageTitle ?></h1>
-                        <p class="text-sm text-gray-500">Business Intelligence Dashboard</p>
+                    <!-- LEFT -->
+                    <div class="flex items-center gap-4">
+
+                        <div class="w-11 h-11 flex items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-500/20">
+                            <i class="fa-solid fa-chart-line text-blue-600 dark:text-blue-400"></i>
+                        </div>
+
+                        <div>
+                            <h1 class="text-xl md:text-2xl font-semibold tracking-tight">
+                                <?= htmlspecialchars($pageTitle) ?>
+                            </h1>
+
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                <?= $t['bi_dashboard'] ?? 'Business Intelligence Dashboard' ?>
+                            </p>
+                        </div>
+
                     </div>
 
-                    <div class="flex gap-2 mt-3 md:mt-0">
+                    <!-- NORMAL FILTER -->
+                    <div x-ref="rangeControl"
+                        x-show="!floating"
+                        x-transition
+                        class="flex items-center gap-3">
 
-                        <button
-                            @click="setRange('today')"
-                            class="cursor-pointer"
-                            :class="active==='today'
-                                ? 'px-3 py-1 text-sm bg-blue-600 text-white rounded transition'
-                                : 'px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 transition'">
-                            Today
-                        </button>
+                        <span title="Time Range" class="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                            Time Range
+                        </span>
 
-                        <button
-                            @click="setRange('7days')"
-                            class="cursor-pointer"
-                            :class="active==='7days'
-                                ? 'px-3 py-1 text-sm bg-blue-600 text-white rounded transition'
-                                : 'px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 transition'">
-                            7 Days
-                        </button>
+                        <div class="flex items-center bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
 
-                        <button
-                            @click="setRange('30days')"
-                            class="cursor-pointer"
-                            :class="active==='30days'
-                                ? 'px-3 py-1 text-sm bg-blue-600 text-white rounded transition'
-                                : 'px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 transition'">
-                            30 Days
-                        </button>
+                            <button
+                                @click="setRange('today')"
+                                class="px-4 py-2 text-sm rounded-md transition-all cursor-pointer"
+                                :class="active==='today'
+                                    ? 'bg-blue-600 text-white shadow'
+                                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'">
+
+                                Today
+                            </button>
+
+                            <button
+                                @click="setRange('7days')"
+                                class="px-4 py-2 text-sm rounded-md transition-all cursor-pointer"
+                                :class="active==='7days'
+                                    ? 'bg-blue-600 text-white shadow'
+                                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'">
+
+                                7 Days
+                            </button>
+
+                            <button
+                                @click="setRange('30days')"
+                                class="px-4 py-2 text-sm rounded-md transition-all cursor-pointer"
+                                :class="active==='30days'
+                                    ? 'bg-blue-600 text-white shadow'
+                                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'">
+
+                                30 Days
+                            </button>
+
+                        </div>
 
                     </div>
 
@@ -457,6 +503,52 @@ $businessInsight = getBusinessInsight("today") ?? [
 
     </div>
 
+    <!-- FLOATING TIME RANGE -->
+    <div
+        x-show="floating"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 translate-x-10"
+        x-transition:enter-end="opacity-100 translate-x-0"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-end="opacity-0 translate-x-10"
+        class="fixed right-6 top-1/2 -translate-y-1/2 z-50">
+
+        <div class="bg-white dark:bg-gray-800 shadow-xl rounded-xl p-2 flex flex-col gap-1">
+
+            <button
+                @click="setRange('today')"
+                class="px-4 py-2 text-sm rounded-md transition-all cursor-pointer"
+                :class="active==='today'
+                ? 'bg-blue-600 text-white'
+                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'">
+
+                Today
+            </button>
+
+            <button
+                @click="setRange('7days')"
+                class="px-4 py-2 text-sm rounded-md transition-all cursor-pointer"
+                :class="active==='7days'
+                ? 'bg-blue-600 text-white'
+                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'">
+
+                7 Days
+            </button>
+
+            <button
+                @click="setRange('30days')"
+                class="px-4 py-2 text-sm rounded-md transition-all cursor-pointer"
+                :class="active==='30days'
+                ? 'bg-blue-600 text-white'
+                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'">
+
+                30 Days
+            </button>
+
+        </div>
+
+    </div>
+
     <!-- overlay -->
     <div id="chartOverlay" class="chart-overlay hidden"></div>
 
@@ -475,6 +567,8 @@ $businessInsight = getBusinessInsight("today") ?? [
 
         };
     </script>
+
+    <script src="/rkd-cafe/public/assets/js/sidebar-tooltip.js"></script>
 
     <div
         id="global-tooltip"
@@ -499,14 +593,44 @@ $businessInsight = getBusinessInsight("today") ?? [
 
             return {
 
-                active: 'today',
+                active: "today",
+                floating: false,
+                loading: false,
 
-                activeClass: 'px-3 py-1 text-sm bg-blue-600 text-white rounded',
-                normalClass: 'px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded',
+                initObserver() {
+
+                    const header = document.getElementById("headerStack")
+                    const container = document.getElementById("dashboardScroll")
+
+                    if (!header || !container) return
+
+                    const headerHeight = header.offsetHeight
+                    const el = this.$refs.rangeControl
+
+                    const checkPosition = () => {
+
+                        if (!el) return
+
+                        const rect = el.getBoundingClientRect()
+
+                        this.floating = rect.top <= headerHeight
+
+                    }
+
+                    // cek saat scroll
+                    container.addEventListener("scroll", checkPosition)
+
+                    // cek saat load pertama
+                    checkPosition()
+
+                },
 
                 async setRange(period) {
 
+                    if (this.loading) return
+
                     this.active = period
+                    this.loading = true
 
                     showChartsLoading()
 
@@ -516,12 +640,15 @@ $businessInsight = getBusinessInsight("today") ?? [
                         const data = await res.json()
 
                         window.analyticsData = data
-
                         renderDashboard(data)
 
                     } catch (e) {
 
                         console.error("Analytics load error", e)
+
+                    } finally {
+
+                        this.loading = false
 
                     }
 

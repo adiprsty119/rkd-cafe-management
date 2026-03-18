@@ -19,6 +19,7 @@ require_once __DIR__ . '/../../app/helpers/menu_helper.php';
 require_once __DIR__ . '/../../app/helpers/menu_engine.php';
 
 $role = $_SESSION['role'] ?? 'guest';
+$sidebarCollapsed = $_SESSION['sidebar_collapsed'] ?? 0;
 
 /* ==========================
    MENU ENGINE
@@ -26,8 +27,34 @@ $role = $_SESSION['role'] ?? 'guest';
 
 $menus = getMenusByRole($role);
 $currentMenu = findMenuByRoute($menus);
-$pageTitle = $currentMenu['menu']['title'] ?? 'Dashboard';
-$breadcrumb = generateBreadcrumb($currentMenu);
+
+// Deteksi settings page
+$isSettingsPage = str_contains($_SERVER['REQUEST_URI'], 'settings.php');
+
+// Tentukan page title
+if ($isSettingsPage) {
+    $pageTitle = 'Settings';
+} else {
+    $pageTitle = $currentMenu['menu']['title'] ?? 'Dashboard';
+}
+
+// FALLBACK BREADCRUMB
+if (!$currentMenu) {
+
+    $breadcrumb = [
+        [
+            'title' => $t['dashboard'] ?? 'Dashboard',
+            'url'   => '/rkd-cafe/resources/views/dashboard/kasir.php'
+        ],
+        [
+            'title' => $pageTitle,
+            'url'   => null
+        ]
+    ];
+} else {
+
+    $breadcrumb = generateBreadcrumb($currentMenu);
+}
 
 /*
 |--------------------------------------------------------------------------
@@ -101,7 +128,7 @@ $settingsTabs = [
 
 
 <body
-    x-data="{ dark: localStorage.theme === 'dark', loading:false, loadingTheme:false, sidebarOpen:true }"
+    x-data="{ dark: localStorage.theme === 'dark', loading:false, loadingTheme:false, sidebarOpen:<?= isset($sidebarCollapsed) && $sidebarCollapsed ? 'false' : 'true' ?> }"
     @toggle-theme.window="loadingTheme = true; setTimeout(() => {let newTheme = !dark; localStorage.theme = newTheme ? 'dark' : 'light'; location.reload();}, 800)"
     x-init="document.documentElement.classList.toggle('dark', dark)"
     :class="{ 'dark': dark }"
@@ -204,13 +231,32 @@ $settingsTabs = [
 
 
                 <!-- HEADER -->
-                <div>
+                <div class="flex flex-col mb-12 md:flex-row md:items-center md:justify-between gap-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm px-6 py-5">
 
-                    <h1 class="text-2xl font-bold"><?= $pageTitle ?></h1>
+                    <!-- LEFT -->
+                    <div class="flex items-center gap-4">
 
-                    <p class="text-sm text-gray-500">
-                        Cashier account settings
-                    </p>
+                        <!-- PAGE ICON -->
+                        <div class="w-11 h-11 flex items-center justify-center rounded-lg bg-gray-200 dark:bg-gray-700">
+
+                            <i class="fa-solid fa-user-gear text-gray-700 dark:text-gray-300"></i>
+
+                        </div>
+
+                        <!-- TITLE -->
+                        <div>
+
+                            <h1 class="text-xl md:text-2xl font-semibold tracking-tight">
+                                <?= htmlspecialchars($pageTitle) ?>
+                            </h1>
+
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                <?= $t['cashier_settings'] ?? 'Cashier account settings' ?>
+                            </p>
+
+                        </div>
+
+                    </div>
 
                 </div>
 
@@ -384,6 +430,7 @@ $settingsTabs = [
     <script src="/rkd-cafe/public/assets/js/toast.js"></script>
     <script src="/rkd-cafe/public/assets/js/notifications.js"></script>
     <script src="/rkd-cafe/public/assets/js/header.js"></script>
+    <script src="/rkd-cafe/public/assets/js/sidebar-tooltip.js"></script>
 
     <div
         id="global-tooltip"

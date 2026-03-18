@@ -20,6 +20,7 @@ require_once __DIR__ . '/../../app/helpers/menu_engine.php';
 require_once __DIR__ . '/../../app/services/analytics_service.php';
 
 $role = $_SESSION['role'] ?? 'guest';
+$sidebarCollapsed = $_SESSION['sidebar_collapsed'] ?? 0;
 
 /* ==========================
    MENU ENGINE
@@ -30,22 +31,54 @@ $currentMenu = findMenuByRoute($menus);
 $pageTitle = $currentMenu['menu']['title'] ?? 'Sales Analytics';
 $breadcrumb = generateBreadcrumb($currentMenu);
 
-
 /* ==========================
-   SALES ANALYTICS ENGINE
+   PERIOD CONTROL (NEW)
 ========================== */
 
-$analytics = getDashboardAnalytics();
+$period = $_GET['period'] ?? 'today';
+
+if (!in_array($period, ['today', '7days', '30days'])) {
+    $period = 'today';
+}
+
+/* ==========================
+   SALES ANALYTICS ENGINE (FINAL)
+========================== */
+
+$analytics = getDashboardAnalytics($period);
 
 $totalRevenue = $analytics['total_revenue'] ?? 0;
 $totalOrders = $analytics['total_orders'] ?? 0;
 $activeCustomers = $analytics['active_customers'] ?? 0;
 $avgOrder = $analytics['avg_order'] ?? 0;
 
-$salesHourly = getSalesHourly();
-$salesDaily = getSalesDaily();
-$paymentDistribution = getPaymentDistribution();
+/*
+|--------------------------------------------------------------------------
+| IMPORTANT: STRUCTURE MUST MATCH analytics.php
+|--------------------------------------------------------------------------
+*/
 
+$salesHourly = getSalesHourly($period);
+$salesDaily = getSalesDaily($period);
+$paymentDistribution = getPaymentDistribution($period);
+
+
+/*
+|--------------------------------------------------------------------------
+| KPI INTELLIGENCE
+|--------------------------------------------------------------------------
+*/
+
+$previous = getDashboardAnalytics("previous_" . $period);
+
+$growthRevenue = 0;
+
+if (($previous['total_revenue'] ?? 0) > 0) {
+    $growthRevenue = (
+        ($totalRevenue - $previous['total_revenue']) /
+        $previous['total_revenue']
+    ) * 100;
+}
 ?>
 
 <!DOCTYPE html>
@@ -81,12 +114,20 @@ $paymentDistribution = getPaymentDistribution();
         [x-cloak] {
             display: none !important;
         }
+
+        .chart-card {
+            transition: all .25s ease;
+        }
+
+        .chart-card:hover {
+            transform: translateY(-2px);
+        }
     </style>
 
 </head>
 
 <body
-    x-data="{ dark: localStorage.theme === 'dark', sidebarOpen:true }"
+    x-data="{ dark: localStorage.theme === 'dark', sidebarOpen:<?= isset($sidebarCollapsed) && $sidebarCollapsed ? 'false' : 'true' ?> }"
     x-init="document.documentElement.classList.toggle('dark', dark)"
     :class="{ 'dark': dark }"
     class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-white transition-colors duration-300">
@@ -172,18 +213,54 @@ $paymentDistribution = getPaymentDistribution();
 
 
                 <!-- HEADER -->
+                <div class="flex flex-col mb-12 md:flex-row md:items-center md:justify-between gap-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm px-6 py-5">
 
-                <div>
+                    <!-- LEFT -->
+                    <div class="flex items-center gap-4">
 
-                    <h1 class="text-2xl font-bold"><?= $pageTitle ?></h1>
+                        <!-- PAGE ICON -->
+                        <div class="w-11 h-11 flex items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-500/20">
 
-                    <p class="text-sm text-gray-500">
-                        Sales performance and transaction insights
-                    </p>
+                            <i class="fa-solid fa-chart-line text-blue-600 dark:text-blue-400"></i>
+
+                        </div>
+
+                        <!-- TITLE -->
+                        <div>
+
+                            <h1 class="text-xl md:text-2xl font-semibold tracking-tight">
+                                <?= htmlspecialchars($pageTitle) ?>
+                            </h1>
+
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                <?= $t['sales_analytics_desc'] ?? 'Sales performance and transaction insights' ?>
+                            </p>
+
+                        </div>
+
+                    </div>
 
                 </div>
 
+                <!-- SALES INSIGHT PANEL -->
+                <div class="bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-xl shadow p-6">
 
+                    <div class="flex items-center gap-2 mb-3">
+                        <i class="fa-solid fa-brain"></i>
+                        <h2 class="font-semibold text-lg">Sales Insight</h2>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-3">
+
+                        <?php foreach ($salesInsight as $ins): ?>
+                            <div class="bg-white/10 px-4 py-3 rounded-lg text-sm">
+                                <?= $ins['message'] ?>
+                            </div>
+                        <?php endforeach; ?>
+
+                    </div>
+
+                </div>
 
                 <!-- KPI CARDS -->
 
@@ -191,18 +268,34 @@ $paymentDistribution = getPaymentDistribution();
 
                     <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
 
-                        <p class="text-gray-500 text-sm">Total Revenue</p>
+                        <div class="flex items-center justify-between">
+
+                            <p class="text-gray-500 text-sm">Total Revenue</p>
+
+                            <i class="fa-solid fa-coins text-yellow-500"></i>
+
+                        </div>
 
                         <h2 class="text-2xl font-bold mt-2">
                             Rp. <?= number_format($totalRevenue, 0, ',', '.') ?>
                         </h2>
+
+                        <p class="text-sm mt-1 <?= $growthRevenue >= 0 ? 'text-green-500' : 'text-red-500' ?>">
+                            <?= number_format($growthRevenue, 1) ?>%
+                        </p>
 
                     </div>
 
 
                     <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
 
-                        <p class="text-gray-500 text-sm">Total Orders</p>
+                        <div class="flex justify-between">
+
+                            <p class="text-gray-500 text-sm">Total Orders</p>
+
+                            <i class="fa-solid fa-receipt text-blue-500"></i>
+
+                        </div>
 
                         <h2 class="text-2xl font-bold mt-2">
                             <?= $totalOrders ?>
@@ -213,7 +306,13 @@ $paymentDistribution = getPaymentDistribution();
 
                     <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
 
-                        <p class="text-gray-500 text-sm">Active Customers</p>
+                        <div class="flex justify-between">
+
+                            <p class="text-gray-500 text-sm">Active Customers</p>
+
+                            <i class="fa-solid fa-users text-purple-500"></i>
+
+                        </div>
 
                         <h2 class="text-2xl font-bold mt-2">
                             <?= $activeCustomers ?>
@@ -224,7 +323,13 @@ $paymentDistribution = getPaymentDistribution();
 
                     <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
 
-                        <p class="text-gray-500 text-sm">Average Order</p>
+                        <div class="flex justify-between">
+
+                            <p class="text-gray-500 text-sm">Average Order</p>
+
+                            <i class="fa-solid fa-chart-line text-green-500"></i>
+
+                        </div>
 
                         <h2 class="text-2xl font-bold mt-2">
                             Rp. <?= number_format($avgOrder, 0, ',', '.') ?>
@@ -239,34 +344,21 @@ $paymentDistribution = getPaymentDistribution();
                 <!-- ROW 1 : HOURLY + DAILY -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                    <!-- HOURLY SALES -->
-                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+                    <!-- HOURLY -->
+                    <?php
+                    $title = "Hourly Sales";
+                    $chartId = "hourlySalesChart";
+                    $insight = $salesHourly['insight'] ?? '';
+                    require __DIR__ . '/../../resources/components/chart-card.php';
+                    ?>
 
-                        <h2 class="font-semibold mb-4 flex items-center gap-2">
-                            <i class="fa-solid fa-clock text-indigo-500"></i>
-                            Hourly Sales
-                        </h2>
-
-                        <div class="h-64">
-                            <canvas id="hourlySalesChart"></canvas>
-                        </div>
-
-                    </div>
-
-
-                    <!-- DAILY SALES -->
-                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
-
-                        <h2 class="font-semibold mb-4 flex items-center gap-2">
-                            <i class="fa-solid fa-calendar-day text-green-500"></i>
-                            Daily Sales
-                        </h2>
-
-                        <div class="h-64">
-                            <canvas id="dailySalesChart"></canvas>
-                        </div>
-
-                    </div>
+                    <!-- DAILY -->
+                    <?php
+                    $title = "Daily Sales";
+                    $chartId = "dailySalesChart";
+                    $insight = $salesDaily['insight'] ?? '';
+                    require __DIR__ . '/../../resources/components/chart-card.php';
+                    ?>
 
                 </div>
 
@@ -275,18 +367,12 @@ $paymentDistribution = getPaymentDistribution();
                 <!-- ROW 2 : PAYMENT DISTRIBUTION (FULL WIDTH) -->
                 <div class="mt-6">
 
-                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
-
-                        <h2 class="font-semibold mb-4 flex items-center gap-2">
-                            <i class="fa-solid fa-credit-card text-orange-500"></i>
-                            Payment Distribution
-                        </h2>
-
-                        <div class="h-72">
-                            <canvas id="paymentChart"></canvas>
-                        </div>
-
-                    </div>
+                    <?php
+                    $title = "Payment Distribution";
+                    $chartId = "paymentChart";
+                    $insight = $paymentDistribution['insight'] ?? '';
+                    require __DIR__ . '/../../resources/components/chart-card.php';
+                    ?>
 
                 </div>
 
@@ -301,11 +387,6 @@ $paymentDistribution = getPaymentDistribution();
 
     <?php require __DIR__ . '/../../resources/components/toast.php'; ?>
 
-
-    <script src="/rkd-cafe/public/assets/js/toast.js"></script>
-    <script src="/rkd-cafe/public/assets/js/notifications.js"></script>
-
-
     <script>
         window.salesAnalytics = {
 
@@ -316,10 +397,11 @@ $paymentDistribution = getPaymentDistribution();
         };
     </script>
 
-
+    <script src="/rkd-cafe/public/assets/js/toast.js"></script>
     <script src="/rkd-cafe/public/assets/js/analytics_sales.js"></script>
     <script src="/rkd-cafe/public/assets/js/notifications.js"></script>
     <script src="/rkd-cafe/public/assets/js/header.js"></script>
+    <script src="/rkd-cafe/public/assets/js/sidebar-tooltip.js"></script>
 
     <div
         id="global-tooltip"

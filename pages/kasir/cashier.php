@@ -17,6 +17,7 @@ require_once __DIR__ . '/../../app/helpers/menu_helper.php';
 require_once __DIR__ . '/../../app/helpers/menu_engine.php';
 
 $role = $_SESSION['role'] ?? 'guest';
+$sidebarCollapsed = $_SESSION['sidebar_collapsed'] ?? 0;
 
 /* ==========================
    MENU ENGINE
@@ -64,7 +65,13 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
 
 <body
-    x-data="{ dark: localStorage.theme === 'dark', loading:false, loadingTheme:false, sidebarOpen:true, cashierPOS() }"
+    x-data="{
+        dark: localStorage.theme === 'dark',
+        loading:false,
+        loadingTheme:false,
+        sidebarOpen:<?= isset($sidebarCollapsed) && $sidebarCollapsed ? 'false' : 'true' ?>,
+        ...cashierPOS()
+    }"
     @toggle-theme.window="loadingTheme = true; setTimeout(() => {let newTheme = !dark; localStorage.theme = newTheme ? 'dark' : 'light'; location.reload();}, 800)"
     x-init="document.documentElement.classList.toggle('dark', dark)"
     :class="{ 'dark': dark }"
@@ -104,7 +111,7 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
 
         <!-- MAIN CONTENT -->
-        <div class="flex-1 flex flex-col min-w-0 md:ml-0 transition-all duration-300">
+        <div class="flex-1 flex flex-col min-w-0 transition-all duration-300">
 
             <!-- =========================
                 HEADER STACK
@@ -166,10 +173,39 @@ $breadcrumb = generateBreadcrumb($currentMenu);
                 class="flex-1 p-4 md:p-6 overflow-y-auto space-y-6 scrollbar-hide">
 
 
+                <!-- HEADER -->
+                <div class="flex flex-col mb-12 md:flex-row md:items-center md:justify-between gap-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm px-6 py-5">
+
+                    <!-- LEFT -->
+                    <div class="flex items-center gap-4">
+
+                        <!-- PAGE ICON -->
+                        <div class="w-11 h-11 flex items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-500/20">
+
+                            <i class="fa-solid fa-cash-register text-emerald-600 dark:text-emerald-400"></i>
+
+                        </div>
+
+                        <!-- TITLE -->
+                        <div>
+
+                            <h1 class="text-xl md:text-2xl font-semibold tracking-tight">
+                                <?= htmlspecialchars($pageTitle) ?>
+                            </h1>
+
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                <?= $t['pos_interface'] ?? 'Process customer orders and payments' ?>
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
                 <!-- MENU SECTION -->
                 <div class="lg:col-span-2 p-6 overflow-y-auto space-y-6">
 
-                    <h1 class="text-2xl font-bold"><?= $pageTitle ?></h1>
 
                     <!-- SEARCH -->
                     <input
@@ -258,7 +294,7 @@ $breadcrumb = generateBreadcrumb($currentMenu);
                     <!-- CART ITEMS -->
                     <div class="flex-1 overflow-y-auto space-y-2">
 
-                        <template x-for="item in cart">
+                        <template x-for="item in cart" :key="item.name">
 
                             <div class="flex justify-between items-center border-b py-2">
 
@@ -275,7 +311,7 @@ $breadcrumb = generateBreadcrumb($currentMenu);
                                 <div class="flex items-center gap-2">
 
                                     <button
-                                        @click="item.qty--"
+                                        @click="item.qty > 1 ? item.qty-- : removeItem(item)"
                                         class="px-2 border rounded">
                                         -
                                     </button>
@@ -305,7 +341,7 @@ $breadcrumb = generateBreadcrumb($currentMenu);
                             <span>Total</span>
 
                             <span>
-                                Rp <span x-text="total"></span>
+                                Rp <span x-text="total.toLocaleString('id-ID')"></span>
                             </span>
 
                         </div>
@@ -333,6 +369,7 @@ $breadcrumb = generateBreadcrumb($currentMenu);
     <script src="/rkd-cafe/public/assets/js/toast.js"></script>
     <script src="/rkd-cafe/public/assets/js/notifications.js"></script>
     <script src="/rkd-cafe/public/assets/js/header.js"></script>
+    <script src="/rkd-cafe/public/assets/js/sidebar-tooltip.js"></script>
 
     <div
         id="global-tooltip"
@@ -379,6 +416,11 @@ $breadcrumb = generateBreadcrumb($currentMenu);
                     }
 
                 },
+
+                removeItem(item) {
+                    this.cart = this.cart.filter(i => i !== item)
+                },
+
 
                 get total() {
 

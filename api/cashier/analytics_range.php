@@ -1,6 +1,6 @@
 <?php
 
-require $_SERVER['DOCUMENT_ROOT'] . '/rkd-cafe/app/services/analytics_service.php';
+require $_SERVER['DOCUMENT_ROOT'] . '/rkd-cafe/app/services/performance_analytics_service.php';
 
 
 /* ==========================

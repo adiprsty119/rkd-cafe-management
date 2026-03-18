@@ -19,6 +19,7 @@ require_once __DIR__ . '/../../app/helpers/menu_helper.php';
 require_once __DIR__ . '/../../app/helpers/menu_engine.php';
 
 $role = $_SESSION['role'] ?? 'guest';
+$sidebarCollapsed = $_SESSION['sidebar_collapsed'] ?? 0;
 
 /* ==========================
    MENU ENGINE
@@ -26,8 +27,34 @@ $role = $_SESSION['role'] ?? 'guest';
 
 $menus = getMenusByRole($role);
 $currentMenu = findMenuByRoute($menus);
-$pageTitle = $currentMenu['menu']['title'] ?? 'Dashboard';
-$breadcrumb = generateBreadcrumb($currentMenu);
+
+// Deteksi settings page
+$isSettingsPage = str_contains($_SERVER['REQUEST_URI'], 'settings.php');
+
+// Tentukan page title
+if ($isSettingsPage) {
+    $pageTitle = 'Settings';
+} else {
+    $pageTitle = $currentMenu['menu']['title'] ?? 'Dashboard';
+}
+
+// FALLBACK BREADCRUMB
+if (!$currentMenu) {
+
+    $breadcrumb = [
+        [
+            'title' => $t['dashboard'] ?? 'Dashboard',
+            'url'   => '/rkd-cafe/resources/views/dashboard/owner.php'
+        ],
+        [
+            'title' => $pageTitle,
+            'url'   => null
+        ]
+    ];
+} else {
+
+    $breadcrumb = generateBreadcrumb($currentMenu);
+}
 
 /*
 |--------------------------------------------------------------------------
@@ -98,7 +125,7 @@ $settingsTabs = [
 
 
 <body
-    x-data="{ dark: localStorage.theme === 'dark', loading:false, loadingTheme:false, sidebarOpen:true }"
+    x-data="{ dark: localStorage.theme === 'dark', loading:false, loadingTheme:false, sidebarOpen:<?= isset($sidebarCollapsed) && $sidebarCollapsed ? 'false' : 'true' ?> }"
     @toggle-theme.window="loadingTheme = true; setTimeout(() => {let newTheme = !dark; localStorage.theme = newTheme ? 'dark' : 'light'; location.reload();}, 800)"
     x-init="document.documentElement.classList.toggle('dark', dark)"
     :class="{ 'dark': dark }"
@@ -135,24 +162,67 @@ $settingsTabs = [
             class="fixed inset-0 bg-black/40 z-30 md:hidden">
         </div>
 
-
-
         <!-- MAIN CONTENT -->
         <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
 
+            <!-- =========================
+                HEADER STACK
+            ========================= -->
+            <div id="headerStack" class="sticky top-0 z-50 relative">
 
-            <!-- NAVBAR -->
-            <div class="p-4 border-t border-gray-700">
+                <!-- =========================
+                    NAVBAR
+                ========================= -->
+                <div
+                    id="dashboardNavbar"
+                    class="relative z-50 transition-all duration-300">
 
-                <?php require __DIR__ . '/../../resources/components/navbar.php'; ?>
+                    <div class="w-full px-4 mt-3 transition-all duration-300 bg-gray-100 dark:bg-gray-800">
+                        <?php require __DIR__ . '/../../resources/components/navbar.php'; ?>
+                    </div>
+
+
+                    <!-- =========================
+                        BREADCRUMB INDICATOR
+                    ========================= -->
+                    <div
+                        id="breadcrumbIndicator"
+                        class="absolute left-auto -translate-x-1/2 top-full z-50 opacity-0 translate-y-2 pointer-events-none transition-all ease-out delay-75 duration-300">
+
+                        <button
+                            class="flex items-center ml-16 px-2 py-1 text-sm rounded-sm backdrop-blur-md bg-gray-100 dark:bg-gray-800 shadow-md hover:bg-white/60 active:scale-95 transition cursor-pointer">
+
+                            <i class="fa-solid fa-angle-down animate-bounce"></i>
+
+                        </button>
+
+                    </div>
+
+                </div>
 
             </div>
 
-            <!-- BREADCRUMB NAVIGATION -->
-            <?php require __DIR__ . '/../../resources/components/breadcrumb.php'; ?>
 
-            <!-- SETTINGS CONTENT -->
-            <main class="flex-1 p-4 md:p-6 overflow-y-auto space-y-6">
+            <!-- =========================
+                BREADCRUMB CONTAINER
+            ========================= -->
+            <div
+                id="breadcrumbContainer"
+                class="relative will-change-transform transition-opacity duration-200">
+
+                <div
+                    id="breadcrumbMask"
+                    class="px-4 py-2 overflow-hidden">
+
+                    <?php require __DIR__ . '/../../resources/components/breadcrumb.php'; ?>
+
+                </div>
+
+            </div>
+
+
+            <main id="dashboardScroll"
+                class="flex-1 p-4 md:p-6 overflow-y-auto space-y-6 scrollbar-hide">
 
 
                 <!-- HEADER -->
@@ -349,6 +419,7 @@ $settingsTabs = [
 
     <script src="/rkd-cafe/public/assets/js/toast.js"></script>
     <script src="/rkd-cafe/public/assets/js/notifications.js"></script>
+    <script src="/rkd-cafe/public/assets/js/sidebar-tooltip.js"></script>
 
     <script>
         function settingsPage() {

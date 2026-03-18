@@ -17,6 +17,7 @@ require_once __DIR__ . '/../../app/helpers/menu_helper.php';
 require_once __DIR__ . '/../../app/helpers/menu_engine.php';
 
 $role = $_SESSION['role'] ?? 'guest';
+$sidebarCollapsed = $_SESSION['sidebar_collapsed'] ?? 0;
 
 /* ==========================
    MENU ENGINE
@@ -64,15 +65,13 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
 
 <body
-    x-data="{ dark: localStorage.theme === 'dark', loading:false, loadingTheme:false, sidebarOpen:true }"
+    x-data="{ dark: localStorage.theme === 'dark', loading:false, loadingTheme:false, sidebarOpen:<?= isset($sidebarCollapsed) && $sidebarCollapsed ? 'false' : 'true' ?> }"
     @toggle-theme.window="loadingTheme = true; setTimeout(() => {let newTheme = !dark; localStorage.theme = newTheme ? 'dark' : 'light'; location.reload();}, 800)"
     x-init="document.documentElement.classList.toggle('dark', dark)"
     :class="{ 'dark': dark }"
     class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-white transition-colors duration-300">
 
-
     <div class="flex min-h-screen">
-
 
         <!-- SIDEBAR -->
         <aside
@@ -103,7 +102,6 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
         <!-- MAIN CONTENT -->
         <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-
 
             <!-- =========================
                     HEADER STACK
@@ -161,7 +159,7 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
             </div>
 
-
+            <!-- DASHBOARD CONTENT -->
             <main id="dashboardScroll"
                 class="flex-1 p-4 md:p-6 overflow-y-auto space-y-6 scrollbar-hide">
 
@@ -169,14 +167,45 @@ $breadcrumb = generateBreadcrumb($currentMenu);
                 <!-- MENU SECTION -->
                 <div class="lg:col-span-2">
 
-                    <div class="flex justify-between items-center mb-4">
+                    <!-- HEADER -->
+                    <div class="flex flex-col mb-12 md:flex-row md:items-center md:justify-between gap-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm px-6 py-5">
 
-                        <h1 class="text-2xl font-bold"><?= $pageTitle ?></h1>
+                        <!-- LEFT -->
+                        <div class="flex items-center gap-4">
 
-                        <input
-                            type="text"
-                            placeholder="<?= $t['search_menu'] ?? 'Search menu...' ?>"
-                            class="border px-3 py-2 rounded-lg dark:bg-gray-800">
+                            <!-- PAGE ICON -->
+                            <div class="w-11 h-11 flex items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-500/20">
+
+                                <i class="fa-solid fa-mug-hot text-amber-600 dark:text-amber-400"></i>
+
+                            </div>
+
+                            <!-- TITLE -->
+                            <div>
+
+                                <h1 class="text-xl md:text-2xl font-semibold tracking-tight">
+                                    <?= htmlspecialchars($pageTitle) ?>
+                                </h1>
+
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                    <?= $t['search_menu'] ?? 'Search menu items quickly' ?>
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                        <!-- RIGHT SEARCH -->
+                        <div class="relative w-full md:w-64">
+
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+
+                            <input
+                                type="text"
+                                placeholder="<?= $t['search_menu'] ?? 'Search menu...' ?>"
+                                class="w-full pl-9 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm">
+
+                        </div>
 
                     </div>
 
@@ -316,6 +345,7 @@ $breadcrumb = generateBreadcrumb($currentMenu);
     <script src="/rkd-cafe/public/assets/js/toast.js"></script>
     <script src="/rkd-cafe/public/assets/js/notifications.js"></script>
     <script src="/rkd-cafe/public/assets/js/header.js"></script>
+    <script src="/rkd-cafe/public/assets/js/sidebar-tooltip.js"></script>
 
     <div
         id="global-tooltip"

@@ -13,17 +13,7 @@ $pdo = getPDO(); // ← TAMBAHKAN BARIS INI
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
 
     $token = $_COOKIE['remember_token'];
-
-    $stmt = $pdo->query("
-        SELECT 
-            id,
-            username,
-            role,
-            sidebar_collapsed,
-            remember_token
-        FROM users
-        WHERE remember_token IS NOT NULL
-    ");
+    $stmt = $pdo->query("SELECT id, username, role, sidebar_collapsed, remember_token FROM users WHERE remember_token IS NOT NULL");
 
     while ($user = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
@@ -91,7 +81,7 @@ if ($currentUser) {
     $_SESSION['role'] = $currentUser['role'];
     $_SESSION['sidebar_collapsed'] = $currentUser['sidebar_collapsed'];
 
-    $sidebarCollapsed = $currentUser['sidebar_collapsed'] == 1;
+    $sidebarCollapsed = (bool) $currentUser['sidebar_collapsed'];
 } else {
 
     /* USER SUDAH DIHAPUS */

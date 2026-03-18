@@ -24,7 +24,6 @@ function fetchAnalyticsAPI($endpoint, $params = [])
 {
 
     $url = analyticsApiUrl($endpoint, $params);
-
     $ch = curl_init();
 
     curl_setopt_array($ch, [

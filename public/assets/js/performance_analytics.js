@@ -918,3 +918,7 @@ function getInsightPriority(text){
         bg:"bg-white/10"
     }
 }
+
+/* ==========================
+   ANALYTICS FILTER (ALPINE)
+========================== */

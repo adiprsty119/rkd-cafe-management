@@ -210,6 +210,32 @@ canvas.chart-ready {
   .animate-fade-in {
     animation: fadeInInsight 0.35s ease forwards;
   }
+
+  body.page-loading > *:not(#pageLoader):not(#topLoader) {
+    filter: blur(2px) brightness(0.85);
+    opacity: 0.7;
+    transform: scale(0.996);
+    transition: all 0.25s ease;
+  }
+
+  body.page-enter {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  body.page-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+    transition: all 0.35s ease;
+  }
+
+  .logout-mode {
+    background: rgba(255, 0, 0, 0.05);
+  }
+
+  [x-cloak] {
+    display: none !important;
+  }
 }
 
 /* =================================
