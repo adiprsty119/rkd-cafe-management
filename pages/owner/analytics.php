@@ -114,12 +114,11 @@ $businessInsight = getBusinessInsight("today") ?? [
     }"
     x-init="
         document.documentElement.classList.toggle('dark', dark);
-        initObserver();
-    "
+        initObserver();"
     :class="{ 'dark': dark }"
     class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-white transition">
 
-    <div class="flex min-h-screen">
+    <div class="flex min-h-screen bg-gradient-to-br from-gray-200 via-gray-100 to-gray-300 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition">
 
         <!-- SIDEBAR -->
         <aside :class="sidebarOpen ? 'w-64':'w-20'"

@@ -300,24 +300,27 @@ $currentMenu = findMenuByRoute($menus);
 
         const topLoader = document.getElementById("topLoader");
 
-        const Loader = {
+        const LoaderEngine = {
             isNavigating: false,
             MIN_DURATION: 1200,
+            timers: [],
+
+            clearTimers() {
+                this.timers.forEach(t => clearTimeout(t));
+                this.timers = [];
+            },
 
             startProgress() {
                 if (!topLoader) return;
 
                 topLoader.style.transition = "none";
                 topLoader.style.width = "0%";
+                topLoader.style.opacity = "1";
 
                 requestAnimationFrame(() => {
-                    topLoader.style.transition = "width 0.3s ease";
-                    topLoader.style.width = "20%";
+                    topLoader.style.transition = "width 1.2s cubic-bezier(0.4,0,0.2,1)";
+                    topLoader.style.width = "85%";
                 });
-
-                setTimeout(() => topLoader.style.width = "45%", 100);
-                setTimeout(() => topLoader.style.width = "70%", 200);
-                setTimeout(() => topLoader.style.width = "90%", 300);
             },
 
             finishProgress() {
@@ -325,57 +328,102 @@ $currentMenu = findMenuByRoute($menus);
 
                 topLoader.style.width = "100%";
 
-                setTimeout(() => {
-                    topLoader.style.width = "0%";
-                }, 300);
+                this.timers.push(setTimeout(() => {
+                    topLoader.style.opacity = "0";
+
+                    this.timers.push(setTimeout(() => {
+                        topLoader.style.width = "0%";
+                        topLoader.style.opacity = "1";
+                    }, 300));
+
+                }, 300));
             },
 
             lockUI() {
                 document.body.classList.add("page-loading");
-
-                requestAnimationFrame(() => {
-                    document.body.style.pointerEvents = "none";
-                });
+                document.body.style.cursor = "progress";
+                document.body.style.overflow = "hidden";
             },
 
             unlockUI() {
-                document.body.style.pointerEvents = "";
                 document.body.classList.remove("page-loading");
+                document.body.style.cursor = "";
+                document.body.style.overflow = "";
             },
 
             start(message = null) {
+                if (this.isNavigating) return;
+
                 this.isNavigating = true;
 
+                this.clearTimers();
                 this.startProgress();
                 Alpine.store('loader').show(message);
                 this.lockUI();
+
+                this.timers.push(setTimeout(() => {
+                    if (this.isNavigating) {
+                        this.reset();
+                    }
+                }, 5000));
+            },
+
+            navigate(url) {
+                this.timers.push(setTimeout(() => {
+                    window.location.href = url;
+                }, this.MIN_DURATION));
+            },
+
+            submit(form) {
+                this.timers.push(setTimeout(() => {
+                    form.submit();
+                }, this.MIN_DURATION));
             },
 
             reset() {
+                this.clearTimers();
                 this.isNavigating = false;
+
                 Alpine.store('loader').hide();
                 this.finishProgress();
                 this.unlockUI();
             }
         };
+        window.LoaderEngine = LoaderEngine;
 
         // =========================
-        // BACK / FORWARD FIX
+        // BACK/FORWARD CACHE FIX
         // =========================
         window.addEventListener("pageshow", (event) => {
             if (
                 event.persisted ||
                 performance.getEntriesByType("navigation")[0]?.type === "back_forward"
             ) {
-                Loader.reset();
+                LoaderEngine.reset();
             }
         });
 
         // =========================
-        // NAVIGATION HANDLER
+        // TAB SWITCH SAFETY
         // =========================
-        function handleNavigation(url, element) {
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "hidden") {
+                LoaderEngine.clearTimers();
+            }
 
+        });
+
+        // =========================
+        // NAVIGATION (EVENT DELEGATION)
+        // =========================
+        document.addEventListener("click", function(e) {
+
+            const link = e.target.closest("nav a[href]");
+            if (!link) return;
+
+            if (link.closest("form")) return;
+
+            const url = link.getAttribute("href");
             if (!url) return;
 
             const parsed = new URL(url, window.location.origin);
@@ -383,7 +431,9 @@ $currentMenu = findMenuByRoute($menus);
             if (
                 url.startsWith("#") ||
                 url.startsWith("javascript:") ||
-                parsed.origin !== window.location.origin
+                parsed.origin !== window.location.origin ||
+                link.hasAttribute("download") ||
+                link.target === "_blank"
             ) return;
 
             const current = window.location.pathname;
@@ -391,40 +441,32 @@ $currentMenu = findMenuByRoute($menus);
 
             if (current === target) return;
 
-            if (Loader.isNavigating) return;
+            if (LoaderEngine.isNavigating) {
+                e.preventDefault();
+                return;
+            }
+
+            e.preventDefault();
 
             // UI feedback
-            element?.classList.add("scale-95", "opacity-70");
-
+            link.classList.add("scale-95", "opacity-70");
             setTimeout(() => {
-                element?.classList.remove("scale-95", "opacity-70");
+                link.classList.remove("scale-95", "opacity-70");
             }, 150);
 
-            // start loader
-            Loader.start();
-
-            // delay navigation
-            setTimeout(() => {
-                window.location.href = url;
-            }, Loader.MIN_DURATION);
-        }
-
-        document.querySelectorAll("nav a[href]").forEach(link => {
-            link.addEventListener("click", function(e) {
-                e.preventDefault();
-                handleNavigation(this.getAttribute("href"), this);
-            });
+            LoaderEngine.start();
+            LoaderEngine.navigate(url);
         });
 
         // =========================
-        // LOGOUT HANDLER
+        // LOGOUT
         // =========================
         const logoutForm = document.getElementById("logoutForm");
 
         if (logoutForm) {
             logoutForm.addEventListener("submit", function(e) {
 
-                if (Loader.isNavigating) {
+                if (LoaderEngine.isNavigating) {
                     e.preventDefault();
                     return;
                 }
@@ -439,11 +481,10 @@ $currentMenu = findMenuByRoute($menus);
 
                 const message = messages[Math.floor(Math.random() * messages.length)];
 
-                Loader.start(message);
+                LoaderEngine.start(message);
+                document.getElementById("pageLoader")?.classList.add("logout-mode");
 
-                setTimeout(() => {
-                    logoutForm.submit();
-                }, Loader.MIN_DURATION);
+                LoaderEngine.submit(logoutForm);
             });
         }
 

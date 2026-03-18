@@ -68,7 +68,7 @@ $notificationCount = getUnreadNotificationCount($pdo, $userId);
         </div>
 
         <!-- LANGUAGE BUTTON -->
-        <div x-data="{open:false, loadingLang:false}" class="relative">
+        <div x-data="{open:false, currentLang: new URLSearchParams(window.location.search).get('lang') || '<?= $lang ?>'}" class="relative">
 
             <button
                 @click="open=!open"
@@ -76,7 +76,7 @@ $notificationCount = getUnreadNotificationCount($pdo, $userId);
 
                 <i class="fa-solid fa-globe"></i>
 
-                <span><?= strtoupper($lang) ?></span>
+                <span x-text="currentLang.toUpperCase()"></span>
 
                 <i
                     class="fa-solid fa-caret-down transition-transform duration-200"
@@ -93,14 +93,52 @@ $notificationCount = getUnreadNotificationCount($pdo, $userId);
                 class="absolute right-0 mt-2 w-24 bg-white shadow rounded-lg dark:bg-gray-700">
 
                 <a href="?lang=id"
-                    @click.prevent="loadingLang=true; setTimeout(()=>window.location='?lang=id',400)"
-                    class="block px-3 py-2 hover:bg-gray-100 hover:dark:bg-gray-500 <?= $lang == 'id' ? 'font-bold' : '' ?>">
+                    @click.prevent="
+                        if(window.LoaderEngine?.isNavigating) return;
+
+                        open = false;
+                        currentLang = 'id';
+
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('lang', 'id');
+
+                        if(window.LoaderEngine){
+                            window.dispatchEvent(new CustomEvent('app:navigate', {
+                                detail: {
+                                    url: url.toString(),
+                                    message: 'Switching language...'
+                                }
+                            }));
+                        } else {
+                            window.location.href = url.toString();
+                        }"
+                    class="block px-3 py-2 hover:bg-gray-100 hover:dark:bg-gray-500"
+                    :class="currentLang === 'id' ? 'font-bold' : ''">
                     ID
                 </a>
 
                 <a href="?lang=en"
-                    @click.prevent="loadingLang=true; setTimeout(()=>window.location='?lang=en',400)"
-                    class="block px-3 py-2 hover:bg-gray-100 hover:dark:bg-gray-500 <?= $lang == 'en' ? 'font-bold' : '' ?>">
+                    @click.prevent="
+                        if(window.LoaderEngine?.isNavigating) return;
+
+                        open = false;
+                        currentLang = 'en';
+
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('lang', 'en');
+
+                        if(window.LoaderEngine){
+                            window.dispatchEvent(new CustomEvent('app:navigate', {
+                                detail: {
+                                    url: url.toString(),
+                                    message: 'Switching language...'
+                                }
+                            }));
+                        } else {
+                            window.location.href = url.toString();
+                        }"
+                    class="block px-3 py-2 hover:bg-gray-100 hover:dark:bg-gray-500"
+                    :class="currentLang === 'en' ? 'font-bold' : ''">
                     EN
                 </a>
 
@@ -110,7 +148,38 @@ $notificationCount = getUnreadNotificationCount($pdo, $userId);
 
         <!-- DARK MODE BUTTON -->
         <button
-            @click="$dispatch('toggle-theme')"
+            @click="
+                if(window.LoaderEngine && !window.LoaderEngine.isNavigating){
+
+                    window.LoaderEngine.start('Applying theme...');
+
+                    const html = document.documentElement;
+                    const initial = html.classList.contains('dark');
+
+                    // 🔥 OBSERVER
+                    const observer = new MutationObserver(() => {
+                        const current = html.classList.contains('dark');
+
+                        if (current !== initial) {
+                            observer.disconnect();
+
+                            // tunggu render settle
+                            requestAnimationFrame(() => {
+                                requestAnimationFrame(() => {
+                                    window.LoaderEngine.reset();
+                                });
+                            });
+                        }
+                    });
+
+                    observer.observe(html, { attributes: true, attributeFilter: ['class'] });
+
+                    // 🔥 TRIGGER THEME
+                    $dispatch('toggle-theme');
+
+                } else {
+                    $dispatch('toggle-theme');
+                }"
             class="flex items-center gap-3 px-4 py-1 bg-yellow-400 border-2 border-yellow-500 rounded-full font-semibold hover:bg-yellow-300 transition cursor-pointer">
 
             <span class="w-6 flex justify-center">
@@ -271,6 +340,7 @@ $notificationCount = getUnreadNotificationCount($pdo, $userId);
 
                 <!-- PROFILE -->
                 <a href="<?= htmlspecialchars('/rkd-cafe/public/profile.php', ENT_QUOTES, 'UTF-8') ?>"
+                    @click.prevent="window.dispatchEvent(new CustomEvent('app:navigate', { detail: { url: '/rkd-cafe/public/profile.php' } }))"
                     class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">
 
                     <i class="fa-solid fa-user text-gray-500"></i>
@@ -280,6 +350,7 @@ $notificationCount = getUnreadNotificationCount($pdo, $userId);
 
                 <!-- SETTINGS -->
                 <a href="<?= htmlspecialchars($settingsUrl, ENT_QUOTES, 'UTF-8') ?>"
+                    @click.prevent="window.dispatchEvent(new CustomEvent('app:navigate', { detail: { url: '<?= $settingsUrl ?>' } }))"
                     class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">
 
                     <i class="fa-solid fa-gear text-gray-500"></i>
@@ -291,7 +362,10 @@ $notificationCount = getUnreadNotificationCount($pdo, $userId);
                 <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
 
                 <!-- LOGOUT -->
-                <form method="POST" action="/rkd-cafe/resources/views/auth/logout.php">
+                <form
+                    id="navbarLogoutForm"
+                    method="POST"
+                    action="/rkd-cafe/resources/views/auth/logout.php">
 
                     <input
                         type="hidden"
@@ -316,3 +390,64 @@ $notificationCount = getUnreadNotificationCount($pdo, $userId);
     </div>
 
 </header>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+
+        // =========================
+        // GLOBAL NAVIGATION LISTENER
+        // =========================
+        window.addEventListener("app:navigate", function(e) {
+
+            const {
+                url,
+                message
+            } = e.detail || {};
+            if (!url) return;
+
+            if (window.LoaderEngine && !window.LoaderEngine.isNavigating) {
+
+                window.LoaderEngine.start(message || null);
+                window.LoaderEngine.navigate(url);
+
+            } else {
+                window.location.href = url;
+            }
+
+        });
+
+        // =========================
+        // NAVBAR LOGOUT
+        // =========================
+        const logoutForm = document.getElementById("navbarLogoutForm");
+
+        if (logoutForm) {
+            logoutForm.addEventListener("submit", function(e) {
+
+                if (window.LoaderEngine?.isNavigating) {
+                    e.preventDefault();
+                    return;
+                }
+
+                e.preventDefault();
+
+                const messages = [
+                    "Signing you out...",
+                    "Securing your session...",
+                    "Goodbye 👋"
+                ];
+
+                const message = messages[Math.floor(Math.random() * messages.length)];
+
+                if (window.LoaderEngine) {
+                    window.LoaderEngine.start(message);
+                    window.LoaderEngine.submit(logoutForm);
+                } else {
+                    logoutForm.submit();
+                }
+
+            });
+        }
+
+    });
+</script>

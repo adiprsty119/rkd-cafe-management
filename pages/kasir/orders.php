@@ -73,9 +73,7 @@ $breadcrumb = generateBreadcrumb($currentMenu);
     :class="{ 'dark': dark }"
     class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-white transition-colors duration-300">
 
-
-    <div class="flex min-h-screen relative">
-
+    <div class="flex min-h-screen relative bg-gradient-to-br from-gray-200 via-gray-100 to-gray-300 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition">
 
         <!-- SIDEBAR -->
         <aside
@@ -85,7 +83,6 @@ $breadcrumb = generateBreadcrumb($currentMenu);
             <?php require __DIR__ . '/../../resources/components/sidebar.php'; ?>
 
         </aside>
-
 
         <!-- MOBILE SIDEBAR -->
         <aside
