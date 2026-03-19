@@ -1,4 +1,13 @@
 <?php
+
+define('APP_INIT', true);
+
+require_once __DIR__ . '/../../../app/bootstrap.php';
+
+ini_set('session.cookie_httponly', 1);
+ini_set('session.use_strict_mode', 1);
+ini_set('session.cookie_secure', isset($_SERVER['HTTPS'])); // aktif jika HTTPS
+
 session_start();
 
 /* MENCEGAH CACHE LOGIN PAGE */

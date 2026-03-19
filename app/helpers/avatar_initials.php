@@ -1,5 +1,9 @@
 <?php
 
+if (!defined('APP_INIT')) {
+    exit('No direct access allowed');
+}
+
 function generateInitialAvatar(string $name): string
 {
     $initials = strtoupper(substr($name, 0, 1));

@@ -1,5 +1,9 @@
 <?php
 
+if (!defined('APP_INIT')) {
+    exit('No direct access allowed');
+}
+
 session_start();
 
 require_once __DIR__ . '/../config/database.php';
@@ -54,20 +58,8 @@ if (!isset($_SESSION['csrf_token'])) {
 ========================== */
 
 $userId = $_SESSION['user_id'];
-
-$stmt = $pdo->prepare("
-    SELECT 
-        username,
-        role,
-        sidebar_collapsed
-    FROM users
-    WHERE id = :id
-    LIMIT 1
-");
-
-$stmt->execute([
-    'id' => $userId
-]);
+$stmt = $pdo->prepare("SELECT username, role, sidebar_collapsed FROM users WHERE id = :id LIMIT 1");
+$stmt->execute(['id' => $userId]);
 
 $currentUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -83,8 +75,6 @@ if ($currentUser) {
 
     $sidebarCollapsed = (bool) $currentUser['sidebar_collapsed'];
 } else {
-
-    /* USER SUDAH DIHAPUS */
 
     session_destroy();
 

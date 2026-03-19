@@ -1,5 +1,9 @@
 <?php
 
+if (!defined('APP_INIT')) {
+    exit('No direct access allowed');
+}
+
 function cacheGoogleAvatar(string $url, int $userId): ?string
 {
     $dir = __DIR__ . "/../../storage/avatars/google/";

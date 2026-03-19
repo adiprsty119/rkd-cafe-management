@@ -1,4 +1,5 @@
 <?php
+define('APP_INIT', true);
 
 require __DIR__ . '/../../../middleware/AuthMiddleware.php';
 

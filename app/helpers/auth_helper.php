@@ -1,5 +1,9 @@
 <?php
 
+if (!defined('APP_INIT')) {
+    exit('No direct access allowed');
+}
+
 function requireLogin(): int
 {
     $userId = intval($_SESSION['user_id'] ?? 0);

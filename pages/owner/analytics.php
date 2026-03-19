@@ -1,4 +1,5 @@
 <?php
+define('APP_INIT', true);
 
 require $_SERVER['DOCUMENT_ROOT'] . '/rkd-cafe/middleware/AuthMiddleware.php';
 
@@ -112,6 +113,7 @@ $businessInsight = getBusinessInsight("today") ?? [
         sidebarOpen:<?= isset($sidebarCollapsed) && $sidebarCollapsed ? 'false' : 'true' ?>,
         ...analyticsFilter()
     }"
+    @toggle-theme.window="loadingTheme = true; setTimeout(() => {let newTheme = !dark; localStorage.theme = newTheme ? 'dark' : 'light'; location.reload();}, 800)"
     x-init="
         document.documentElement.classList.toggle('dark', dark);
         initObserver();"

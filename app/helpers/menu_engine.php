@@ -1,5 +1,9 @@
 <?php
 
+if (!defined('APP_INIT')) {
+    exit('No direct access allowed');
+}
+
 function getMenusByRole($role)
 {
     $lang = $_SESSION['lang'] ?? 'en';

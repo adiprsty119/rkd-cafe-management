@@ -1,11 +1,6 @@
 <?php
 
-require_once __DIR__ . '/../../config/database.php';
-require_once __DIR__ . '/../../app/helpers/auth_helper.php';
-require_once __DIR__ . '/../../app/helpers/user_helper.php';
-require_once __DIR__ . '/../../app/helpers/avatar_helper.php';
-require_once __DIR__ . '/../../app/helpers/role_helper.php';
-require_once __DIR__ . '/../../app/helpers/notification_helper.php';
+require_once __DIR__ . '/../../app/bootstrap.php';
 
 $pdo = getPDO();
 
@@ -350,7 +345,7 @@ $notificationCount = getUnreadNotificationCount($pdo, $userId);
 
                 <!-- SETTINGS -->
                 <a href="<?= htmlspecialchars($settingsUrl, ENT_QUOTES, 'UTF-8') ?>"
-                    @click.prevent="window.dispatchEvent(new CustomEvent('app:navigate', { detail: { url: '<?= $settingsUrl ?>' } }))"
+                    @click.prevent="window.dispatchEvent(new CustomEvent('app:navigate', { detail: { url: '<?= json_encode($settingsUrl) ?>' } }))"
                     class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">
 
                     <i class="fa-solid fa-gear text-gray-500"></i>

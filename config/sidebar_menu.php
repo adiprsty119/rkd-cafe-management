@@ -1,11 +1,21 @@
 <?php
 
 // load translation
+
+$lang = $lang ?? 'en';
 $allowedLang = ['id', 'en'];
+
 if (!in_array($lang, $allowedLang, true)) {
     $lang = 'en';
 }
-$t = require __DIR__ . '/../resources/lang/' . $lang . '.php';
+
+$langPath = realpath(__DIR__ . '/../resources/lang/' . $lang . '.php');
+
+if ($langPath === false) {
+    $t = [];
+} else {
+    $t = require $langPath;
+}
 
 
 /*

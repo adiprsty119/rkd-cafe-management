@@ -1,14 +1,13 @@
 <?php
 
-require_once __DIR__ . '/../../app/helpers/menu_helper.php';
-require_once __DIR__ . '/../../app/helpers/childmenu_helper.php';
-require_once __DIR__ . '/../../app/helpers/icon_helper.php';
-require_once __DIR__ . '/../../app/helpers/menu_engine.php';
+require_once __DIR__ . '/../../app/bootstrap.php';
+$pdo = getPDO();
 
-$allowedRoles = ['admin', 'kasir', 'owner'];
-$role = $_SESSION['role'] ?? 'guest';
+$userId = $_SESSION['user_id'] ?? null;
 
-if (!in_array($role, $allowedRoles)) {
+if ($userId) {
+    $role = getUserRoleById($pdo, $userId);
+} else {
     $role = 'guest';
 }
 
@@ -36,14 +35,10 @@ $currentMenu = findMenuByRoute($menus);
 
         <div class="relative flex flex-col items-center gap-8">
 
-            <div class="absolute w-40 h-40 rounded-full
-                        bg-gradient-to-tr from-pink-500 via-purple-500 to-indigo-500
-                        opacity-20 blur-3xl animate-pulse">
+            <div class="absolute w-40 h-40 rounded-full bg-gradient-to-tr from-pink-500 via-purple-500 to-indigo-500 opacity-20 blur-3xl animate-pulse">
             </div>
 
-            <div class="w-16 h-16 rounded-full border-[3px]
-                        border-transparent border-t-pink-500 border-r-purple-500
-                        animate-spin">
+            <div class="w-16 h-16 rounded-full border-[3px] border-transparent border-t-pink-500 border-r-purple-500 animate-spin">
             </div>
 
             <div class="absolute w-6 h-6 rounded-full bg-white dark:bg-gray-200 animate-ping"></div>
