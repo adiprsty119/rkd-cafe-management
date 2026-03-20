@@ -8,7 +8,11 @@ $pdo = getPDO();
    AUTH VALIDATION
 ========================== */
 
-$userId = requireLogin();
+$userId = $_SESSION['user_id'] ?? null;
+
+if (!$userId) {
+    return; // optional safety
+}
 
 /* ==========================
    DATA FETCH

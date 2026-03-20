@@ -32,9 +32,9 @@ $userModel = new User($pdo);
    ROLE REDIRECT
 ========================== */
 
-function redirectByRole($role)
+function redirectByRole($roleName)
 {
-    switch ($role) {
+    switch ($roleName) {
 
         case 'admin':
             header("Location: /rkd-cafe/resources/views/dashboard/admin.php");
@@ -223,7 +223,16 @@ function login($userModel)
         exit;
     }
 
-    $user = $userModel->findByUsername($username);
+    $stmt = $pdo->prepare("
+        SELECT u.*, r.name AS role_name
+        FROM users u
+        LEFT JOIN roles r ON u.role_id = r.id
+        WHERE u.username = :username
+        LIMIT 1
+    ");
+
+    $stmt->execute(['username' => $username]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     /* ==========================
        TIMING ATTACK PROTECTION
@@ -342,8 +351,10 @@ function login($userModel)
     ]);
 
     session_regenerate_id(true);
-
     clearLoginAttempts($username);
+
+    // var_dump($user['role_name']);
+    // exit;
 
     /* ==========================
        SESSION BINDING
@@ -351,8 +362,14 @@ function login($userModel)
 
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['username'] = $user['username'];
-    $_SESSION['role'] = $user['role'];
+    $_SESSION['role_id'] = $user['role_id'];
+    $_SESSION['role'] = $user['role_name'];
     $_SESSION['fingerprint'] = hash('sha256', $ip . $ua);
+
+    // LOAD PERMISSIONS
+    $stmt = $pdo->prepare("SELECT p.name FROM permissions p JOIN role_permissions rp ON rp.permission_id = p.id WHERE rp.role_id = ?");
+    $stmt->execute([$user['role_id']]);
+    $_SESSION['permissions'] = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
     /* ==========================
        REMEMBER ME (DUAL TOKEN)
@@ -394,7 +411,7 @@ function login($userModel)
         "message" => "Login berhasil!"
     ];
 
-    redirectByRole($user['role']);
+    redirectByRole($user['role_name']);
 }
 
 /* ==========================
@@ -628,7 +645,9 @@ function callbackGoogle($userModel)
        FIND USER
     ========================== */
 
-    $user = $userModel->findByEmail($email);
+    $stmt = $pdo->prepare("SELECT u.*, r.name AS role_name FROM users u LEFT JOIN roles r ON u.role_id = r.id WHERE u.email = :email LIMIT 1");
+    $stmt->execute(['email' => $email]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$user) {
 
@@ -638,11 +657,13 @@ function callbackGoogle($userModel)
         $userModel->createGoogleUser($name, $username, $email, $picture);
     }
 
-    $user = $userModel->findByEmail($email);
+    $stmt = $pdo->prepare("SELECT u.*, r.name AS role_name FROM users u LEFT JOIN roles r ON u.role_id = r.id WHERE u.email = :email LIMIT 1");
+    $stmt->execute(['email' => $email]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     /* ==========================
-   CACHE GOOGLE AVATAR
-========================== */
+        CACHE GOOGLE AVATAR
+    ========================== */
 
     require_once __DIR__ . '/../helpers/avatar_cache.php';
 
@@ -698,7 +719,13 @@ function callbackGoogle($userModel)
 
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['username'] = $user['username'];
-    $_SESSION['role'] = $user['role'];
+    $_SESSION['role_id'] = $user['role_id'];
+    $_SESSION['role'] = $user['role_name'];
+
+    $stmt = $pdo->prepare("SELECT p.name FROM permissions p JOIN role_permissions rp ON rp.permission_id = p.id WHERE rp.role_id = ?");
+    $stmt->execute([$user['role_id']]);
+    $_SESSION['permissions'] = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
     $_SESSION['foto'] = $user['foto'] ?? $picture;
     $_SESSION['login_method'] = 'google';
     $_SESSION['toast'] = [
@@ -706,7 +733,7 @@ function callbackGoogle($userModel)
         "message" => "Login dengan Google berhasil!"
     ];
 
-    redirectByRole($user['role']);
+    redirectByRole($user['role_name']);
 }
 
 

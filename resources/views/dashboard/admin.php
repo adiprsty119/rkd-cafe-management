@@ -15,7 +15,7 @@ if (!in_array($lang, ['id', 'en'])) {
     $lang = 'id';
 }
 
-// load translation
+// LOAD
 $t = require __DIR__ . '/../../lang/' . $lang . '.php';
 require_once __DIR__ . '/../../../app/helpers/menu_helper.php';
 require_once __DIR__ . '/../../../app/helpers/menu_engine.php';
@@ -27,10 +27,16 @@ $sidebarCollapsed = $_SESSION['sidebar_collapsed'] ?? 0;
    MENU ENGINE
 ========================== */
 
+$allMenus = $_SESSION['menu_config'][$role] ?? [];
 $menus = getMenusByRole($role);
-$currentMenu = findMenuByRoute($menus);
+$currentMenu = findMenuByRoute($allMenus);
 $pageTitle = $currentMenu['menu']['title'] ?? 'Dashboard';
 $breadcrumb = generateBreadcrumb($currentMenu);
+
+
+
+
+
 ?>
 
 <!DOCTYPE html>
@@ -51,8 +57,9 @@ $breadcrumb = generateBreadcrumb($currentMenu);
     <!-- Alpine.js -->
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-    <!-- Global Seacrh [global-search.js] -->
+    <!-- Load JS -->
     <script defer src="/rkd-cafe/public/assets/js/global-search.js"></script>
+    <script defer src="/rkd-cafe/public/assets/js/header.js"></script>
 
     <style>
         [x-cloak] {
@@ -69,7 +76,7 @@ $breadcrumb = generateBreadcrumb($currentMenu);
     :class="{ 'dark': dark }"
     class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-white transition-colors duration-300">
 
-    <div class="flex min-h-screen bg-gradient-to-br from-gray-200 via-gray-100 to-gray-300 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition relative">
+    <div class="flex min-h-screen bg-gradient-to-br from-gray-200 via-gray-100 to-gray-300 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition">
 
         <!-- SIDEBAR -->
         <aside
@@ -99,7 +106,7 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
 
         <!-- MAIN CONTENT -->
-        <div class="flex-1 flex flex-col min-w-0 md:ml-0 transition-all duration-300">
+        <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden md:ml-0 transition-all duration-300">
 
             <!-- =========================
                     HEADER STACK
@@ -158,7 +165,10 @@ $breadcrumb = generateBreadcrumb($currentMenu);
             </div>
 
             <!-- DASHBOARD CONTENT -->
-            <main id="dashboardScroll"
+            <main
+                x-data="dashboard()"
+                x-init="init()"
+                id="dashboardScroll"
                 class="flex-1 p-4 md:p-6 overflow-y-auto space-y-6 scrollbar-hide">
 
                 <!-- HEADER -->
@@ -195,6 +205,11 @@ $breadcrumb = generateBreadcrumb($currentMenu);
                         x-data="{loading:false}"
                         class="flex items-center gap-3">
 
+                        <!-- LAST UPDATE -->
+                        <div class="text-xs text-gray-400 hidden sm:block">
+                            Last update: <span x-text="formattedTime()"></span>
+                        </div>
+
                         <button
                             @click="loading=true; setTimeout(()=>window.location.reload(),400)"
                             class="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition cursor-pointer">
@@ -212,13 +227,13 @@ $breadcrumb = generateBreadcrumb($currentMenu);
                 </div>
 
                 <!-- STATISTIC CARDS -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-14">
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-12">
 
                     <div class="bg-white p-6 rounded-xl shadow-2xl cursor-pointer dark:bg-gray-800">
                         <div class="flex justify-between items-center">
                             <div>
                                 <p class="text-gray-500 text-sm"><?= $t['total_sales'] ?></p>
-                                <h2 class="text-2xl font-bold">Rp 8.2 jt</h2>
+                                <h2 class="text-2xl font-bold" x-text="formatRupiah(data.total_sales)"></h2>
                             </div>
                             <i class="fa-solid fa-money-bill-wave text-green-500 text-2xl"></i>
                         </div>
@@ -228,7 +243,7 @@ $breadcrumb = generateBreadcrumb($currentMenu);
                         <div class="flex justify-between items-center">
                             <div>
                                 <p class="text-gray-500 text-sm"><?= $t['orders_today'] ?></p>
-                                <h2 class="text-2xl font-bold">124</h2>
+                                <h2 class="text-2xl font-bold" x-text="data.orders_today"></h2>
                             </div>
                             <i class="fa-solid fa-receipt text-blue-500 text-2xl"></i>
                         </div>
@@ -238,7 +253,7 @@ $breadcrumb = generateBreadcrumb($currentMenu);
                         <div class="flex justify-between items-center">
                             <div>
                                 <p class="text-gray-500 text-sm"><?= $t['menu_items'] ?></p>
-                                <h2 class="text-2xl font-bold">36</h2>
+                                <h2 class="text-2xl font-bold" x-text="data.menu_items"></h2>
                             </div>
                             <i class="fa-solid fa-utensils text-yellow-500 text-2xl"></i>
                         </div>
@@ -248,10 +263,90 @@ $breadcrumb = generateBreadcrumb($currentMenu);
                         <div class="flex justify-between items-center">
                             <div>
                                 <p class="text-gray-500 text-sm"><?= $t['customers'] ?></p>
-                                <h2 class="text-2xl font-bold">58</h2>
+                                <h2 class="text-2xl font-bold" x-text="data.customers"></h2>
                             </div>
                             <i class="fa-solid fa-user-group text-purple-500 text-2xl"></i>
                         </div>
+                    </div>
+
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-2xl mb-12">
+
+                    <!-- HEADER -->
+                    <div class="flex justify-between items-center mb-5">
+
+                        <div>
+                            <p class="text-gray-500 text-sm">Top Products</p>
+                            <h2 class="text-lg font-bold">Best Sellers</h2>
+                        </div>
+
+                        <i class="fa-solid fa-chart-simple text-indigo-500 text-2xl"></i>
+
+                    </div>
+
+                    <!-- LIST -->
+                    <div class="flex gap-8 overflow-x-auto">
+
+                        <!-- LOOP PER COLUMN -->
+                        <template x-for="(group, colIndex) in chunk(data.top_products, 3)" :key="colIndex">
+
+                            <div class="flex flex-col gap-4 min-w-[220px]">
+
+                                <!-- LOOP PER ITEM -->
+                                <template x-for="(p, index) in group" :key="index">
+
+                                    <div class="flex items-center justify-between group">
+
+                                        <!-- LEFT -->
+                                        <div class="flex items-center gap-3">
+
+                                            <!-- GLOBAL INDEX -->
+                                            <div
+                                                class="w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold"
+                                                :class="{
+                                'bg-yellow-100 text-yellow-600': (colIndex*3 + index) === 0,
+                                'bg-gray-200 text-gray-600': (colIndex*3 + index) === 1,
+                                'bg-orange-100 text-orange-600': (colIndex*3 + index) === 2,
+                                'bg-gray-100 text-gray-500': (colIndex*3 + index) > 2
+                            }">
+
+                                                <span x-text="colIndex * 3 + index + 1"></span>
+
+                                            </div>
+
+                                            <!-- NAME -->
+                                            <div>
+                                                <p class="text-sm font-semibold text-gray-800 dark:text-white"
+                                                    x-text="p.name"></p>
+
+                                                <p class="text-xs text-gray-400">
+                                                    Popular item
+                                                </p>
+                                            </div>
+
+                                        </div>
+
+                                        <!-- RIGHT -->
+                                        <div class="text-right">
+
+                                            <p class="text-sm font-bold text-gray-800 dark:text-white"
+                                                x-text="p.total_sold"></p>
+
+                                            <p class="text-xs text-gray-400">
+                                                sold
+                                            </p>
+
+                                        </div>
+
+                                    </div>
+
+                                </template>
+
+                            </div>
+
+                        </template>
+
                     </div>
 
                 </div>
@@ -277,33 +372,21 @@ $breadcrumb = generateBreadcrumb($currentMenu);
                         </thead>
 
                         <tbody>
-
-                            <tr class="border-t">
-                                <td class="p-3">#ORD001</td>
-                                <td class="p-3">Andi</td>
-                                <td class="p-3">Latte + Croissant</td>
-                                <td class="p-3">Rp 45.000</td>
-                                <td class="p-3">
-                                    <span class="bg-green-100 text-green-600 px-2 py-1 rounded text-xs">
-                                        Paid
-                                    </span>
-                                </td>
-                            </tr>
-
-                            <tr class="border-t">
-                                <td class="p-3">#ORD002</td>
-                                <td class="p-3">Budi</td>
-                                <td class="p-3">Espresso</td>
-                                <td class="p-3">Rp 20.000</td>
-                                <td class="p-3">
-                                    <span class="bg-yellow-100 text-yellow-600 px-2 py-1 rounded text-xs">
-                                        Pending
-                                    </span>
-                                </td>
-                            </tr>
-
+                            <template x-for="order in data.recent_orders" :key="order.id">
+                                <tr class="border-t">
+                                    <td class="p-3" x-text="'#ORD' + order.id"></td>
+                                    <td class="p-3" x-text="order.customer_name"></td>
+                                    <td class="p-3" x-text="formatRupiah(order.total)"></td>
+                                    <td class="p-3">
+                                        <span
+                                            class="px-2 py-1 rounded text-xs"
+                                            :class="statusClass(order.status)"
+                                            x-text="order.status">
+                                        </span>
+                                    </td>
+                                </tr>
+                            </template>
                         </tbody>
-
                     </table>
 
                 </div>
@@ -340,6 +423,7 @@ $breadcrumb = generateBreadcrumb($currentMenu);
     <script src="/rkd-cafe/public/assets/js/toast.js"></script>
     <script src="/rkd-cafe/public/assets/js/notifications.js"></script>
     <script src="/rkd-cafe/public/assets/js/sidebar-tooltip.js"></script>
+    <script src="/rkd-cafe/public/assets/js/dashboard-admin.js"></script>
 </body>
 
 </html>

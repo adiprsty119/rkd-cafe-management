@@ -32,8 +32,9 @@ $role = $_SESSION['role'] ?? 'guest';
    MENU ENGINE
 ========================== */
 
+$allMenus = $_SESSION['menu_config'][$role] ?? [];
 $menus = getMenusByRole($role);
-$currentMenu = findMenuByRoute($menus);
+$currentMenu = findMenuByRoute($allMenus);
 $pageTitle = $currentMenu['menu']['title'] ?? 'Dashboard';
 $breadcrumb = generateBreadcrumb($currentMenu);
 
@@ -58,8 +59,9 @@ $breadcrumb = generateBreadcrumb($currentMenu);
     <!-- Alpine.js -->
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-    <!-- Global Seacrh [global-search.js] -->
+    <!-- Load JS -->
     <script defer src="/rkd-cafe/public/assets/js/global-search.js"></script>
+    <script defer src="/rkd-cafe/public/assets/js/header.js"></script>
 
     <style>
         [x-cloak] {
@@ -106,7 +108,7 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
 
         <!-- MAIN -->
-        <div class="flex-1 flex flex-col min-w-0 md:ml-0 transition-all duration-300">
+        <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden md:ml-0 transition-all duration-300">
 
             <!-- =========================
                     HEADER STACK

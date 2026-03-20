@@ -27,8 +27,9 @@ $sidebarCollapsed = $_SESSION['sidebar_collapsed'] ?? 0;
    MENU ENGINE
 ========================== */
 
+$allMenus = $_SESSION['menu_config'][$role] ?? [];
 $menus = getMenusByRole($role);
-$currentMenu = findMenuByRoute($menus);
+$currentMenu = findMenuByRoute($allMenus);
 $pageTitle = $currentMenu['menu']['title'] ?? 'Customer Analytics';
 $breadcrumb = generateBreadcrumb($currentMenu);
 

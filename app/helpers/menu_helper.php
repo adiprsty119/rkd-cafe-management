@@ -12,7 +12,8 @@ function currentRoute(): string
     static $route = null;
 
     if ($route === null) {
-        $route = basename(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
+        $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+        $route = basename($path ?? '');
     }
 
     return $route;
@@ -25,7 +26,7 @@ function currentRoute(): string
 function activeMenu(string $url): string
 {
     $current = currentRoute();
-    $target  = basename($url);
+    $target  = basename(parse_url($url, PHP_URL_PATH));
 
     return ($current === $target)
         ? "bg-gray-200 -ml-1.5 dark:bg-gray-700 font-semibold border-yellow-500"
@@ -46,7 +47,7 @@ function isActivePrefix(?string $prefix): bool
     $prefixes = explode('|', $prefix);
 
     foreach ($prefixes as $p) {
-        if (str_contains($route, $p)) {
+        if (str_starts_with($route, $p)) { // 🔥 lebih akurat
             return true;
         }
     }

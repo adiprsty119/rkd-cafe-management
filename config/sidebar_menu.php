@@ -32,7 +32,8 @@ $menuConfig = [
         [
             'title' => $t['dashboard'],
             'icon' => 'fa-gauge',
-            'url' => '/rkd-cafe/resources/views/dashboard/admin.php'
+            'url' => '/rkd-cafe/resources/views/dashboard/admin.php',
+            'permission' => 'view_dashboard'
         ],
 
         [
@@ -44,13 +45,15 @@ $menuConfig = [
                 [
                     'title' => 'Menu List',
                     'icon' => 'fa-list',
-                    'url' => '/rkd-cafe/pages/admin/menu_list.php'
+                    'url' => '/rkd-cafe/pages/admin/menu_list.php',
+                    'permission' => 'view_menu_list'
                 ],
 
                 [
                     'title' => 'Categories',
                     'icon' => 'fa-layer-group',
-                    'url' => '/rkd-cafe/pages/admin/categories.php'
+                    'url' => '/rkd-cafe/pages/admin/categories.php',
+                    'permission' => 'view_categories'
                 ]
 
             ]
@@ -65,13 +68,15 @@ $menuConfig = [
                 [
                     'title' => 'Cashier',
                     'icon' => 'fa-computer',
-                    'url' => '/rkd-cafe/pages/admin/cashier.php'
+                    'url' => '/rkd-cafe/pages/admin/cashier.php',
+                    'permission' => 'view_cashier'
                 ],
 
                 [
                     'title' => 'Orders',
                     'icon' => 'fa-receipt',
-                    'url' => '/rkd-cafe/pages/admin/orders.php'
+                    'url' => '/rkd-cafe/pages/admin/orders.php',
+                    'permission' => 'view_orders'
                 ]
 
             ]
@@ -86,13 +91,15 @@ $menuConfig = [
                 [
                     'title' => 'Sales Report',
                     'icon' => 'fa-chart-column',
-                    'url' => '/rkd-cafe/pages/admin/sales_report.php'
+                    'url' => '/rkd-cafe/pages/admin/sales_report.php',
+                    'permission' => 'view_sales_report'
                 ],
 
                 [
                     'title' => 'Revenue',
                     'icon' => 'fa-money-bill-trend-up',
-                    'url' => '/rkd-cafe/pages/admin/revenue.php'
+                    'url' => '/rkd-cafe/pages/admin/revenue.php',
+                    'permission' => 'view_revenue'
                 ]
 
             ]
@@ -105,7 +112,8 @@ $menuConfig = [
         [
             'title' => $t['dashboard'],
             'icon'  => 'fa-gauge',
-            'url'   => '/rkd-cafe/resources/views/dashboard/kasir.php'
+            'url'   => '/rkd-cafe/resources/views/dashboard/kasir.php',
+            'permission' => 'view_dashboard'
         ],
 
         [
@@ -117,13 +125,15 @@ $menuConfig = [
                 [
                     'title' => 'Cashier',
                     'icon'  => 'fa-computer',
-                    'url' => '/rkd-cafe/pages/kasir/cashier.php'
+                    'url' => '/rkd-cafe/pages/kasir/cashier.php',
+                    'permission' => 'view_cashier'
                 ],
 
                 [
                     'title' => 'Orders',
                     'icon'  => 'fa-receipt',
-                    'url' => '/rkd-cafe/pages/kasir/orders.php'
+                    'url' => '/rkd-cafe/pages/kasir/orders.php',
+                    'permission' => 'view_orders'
                 ]
 
             ]
@@ -132,13 +142,15 @@ $menuConfig = [
         [
             'title' => $t['menu'],
             'icon'  => 'fa-mug-hot',
-            'url'   => '/rkd-cafe/pages/kasir/menu.php'
+            'url'   => '/rkd-cafe/pages/kasir/menu.php',
+            'permission' => 'view_menu'
         ],
 
         [
             'title' => 'Customers',
             'icon'  => 'fa-user-group',
-            'url'   => '/rkd-cafe/pages/kasir/customers.php'
+            'url'   => '/rkd-cafe/pages/kasir/customers.php',
+            'permission' => 'view_customers'
         ]
 
     ],
@@ -148,7 +160,8 @@ $menuConfig = [
         [
             'title' => $t['dashboard'],
             'icon'  => 'fa-gauge',
-            'url'   => '/rkd-cafe/resources/views/dashboard/owner.php'
+            'url'   => '/rkd-cafe/resources/views/dashboard/owner.php',
+            'permission' => 'view_dashboard'
         ],
 
         [
@@ -160,13 +173,15 @@ $menuConfig = [
                 [
                     'title' => 'Sales Report',
                     'icon'  => 'fa-chart-column',
-                    'url' => '/rkd-cafe/pages/owner/sales_report.php'
+                    'url' => '/rkd-cafe/pages/owner/sales_report.php',
+                    'permission' => 'view_sales_report'
                 ],
 
                 [
                     'title' => 'Revenue',
                     'icon'  => 'fa-money-bill-trend-up',
-                    'url' => '/rkd-cafe/pages/owner/revenue.php'
+                    'url' => '/rkd-cafe/pages/owner/revenue.php',
+                    'permission' => 'view_revenue'
                 ]
 
             ]
@@ -181,19 +196,22 @@ $menuConfig = [
                 [
                     'title' => 'Performance Analytics',
                     'icon'  => 'fa-chart-simple',
-                    'url' => '/rkd-cafe/pages/owner/analytics.php'
+                    'url' => '/rkd-cafe/pages/owner/analytics.php',
+                    'permission' => 'view_performance_analytics'
                 ],
 
                 [
                     'title' => 'Sales Analytics',
                     'icon'  => 'fa-chart-line',
-                    'url' => '/rkd-cafe/pages/owner/analytics_sales.php'
+                    'url' => '/rkd-cafe/pages/owner/analytics_sales.php',
+                    'permission' => 'view_sales_analytics'
                 ],
 
                 [
                     'title' => 'Customer Analytics',
                     'icon'  => 'fa-users',
-                    'url' => '/rkd-cafe/pages/owner/analytics_customer.php'
+                    'url' => '/rkd-cafe/pages/owner/analytics_customer.php',
+                    'permission' => 'view_customer_analytics'
                 ]
 
             ]
@@ -202,7 +220,8 @@ $menuConfig = [
         [
             'title' => 'Customers',
             'icon'  => 'fa-user-group',
-            'url'   => '/rkd-cafe/pages/owner/customers.php'
+            'url'   => '/rkd-cafe/pages/owner/customers.php',
+            'permission' => 'view_customer'
         ]
 
     ]

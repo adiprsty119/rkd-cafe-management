@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../app/bootstrap.php';
+
 $pdo = getPDO();
 
 $userId = $_SESSION['user_id'] ?? null;

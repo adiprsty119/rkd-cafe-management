@@ -37,9 +37,10 @@ function getDisplayName(?array $user): string
 function getUserRoleById(PDO $pdo, int $userId): string
 {
     $stmt = $pdo->prepare("
-        SELECT role
-        FROM users
-        WHERE id = :id
+        SELECT r.name AS role_name
+        FROM users u
+        LEFT JOIN roles r ON u.role_id = r.id
+        WHERE u.id = :id
         LIMIT 1
     ");
 
@@ -49,10 +50,8 @@ function getUserRoleById(PDO $pdo, int $userId): string
 
     $role = $stmt->fetchColumn();
 
-    // 🔐 whitelist roles
-    $allowedRoles = ['admin', 'kasir', 'owner'];
-
-    if (!in_array($role, $allowedRoles, true)) {
+    // 🔐 fallback kalau null
+    if (!$role) {
         return 'guest';
     }
 

@@ -14,23 +14,46 @@ $pdo = getPDO(); // ← TAMBAHKAN BARIS INI
    AUTO LOGIN VIA REMEMBER TOKEN
 ========================== */
 
-if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
+if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember'])) {
 
-    $token = $_COOKIE['remember_token'];
-    $stmt = $pdo->query("SELECT id, username, role, sidebar_collapsed, remember_token FROM users WHERE remember_token IS NOT NULL");
+    $cookie = $_COOKIE['remember'];
 
-    while ($user = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    // Validasi format cookie
+    if (strpos($cookie, ':') !== false) {
 
-        if (password_verify($token, $user['remember_token'])) {
+        list($selector, $validator) = explode(':', $cookie);
+
+        $stmt = $pdo->prepare("
+            SELECT u.*, r.name AS role_name
+            FROM users u
+            LEFT JOIN roles r ON u.role_id = r.id
+            WHERE u.remember_selector = ?
+            LIMIT 1
+        ");
+
+        $stmt->execute([$selector]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($user && password_verify($validator, $user['remember_token'])) {
 
             session_regenerate_id(true);
 
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
-            $_SESSION['role'] = $user['role'];
+            $_SESSION['role_id'] = $user['role_id'];
+            $_SESSION['role'] = $user['role_name'] ?? 'guest';
             $_SESSION['sidebar_collapsed'] = $user['sidebar_collapsed'];
 
-            break;
+            // LOAD PERMISSIONS
+            $stmt = $pdo->prepare("
+                SELECT p.name
+                FROM permissions p
+                JOIN role_permissions rp ON rp.permission_id = p.id
+                WHERE rp.role_id = ?
+            ");
+
+            $stmt->execute([$user['role_id']]);
+            $_SESSION['permissions'] = $stmt->fetchAll(PDO::FETCH_COLUMN) ?: [];
         }
     }
 }
@@ -58,7 +81,7 @@ if (!isset($_SESSION['csrf_token'])) {
 ========================== */
 
 $userId = $_SESSION['user_id'];
-$stmt = $pdo->prepare("SELECT username, role, sidebar_collapsed FROM users WHERE id = :id LIMIT 1");
+$stmt = $pdo->prepare("SELECT u.username, u.role_id, r.name AS role_name, u.sidebar_collapsed FROM users u LEFT JOIN roles r ON u.role_id = r.id WHERE u.id = :id LIMIT 1");
 $stmt->execute(['id' => $userId]);
 
 $currentUser = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -70,7 +93,8 @@ $currentUser = $stmt->fetch(PDO::FETCH_ASSOC);
 if ($currentUser) {
 
     $_SESSION['username'] = $currentUser['username'];
-    $_SESSION['role'] = $currentUser['role'];
+    $_SESSION['role_id'] = $currentUser['role_id'];
+    $_SESSION['role'] = $currentUser['role_name'];
     $_SESSION['sidebar_collapsed'] = $currentUser['sidebar_collapsed'];
 
     $sidebarCollapsed = (bool) $currentUser['sidebar_collapsed'];
@@ -80,4 +104,28 @@ if ($currentUser) {
 
     header("Location: /rkd-cafe/resources/views/auth/login.php");
     exit();
+}
+
+// LOAD PERMISSIONS
+$stmt = $pdo->prepare("
+    SELECT p.name
+    FROM permissions p
+    JOIN role_permissions rp ON rp.permission_id = p.id
+    WHERE rp.role_id = ?
+");
+
+$stmt->execute([$_SESSION['role_id']]);
+$_SESSION['permissions'] = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+
+// ==========================
+// CACHE MENU CONFIG
+// ==========================
+if (!isset($_SESSION['menu_config'])) {
+    $_SESSION['menu_config'] = require __DIR__ . '/../config/sidebar_menu.php';
+}
+
+function hasPermission($permission)
+{
+    return in_array($permission, $_SESSION['permissions'] ?? []);
 }

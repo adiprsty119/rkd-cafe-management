@@ -1,9 +1,9 @@
 <?php if (!empty($breadcrumb)): ?>
 
-    <!-- BREADCRUMB NAVIGATION -->
-    <nav class="flex items-center text-sm text-gray-500 bg-gradient-to-br bg-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition px-4 py-2 rounded-lg shadow-sm w-fit ml-0.5 mt-5">
+    <nav class="flex items-center text-sm text-gray-500 bg-white dark:bg-gray-800 px-4 py-2 rounded-lg shadow-sm w-fit ml-0.5 mt-5">
 
-        <a href="/rkd-cafe/resources/views/dashboard/<?= $_SESSION['role'] ?>.php"
+        <!-- HOME -->
+        <a href="<?= htmlspecialchars(getDashboardUrl(), ENT_QUOTES, 'UTF-8') ?>"
             class="flex items-center hover:text-amber-600 transition">
 
             <i class="fa-solid fa-house text-gray-400 hover:text-gray-600 mr-2"></i>
@@ -19,10 +19,10 @@
             <?php if (!$isLast): ?>
 
                 <a
-                    href="<?= $item['url'] ?? '#' ?>"
+                    href="<?= htmlspecialchars($item['url'] ?? '#', ENT_QUOTES, 'UTF-8') ?>"
                     class="hover:text-amber-600 transition font-medium">
 
-                    <?= $item['title'] ?>
+                    <?= htmlspecialchars($item['title'], ENT_QUOTES, 'UTF-8') ?>
 
                 </a>
 
@@ -30,7 +30,7 @@
 
                 <span class="font-semibold text-gray-800 dark:text-gray-200">
 
-                    <?= $item['title'] ?>
+                    <?= htmlspecialchars($item['title'], ENT_QUOTES, 'UTF-8') ?>
 
                 </span>
 
@@ -38,4 +38,6 @@
 
         <?php endforeach; ?>
 
-    </nav><?php endif; ?>
+    </nav>
+
+<?php endif; ?>

@@ -17,7 +17,7 @@ header("X-Frame-Options: SAMEORIGIN");
 header("X-Content-Type-Options: nosniff");
 header("Referrer-Policy: strict-origin-when-cross-origin");
 
-if (isset($_SESSION['user_id'])) {
+if (!empty($_SESSION['user_id'])) {
     header("Location: /rkd-cafe/public/index.php");
     exit();
 }
