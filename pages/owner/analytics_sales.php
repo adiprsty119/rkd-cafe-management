@@ -52,7 +52,7 @@ $totalRevenue = $analytics['total_revenue'] ?? 0;
 $totalOrders = $analytics['total_orders'] ?? 0;
 $activeCustomers = $analytics['active_customers'] ?? 0;
 $avgOrder = $analytics['avg_order'] ?? 0;
-
+$salesInsight = $analytics['sales_insight'] ?? [];
 /*
 |--------------------------------------------------------------------------
 | IMPORTANT: STRUCTURE MUST MATCH analytics.php

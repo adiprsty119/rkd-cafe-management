@@ -1,7 +1,7 @@
 <?php if (!empty($breadcrumb)): ?>
 
     <!-- BREADCRUMB NAVIGATION -->
-    <nav class="flex items-center text-sm text-gray-600 dark:text-gray-300 bg-white px-4 py-2 rounded-lg shadow-sm w-fit ml-0.5 mt-5">
+    <nav class="flex items-center text-sm text-gray-500 bg-gradient-to-br bg-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition px-4 py-2 rounded-lg shadow-sm w-fit ml-0.5 mt-5">
 
         <a href="/rkd-cafe/resources/views/dashboard/<?= $_SESSION['role'] ?>.php"
             class="flex items-center hover:text-amber-600 transition">

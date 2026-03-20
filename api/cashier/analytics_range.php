@@ -1,6 +1,6 @@
 <?php
 
-require $_SERVER['DOCUMENT_ROOT'] . '/rkd-cafe/app/services/performance_analytics_service.php';
+require $_SERVER['DOCUMENT_ROOT'] . '/rkd-cafe/app/services/analytics_service.php';
 
 
 /* ==========================
@@ -28,19 +28,12 @@ if (!in_array($period, $allowed)) {
 $data = [
 
    "kpi" => getDashboardAnalytics($period),
-
    "salesTrend" => getSalesTrend($period),
-
    "customerInsight" => getCustomerInsight($period),
-
    "productProfit" => getProductProfit($period),
-
    "salesPrediction" => getSalesPrediction($period),
-
    "paymentDistribution" => getPaymentDistribution($period),
-
    "customerGrowth" => getCustomerGrowth($period),
-
    "businessInsight" => getBusinessInsight($period)
 
 ];

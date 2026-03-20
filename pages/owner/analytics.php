@@ -12,7 +12,7 @@ if (!in_array($lang, ['id', 'en'])) {
 $t = require __DIR__ . '/../../resources/lang/' . $lang . '.php';
 require_once __DIR__ . '/../../app/helpers/menu_helper.php';
 require_once __DIR__ . '/../../app/helpers/menu_engine.php';
-require_once __DIR__ . '/../../app/services/performance_analytics_service.php';
+require_once __DIR__ . '/../../app/services/analytics_service.php';
 
 $role = $_SESSION['role'] ?? 'guest';
 $sidebarCollapsed = $_SESSION['sidebar_collapsed'] ?? 0;

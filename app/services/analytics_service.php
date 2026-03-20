@@ -35,7 +35,6 @@ function fetchAnalyticsAPI($endpoint, $params = [])
     ]);
 
     $response = curl_exec($ch);
-
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $error = curl_error($ch);
 
@@ -172,8 +171,6 @@ function getBusinessInsight($period = "today")
         "engine" => $response["engine"] ?? null
     ];
 }
-
-
 
 
 /* ==========================
