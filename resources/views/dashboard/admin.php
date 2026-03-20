@@ -33,10 +33,6 @@ $currentMenu = findMenuByRoute($allMenus);
 $pageTitle = $currentMenu['menu']['title'] ?? 'Dashboard';
 $breadcrumb = generateBreadcrumb($currentMenu);
 
-
-
-
-
 ?>
 
 <!DOCTYPE html>
@@ -271,123 +267,144 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
                 </div>
 
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-2xl mb-12">
 
-                    <!-- HEADER -->
-                    <div class="flex justify-between items-center mb-5">
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
 
-                        <div>
-                            <p class="text-gray-500 text-sm">Top Products</p>
-                            <h2 class="text-lg font-bold">Best Sellers</h2>
+                    <!-- =========================
+                        LEFT: TOP PRODUCTS
+                    ========================= -->
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-2xl">
+
+                        <!-- HEADER -->
+                        <div class="flex justify-between items-center mb-5">
+                            <div>
+                                <p class="text-gray-500 text-sm">Top Products</p>
+                                <h2 class="text-lg font-bold">Best Sellers</h2>
+                            </div>
+                            <i class="fa-solid fa-chart-simple text-indigo-500 text-2xl"></i>
                         </div>
 
-                        <i class="fa-solid fa-chart-simple text-indigo-500 text-2xl"></i>
+                        <!-- LIST -->
+                        <div class="grid grid-flow-col auto-cols-[240px] gap-6 overflow-x-auto pb-2">
 
-                    </div>
+                            <template x-for="(group, colIndex) in chunk(data.top_products, 3)" :key="colIndex">
 
-                    <!-- LIST -->
-                    <div class="flex gap-8 overflow-x-auto">
+                                <div class="flex flex-col gap-4">
 
-                        <!-- LOOP PER COLUMN -->
-                        <template x-for="(group, colIndex) in chunk(data.top_products, 3)" :key="colIndex">
+                                    <template x-for="(p, index) in group" :key="index">
 
-                            <div class="flex flex-col gap-4 min-w-[220px]">
+                                        <div
+                                            class="p-4 rounded-xl bg-gray-50 dark:bg-gray-900/40 hover:bg-white dark:hover:bg-gray-800 transition-all duration-300 shadow-sm hover:shadow-md group cursor-pointer">
 
-                                <!-- LOOP PER ITEM -->
-                                <template x-for="(p, index) in group" :key="index">
+                                            <div class="flex items-center justify-between">
 
-                                    <div class="flex items-center justify-between group">
+                                                <div class="flex items-center gap-3">
 
-                                        <!-- LEFT -->
-                                        <div class="flex items-center gap-3">
+                                                    <div
+                                                        class="w-9 h-9 flex items-center justify-center rounded-xl text-xs font-bold"
+                                                        :class="{
+                                            'bg-gradient-to-br from-yellow-300 to-yellow-500 text-white': (colIndex*3 + index) === 0,
+                                            'bg-gray-300 text-gray-700': (colIndex*3 + index) === 1,
+                                            'bg-orange-300 text-white': (colIndex*3 + index) === 2,
+                                            'bg-gray-200 text-gray-600': (colIndex*3 + index) > 2
+                                        }">
 
-                                            <!-- GLOBAL INDEX -->
-                                            <div
-                                                class="w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold"
-                                                :class="{
-                                'bg-yellow-100 text-yellow-600': (colIndex*3 + index) === 0,
-                                'bg-gray-200 text-gray-600': (colIndex*3 + index) === 1,
-                                'bg-orange-100 text-orange-600': (colIndex*3 + index) === 2,
-                                'bg-gray-100 text-gray-500': (colIndex*3 + index) > 2
-                            }">
+                                                        <span x-text="colIndex * 3 + index + 1"></span>
 
-                                                <span x-text="colIndex * 3 + index + 1"></span>
+                                                    </div>
+
+                                                    <div>
+                                                        <p class="text-sm font-semibold group-hover:text-indigo-500"
+                                                            x-text="p.name"></p>
+                                                        <p class="text-xs text-gray-400">Best selling product</p>
+                                                    </div>
+
+                                                </div>
+
+                                                <div class="text-right">
+                                                    <p class="text-base font-bold" x-text="p.total_sold"></p>
+                                                    <p class="text-xs text-gray-400">sold</p>
+                                                </div>
 
                                             </div>
 
-                                            <!-- NAME -->
-                                            <div>
-                                                <p class="text-sm font-semibold text-gray-800 dark:text-white"
-                                                    x-text="p.name"></p>
-
-                                                <p class="text-xs text-gray-400">
-                                                    Popular item
-                                                </p>
+                                            <!-- PROGRESS -->
+                                            <div class="mt-3">
+                                                <div class="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full">
+                                                    <div
+                                                        class="h-full bg-indigo-500 rounded-full"
+                                                        :style="`width: ${(p.total_sold / data.top_products[0].total_sold) * 100}%`">
+                                                    </div>
+                                                </div>
                                             </div>
 
                                         </div>
 
-                                        <!-- RIGHT -->
-                                        <div class="text-right">
+                                    </template>
 
-                                            <p class="text-sm font-bold text-gray-800 dark:text-white"
-                                                x-text="p.total_sold"></p>
+                                </div>
 
-                                            <p class="text-xs text-gray-400">
-                                                sold
-                                            </p>
-
-                                        </div>
-
-                                    </div>
-
-                                </template>
-
-                            </div>
-
-                        </template>
-
-                    </div>
-
-                </div>
-
-
-                <!-- RECENT ORDERS TABLE -->
-                <div class="bg-white rounded-xl shadow-xl dark:bg-gray-700 overflow-x-auto">
-
-                    <div class="p-4 border-b font-semibold dark:bg-gray-800">
-                        <?= $t['recent_orders'] ?>
-                    </div>
-
-                    <table class="w-full text-sm">
-
-                        <thead class="bg-gray-50 dark:bg-gray-700">
-                            <tr>
-                                <th class="p-3 text-left"><?= $t['order_id'] ?></th>
-                                <th class="p-3 text-left"><?= $t['customer'] ?></th>
-                                <th class="p-3 text-left"><?= $t['menu'] ?></th>
-                                <th class="p-3 text-left"><?= $t['total'] ?></th>
-                                <th class="p-3 text-left"><?= $t['status'] ?></th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            <template x-for="order in data.recent_orders" :key="order.id">
-                                <tr class="border-t">
-                                    <td class="p-3" x-text="'#ORD' + order.id"></td>
-                                    <td class="p-3" x-text="order.customer_name"></td>
-                                    <td class="p-3" x-text="formatRupiah(order.total)"></td>
-                                    <td class="p-3">
-                                        <span
-                                            class="px-2 py-1 rounded text-xs"
-                                            :class="statusClass(order.status)"
-                                            x-text="order.status">
-                                        </span>
-                                    </td>
-                                </tr>
                             </template>
-                        </tbody>
-                    </table>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =========================
+        RIGHT: RECENT ORDERS
+    ========================= -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden flex flex-col">
+
+                        <div class="p-4 border-b font-semibold dark:bg-gray-800">
+                            <?= $t['recent_orders'] ?>
+                        </div>
+
+                        <div class="overflow-x-auto">
+
+                            <table class="w-full text-sm">
+
+                                <thead class="bg-gray-50 dark:bg-gray-700">
+                                    <tr>
+                                        <th class="p-3 text-left"><?= $t['order_id'] ?></th>
+                                        <th class="p-3 text-left"><?= $t['customer'] ?></th>
+                                        <th class="p-3 text-left"><?= $t['menu'] ?></th>
+                                        <th class="p-3 text-left"><?= $t['total'] ?></th>
+                                        <th class="p-3 text-left"><?= $t['status'] ?></th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+
+                                    <template x-for="order in data.recent_orders" :key="order.id">
+                                        <tr class="border-t hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+
+                                            <td class="p-3 font-medium" x-text="'#ORD' + order.id"></td>
+
+                                            <td class="p-3" x-text="order.customer_name"></td>
+
+                                            <td class="p-3 text-gray-500">-</td>
+
+                                            <td class="p-3 font-semibold" x-text="formatRupiah(order.total)"></td>
+
+                                            <td class="p-3">
+                                                <span
+                                                    class="px-2 py-1 rounded text-xs"
+                                                    :class="statusClass(order.status)"
+                                                    x-text="order.status">
+                                                </span>
+                                            </td>
+
+                                        </tr>
+                                    </template>
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
 
                 </div>
 

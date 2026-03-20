@@ -1,5 +1,6 @@
 <?php
 define('APP_INIT', true);
+define('BYPASS_MENU_VALIDATION', true);
 
 require $_SERVER['DOCUMENT_ROOT'] . '/rkd-cafe/middleware/AuthMiddleware.php';
 

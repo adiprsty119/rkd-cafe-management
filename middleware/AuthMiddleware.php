@@ -115,7 +115,10 @@ $stmt = $pdo->prepare("
 ");
 
 $stmt->execute([$_SESSION['role_id']]);
-$_SESSION['permissions'] = $stmt->fetchAll(PDO::FETCH_COLUMN);
+$permissions = $stmt->fetchAll(PDO::FETCH_COLUMN);
+$_SESSION['permissions'] = !empty($permissions)
+    ? array_map(fn($p) => strtolower(trim($p)), $permissions)
+    : ($_SESSION['permissions'] ?? []);
 
 
 // ==========================
@@ -125,7 +128,12 @@ if (!isset($_SESSION['menu_config'])) {
     $_SESSION['menu_config'] = require __DIR__ . '/../config/sidebar_menu.php';
 }
 
-function hasPermission($permission)
+function hasPermission($permission): bool
 {
-    return in_array($permission, $_SESSION['permissions'] ?? []);
+    $permissions = $_SESSION['permissions'] ?? [];
+
+    return in_array(
+        strtolower(str_replace(' ', '_', $permission)),
+        $permissions
+    );
 }

@@ -91,6 +91,15 @@ function findMenuByRoute(array $menus)
         }
     }
 
+    if (defined('BYPASS_MENU_VALIDATION')) {
+        return [
+            'menu' => [
+                'title' => ucfirst(str_replace('.php', '', currentRoute()))
+            ],
+            'parent' => null
+        ];
+    }
+
     return null;
 }
 

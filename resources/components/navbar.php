@@ -349,7 +349,17 @@ $notificationCount = getUnreadNotificationCount($pdo, $userId);
 
                 <!-- SETTINGS -->
                 <a href="<?= htmlspecialchars($settingsUrl, ENT_QUOTES, 'UTF-8') ?>"
-                    @click.prevent="window.dispatchEvent(new CustomEvent('app:navigate', { detail: { url: '<?= json_encode($settingsUrl) ?>' } }))"
+                    data-url="<?= htmlspecialchars($settingsUrl) ?>"
+                    @click.prevent="
+                        const url = $el.dataset.url;
+
+                        if (window.LoaderEngine && !window.LoaderEngine.isNavigating) {
+                            window.dispatchEvent(new CustomEvent('app:navigate', {
+                                detail: { url: url, message: 'Opening settings...' }
+                            }));
+                        } else {
+                            window.location.href = url;
+                        }"
                     class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">
 
                     <i class="fa-solid fa-gear text-gray-500"></i>
@@ -407,7 +417,11 @@ $notificationCount = getUnreadNotificationCount($pdo, $userId);
             if (window.LoaderEngine && !window.LoaderEngine.isNavigating) {
 
                 window.LoaderEngine.start(message || null);
-                window.LoaderEngine.navigate(url);
+
+                // 🔥 DELAY AGAR LOADER MUNCUL DULU
+                setTimeout(() => {
+                    window.LoaderEngine.navigate(url);
+                }, 300); // bisa 200–500ms
 
             } else {
                 window.location.href = url;
