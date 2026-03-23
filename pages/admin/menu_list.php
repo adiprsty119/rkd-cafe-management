@@ -212,11 +212,12 @@ $breadcrumb = generateBreadcrumb($currentMenu);
                 <div class="flex flex-wrap gap-4">
 
                     <input
+                        x-model="search"
                         type="text"
                         placeholder="<?= $t['search_menu'] ?? 'Search menu...' ?>"
                         class="border rounded-lg px-4 py-2 w-64 focus:ring-2 focus:ring-amber-400 dark:bg-gray-800">
 
-                    <select class="border rounded-lg px-4 py-2 dark:bg-gray-800">
+                    <select x-model="category" class="border rounded-lg px-4 py-2 dark:bg-gray-800">
 
                         <option><?= $t['all_categories'] ?? 'All Categories' ?></option>
                         <option>Coffee</option>
@@ -224,7 +225,7 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
                     </select>
 
-                    <select class="border rounded-lg px-4 py-2 dark:bg-gray-800">
+                    <select x-model="status" class="border rounded-lg px-4 py-2 dark:bg-gray-800">
 
                         <option><?= $t['status'] ?? 'Status' ?></option>
                         <option>Available</option>
@@ -234,82 +235,104 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
                 </div>
 
-
-
                 <!-- MENU TABLE -->
-                <div class="bg-white rounded-xl shadow-xl dark:bg-gray-800 overflow-x-auto">
+                <div x-data="menuManager()" x-init="init()"
+                    class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
 
-                    <div class="p-4 border-b font-semibold dark:bg-gray-700">
-                        <?= $t['menu_list'] ?? 'Menu List' ?>
+                    <!-- HEADER -->
+                    <div class="flex items-center justify-between px-5 py-4 border-b dark:border-gray-700">
+
+                        <h2 class="font-semibold text-lg">
+                            <?= $t['menu_list'] ?? 'Menu List' ?>
+                        </h2>
+
+                        <span class="text-xs text-gray-400" x-text="filtered.length + ' items'"></span>
+
                     </div>
 
-                    <table class="w-full text-sm">
+                    <!-- TABLE -->
+                    <div class="overflow-x-auto">
 
-                        <thead class="bg-gray-50 dark:bg-gray-700">
+                        <table class="w-full text-sm">
 
-                            <tr>
+                            <thead class="bg-gray-50 dark:bg-gray-700 text-xs uppercase text-gray-500">
 
-                                <th class="p-3 text-left"><?= $t['image'] ?? 'Image' ?></th>
-                                <th class="p-3 text-left"><?= $t['menu'] ?? 'Menu' ?></th>
-                                <th class="p-3 text-left"><?= $t['category'] ?? 'Category' ?></th>
-                                <th class="p-3 text-left"><?= $t['price'] ?? 'Price' ?></th>
-                                <th class="p-3 text-left"><?= $t['status'] ?? 'Status' ?></th>
-                                <th class="p-3 text-left"><?= $t['action'] ?? 'Action' ?></th>
+                                <tr>
+                                    <th class="p-3 text-left">#</th>
+                                    <th class="p-3 text-left"><?= $t['image'] ?? 'Image' ?></th>
+                                    <th class="p-3 text-left"><?= $t['menu'] ?? 'Menu' ?></th>
+                                    <th class="p-3 text-left"><?= $t['category'] ?? 'Category' ?></th>
+                                    <th class="p-3 text-left"><?= $t['price'] ?? 'Price' ?></th>
+                                    <th class="p-3 text-left"><?= $t['status'] ?? 'Status' ?></th>
+                                    <th class="p-3 text-left"><?= $t['action'] ?? 'Action' ?></th>
+                                </tr>
 
-                            </tr>
+                            </thead>
 
-                        </thead>
+                            <tbody>
 
+                                <template x-for="(item, index) in filtered" :key="item.id">
 
-                        <tbody>
+                                    <tr class="border-t hover:bg-gray-50 dark:hover:bg-gray-700 transition">
 
-                            <tr class="border-t">
+                                        <td class="p-3 text-gray-400" x-text="index+1"></td>
 
-                                <td class="p-3">
+                                        <td class="p-3">
+                                            <img :src="item.image"
+                                                class="w-12 h-12 rounded-lg object-cover shadow">
+                                        </td>
 
-                                    <img
-                                        src="/rkd-cafe/public/assets/images/latte.png"
-                                        class="w-10 h-10 rounded object-cover">
+                                        <td class="p-3 font-semibold" x-text="item.name"></td>
 
-                                </td>
+                                        <td class="p-3">
+                                            <span class="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded"
+                                                x-text="item.category"></span>
+                                        </td>
 
-                                <td class="p-3 font-semibold">
-                                    Latte
-                                </td>
+                                        <td class="p-3 font-medium text-amber-500"
+                                            x-text="formatRupiah(item.price)">
+                                        </td>
 
-                                <td class="p-3">
-                                    Coffee
-                                </td>
+                                        <td class="p-3">
+                                            <span
+                                                class="text-xs px-2 py-1 rounded"
+                                                :class="item.status === 'active'
+                                    ? 'bg-green-100 text-green-600'
+                                    : 'bg-gray-200 text-gray-500'"
+                                                x-text="item.status">
+                                            </span>
+                                        </td>
 
-                                <td class="p-3">
-                                    Rp 30.000
-                                </td>
+                                        <td class="p-3 space-x-2">
 
-                                <td class="p-3">
+                                            <button @click="edit(item)"
+                                                class="text-blue-500 hover:underline text-xs">
+                                                Edit
+                                            </button>
 
-                                    <span class="bg-green-100 text-green-600 px-2 py-1 rounded text-xs">
-                                        Available
-                                    </span>
+                                            <button @click="remove(item.id)"
+                                                class="text-red-500 hover:underline text-xs">
+                                                Delete
+                                            </button>
 
-                                </td>
+                                        </td>
 
-                                <td class="p-3 space-x-2">
+                                    </tr>
 
-                                    <button class="text-blue-600 hover:underline">
-                                        Edit
-                                    </button>
+                                </template>
 
-                                    <button class="text-red-600 hover:underline">
-                                        Delete
-                                    </button>
+                                <!-- EMPTY STATE -->
+                                <tr x-show="filtered.length === 0">
+                                    <td colspan="7" class="text-center py-10 text-gray-400">
+                                        No menu found
+                                    </td>
+                                </tr>
 
-                                </td>
+                            </tbody>
 
-                            </tr>
+                        </table>
 
-                        </tbody>
-
-                    </table>
+                    </div>
 
                 </div>
 
@@ -342,6 +365,85 @@ $breadcrumb = generateBreadcrumb($currentMenu);
     <?php unset($_SESSION['toast']);
     endif; ?>
 
+
+    <script>
+        function menuManager() {
+            return {
+
+                search: '',
+                category: '',
+                status: '',
+
+                data: [],
+                filtered: [],
+
+                init() {
+                    this.fetchMenu();
+                    this.$watch('search', () => this.applyFilter());
+                    this.$watch('category', () => this.applyFilter());
+                    this.$watch('status', () => this.applyFilter());
+                },
+
+                async fetchMenu() {
+
+                    try {
+                        const res = await fetch('/rkd-cafe/api/menu/menu.php');
+                        const json = await res.json();
+
+                        this.data = json;
+                        this.filtered = json;
+
+                    } catch (e) {
+                        console.error("Fetch menu error:", e);
+                    }
+                },
+
+                applyFilter() {
+
+                    this.filtered = this.data.filter(item => {
+
+                        const s = this.search.toLowerCase();
+
+                        const matchSearch = item.name.toLowerCase().includes(s);
+
+                        const matchCategory = this.category ?
+                            item.category === this.category :
+                            true;
+
+                        const matchStatus = this.status ?
+                            item.status === this.status :
+                            true;
+
+                        return matchSearch && matchCategory && matchStatus;
+                    });
+                },
+
+                formatRupiah(val) {
+                    return 'Rp ' + Number(val).toLocaleString('id-ID');
+                },
+
+                edit(item) {
+                    window.dispatchEvent(new CustomEvent('app:navigate', {
+                        detail: {
+                            url: `/rkd-cafe/pages/menu/edit.php?id=${item.id}`,
+                            message: 'Opening menu...'
+                        }
+                    }));
+                },
+
+                async remove(id) {
+
+                    if (!confirm('Delete this menu?')) return;
+
+                    await fetch(`/rkd-cafe/api/menu/menu_delete.php?id=${id}`);
+
+                    this.data = this.data.filter(i => i.id !== id);
+                    this.applyFilter();
+                }
+
+            }
+        }
+    </script>
 </body>
 
 </html>
