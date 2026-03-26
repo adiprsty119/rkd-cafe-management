@@ -205,8 +205,11 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
                 </div>
 
-                <!-- MENU SECTION -->
-                <div class="lg:col-span-2 p-6 overflow-y-auto space-y-6">
+                <!-- POS GRID -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
+
+                    <!-- MENU SECTION -->
+                    <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 overflow-y-auto space-y-6">
 
 
                     <!-- SEARCH -->
@@ -285,7 +288,7 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
 
                 <!-- CART SECTION -->
-                <div class="bg-white dark:bg-gray-800 p-6 flex flex-col border-l">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 flex flex-col">
 
 
                     <h2 class="font-semibold mb-4">
@@ -350,11 +353,87 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
 
                         <button
+                            @click="checkout()"
                             class="w-full bg-amber-500 hover:bg-amber-600 text-white py-3 rounded font-semibold">
 
                             Checkout
 
                         </button>
+
+                    </div>
+
+                </div>
+
+                </div> <!-- END POS GRID -->
+
+                <!-- PAYMENT MODAL -->
+                <div
+                    x-show="showPaymentModal"
+                    x-transition
+                    class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+                    @click.self="showPaymentModal = false">
+
+                    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md mx-4">
+
+                        <h3 class="text-lg font-semibold mb-4">Pembayaran</h3>
+
+                        <div class="space-y-4">
+
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Total Pembayaran</label>
+                                <div class="text-2xl font-bold text-amber-600">
+                                    Rp <span x-text="total.toLocaleString('id-ID')"></span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Metode Pembayaran</label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button
+                                        @click="paymentMethod = 'cash'"
+                                        :class="paymentMethod === 'cash' ? 'bg-amber-500 text-white' : 'bg-gray-200 dark:bg-gray-700'"
+                                        class="p-3 rounded-lg font-medium transition">
+                                        <i class="fas fa-money-bill-wave mr-2"></i>Tunai
+                                    </button>
+                                    <button
+                                        @click="paymentMethod = 'card'"
+                                        :class="paymentMethod === 'card' ? 'bg-amber-500 text-white' : 'bg-gray-200 dark:bg-gray-700'"
+                                        class="p-3 rounded-lg font-medium transition">
+                                        <i class="fas fa-credit-card mr-2"></i>Kartu
+                                    </button>
+                                </div>
+                            </div>
+
+                            <template x-if="paymentMethod === 'cash'">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Jumlah Bayar</label>
+                                    <input
+                                        x-model="cashAmount"
+                                        type="number"
+                                        class="w-full p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
+                                        placeholder="Masukkan jumlah bayar">
+                                </div>
+                                <div x-show="cashAmount" class="text-sm">
+                                    Kembalian: Rp <span x-text="(cashAmount - total).toLocaleString('id-ID')"></span>
+                                </div>
+                            </template>
+
+                            <div class="flex gap-3 pt-4">
+                                <button
+                                    @click="showPaymentModal = false"
+                                    class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                                    Batal
+                                </button>
+                                <button
+                                    @click="processPayment()"
+                                    :disabled="!canProcessPayment"
+                                    :class="canProcessPayment ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-300 cursor-not-allowed'"
+                                    class="flex-1 px-4 py-2 text-white rounded-lg transition">
+                                    Bayar
+                                </button>
+                            </div>
+
+                        </div>
 
                     </div>
 
@@ -398,6 +477,9 @@ $breadcrumb = generateBreadcrumb($currentMenu);
             return {
 
                 cart: [],
+                showPaymentModal: false,
+                paymentMethod: '',
+                cashAmount: '',
 
                 addItem(name, price) {
 
@@ -423,11 +505,38 @@ $breadcrumb = generateBreadcrumb($currentMenu);
                     this.cart = this.cart.filter(i => i !== item)
                 },
 
+                checkout() {
+                    if (this.cart.length === 0) {
+                        alert('Keranjang kosong!');
+                        return;
+                    }
+                    this.showPaymentModal = true;
+                    this.paymentMethod = 'cash';
+                    this.cashAmount = '';
+                },
+
+                processPayment() {
+                    if (!this.canProcessPayment) return;
+                    
+                    // Simulasi pemrosesan pembayaran
+                    alert('Pembayaran berhasil diproses!');
+                    this.cart = [];
+                    this.showPaymentModal = false;
+                    this.paymentMethod = '';
+                    this.cashAmount = '';
+                },
 
                 get total() {
 
                     return this.cart.reduce((t, i) => t + (i.price * i.qty), 0)
 
+                },
+
+                get canProcessPayment() {
+                    if (this.paymentMethod === 'cash') {
+                        return this.cashAmount >= this.total;
+                    }
+                    return this.paymentMethod === 'card';
                 }
 
             }
