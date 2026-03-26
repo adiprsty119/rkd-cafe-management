@@ -16,6 +16,7 @@ if (!in_array($lang, ['id', 'en'])) {
 $t = require __DIR__ . '/../../resources/lang/' . $lang . '.php';
 require_once __DIR__ . '/../../app/helpers/menu_helper.php';
 require_once __DIR__ . '/../../app/helpers/menu_engine.php';
+require_once __DIR__ . '/../../app/helpers/buttons.php';
 
 $role = $_SESSION['role'] ?? 'guest';
 $sidebarCollapsed = $_SESSION['sidebar_collapsed'] ?? 0;
@@ -103,7 +104,7 @@ $breadcrumb = generateBreadcrumb($currentMenu);
         </div>
 
         <!-- MAIN CONTENT -->
-        <div class="flex-1 flex flex-col min-w-0 md:ml-0 transition-all duration-300">
+        <div class="flex-1 flex flex-col min-w-0 h-screen md:ml-0 transition-all duration-300">
 
             <!-- =========================
                 HEADER STACK
@@ -162,6 +163,8 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
 
             <main id="dashboardScroll"
+                x-data="menuManager()"
+                x-init="init()"
                 class="flex-1 p-4 md:p-6 overflow-y-auto space-y-6 scrollbar-hide">
 
                 <!-- HEADER -->
@@ -195,146 +198,508 @@ $breadcrumb = generateBreadcrumb($currentMenu);
                     <!-- RIGHT ACTION -->
                     <div class="flex items-center gap-3">
 
-                        <button
-                            class="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg shadow-sm text-sm transition cursor-pointer">
+                        <div class="relative" x-data="{ open:false }">
 
-                            <i class="fa-solid fa-plus"></i>
+                            <!-- MAIN BUTTON -->
+                            <button
+                                @click="open = !open"
+                                @keydown.window.ctrl.n.prevent="quickAdd()"
+                                class="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl shadow-sm text-sm transition-all hover:scale-105 active:scale-95 cursor-pointer">
 
-                            <?= $t['add_menu'] ?? 'Add Menu' ?>
+                                <i class="fa-solid fa-plus"></i>
+                                <?= $t['add_menu'] ?? 'Add Menu' ?>
 
-                        </button>
+                                <i class="fa-solid fa-chevron-down text-xs opacity-70"></i>
+                            </button>
+
+                            <!-- DROPDOWN -->
+                            <div
+                                x-show="open"
+                                @click.outside="open = false"
+                                x-transition
+                                class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg border dark:border-gray-700 overflow-hidden z-50">
+
+                                <!-- ADD PAGE -->
+                                <button
+                                    @click="navigate('/rkd-cafe/pages/admin/menu/create.php'); open=false"
+                                    class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm flex items-center gap-2 cursor-pointer">
+
+                                    <i class="fa-solid fa-plus"></i>
+                                    Add New Menu
+                                </button>
+
+                                <!-- QUICK ADD (MODAL) -->
+                                <button
+                                    @click="quickAdd(); open=false"
+                                    class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm flex items-center gap-2 cursor-pointer">
+
+                                    <i class="fa-solid fa-bolt"></i>
+                                    Quick Add
+                                </button>
+
+                                <!-- DUPLICATE -->
+                                <button
+                                    @click="duplicateLast(); open=false"
+                                    class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm flex items-center gap-2 cursor-pointer">
+
+                                    <i class="fa-solid fa-copy"></i>
+                                    Duplicate Last
+                                </button>
+
+                            </div>
+                        </div>
 
                     </div>
 
                 </div>
 
-                <!-- SEARCH + FILTER -->
-                <div class="flex flex-wrap gap-4">
+                <div :class="{ 'overflow-hidden': confirmModal }">
+                    <!-- SEARCH + FILTER -->
+                    <div class="flex flex-wrap gap-4 mb-5">
 
-                    <input
-                        x-model="search"
-                        type="text"
-                        placeholder="<?= $t['search_menu'] ?? 'Search menu...' ?>"
-                        class="border rounded-lg px-4 py-2 w-64 focus:ring-2 focus:ring-amber-400 dark:bg-gray-800">
+                        <input
+                            x-model="search"
+                            type="text"
+                            placeholder="<?= $t['search_menu'] ?? 'Search menu...' ?>"
+                            class="border rounded-lg px-4 py-2 w-64 focus:ring-2 focus:ring-amber-400 dark:bg-gray-800">
 
-                    <select x-model="category" class="border rounded-lg px-4 py-2 dark:bg-gray-800">
+                        <!-- PRICE FILTER -->
+                        <input type="number" x-model="minPrice" placeholder="Min price"
+                            class="border px-3 py-2 rounded dark:bg-gray-800">
 
-                        <option><?= $t['all_categories'] ?? 'All Categories' ?></option>
-                        <option>Coffee</option>
-                        <option>Bakery</option>
+                        <input type="number" x-model="maxPrice" placeholder="Max price"
+                            class="border px-3 py-2 rounded dark:bg-gray-800">
 
-                    </select>
+                        <select x-model="category" class="border rounded-lg px-4 py-2 dark:bg-gray-800">
 
-                    <select x-model="status" class="border rounded-lg px-4 py-2 dark:bg-gray-800">
+                            <option value="">
+                                <?= $t['all_categories'] ?? 'All Categories' ?>
+                            </option>
 
-                        <option><?= $t['status'] ?? 'Status' ?></option>
-                        <option>Available</option>
-                        <option>Unavailable</option>
+                            <template x-for="cat in categories" :key="cat.id">
+                                <option :value="cat.name" x-text="cat.name"></option>
+                            </template>
 
-                    </select>
+                        </select>
 
-                </div>
+                        <select x-model="status" class="border rounded-lg px-4 py-2 dark:bg-gray-800">
 
-                <!-- MENU TABLE -->
-                <div x-data="menuManager()" x-init="init()"
-                    class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
+                            <option value=""><?= $t['status'] ?? 'Status' ?></option>
+                            <option value="active">Available</option>
+                            <option value="inactive">Unavailable</option>
 
-                    <!-- HEADER -->
-                    <div class="flex items-center justify-between px-5 py-4 border-b dark:border-gray-700">
+                        </select>
 
-                        <h2 class="font-semibold text-lg">
-                            <?= $t['menu_list'] ?? 'Menu List' ?>
-                        </h2>
-
-                        <span class="text-xs text-gray-400" x-text="filtered.length + ' items'"></span>
+                        <!-- USAGE FILTER -->
+                        <select x-model="usage" class="border rounded-lg px-4 py-2 dark:bg-gray-800">
+                            <option value="">Usage</option>
+                            <option value="used">Used</option>
+                            <option value="free">Free</option>
+                        </select>
 
                     </div>
 
-                    <!-- TABLE -->
-                    <div class="overflow-x-auto">
+                    <!-- MENU TABLE -->
+                    <div
+                        class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
 
-                        <table class="w-full text-sm">
+                        <!-- BULK ACTION 🔥 -->
+                        <div
+                            x-show="data.some(i => i.selected)"
+                            x-transition
+                            class="flex gap-2 mb-4">
 
-                            <thead class="bg-gray-50 dark:bg-gray-700 text-xs uppercase text-gray-500">
+                            <button
+                                @click="bulkDelete()"
+                                class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm cursor-pointer">
+                                Delete Selected
+                            </button>
 
-                                <tr>
-                                    <th class="p-3 text-left">#</th>
-                                    <th class="p-3 text-left"><?= $t['image'] ?? 'Image' ?></th>
-                                    <th class="p-3 text-left"><?= $t['menu'] ?? 'Menu' ?></th>
-                                    <th class="p-3 text-left"><?= $t['category'] ?? 'Category' ?></th>
-                                    <th class="p-3 text-left"><?= $t['price'] ?? 'Price' ?></th>
-                                    <th class="p-3 text-left"><?= $t['status'] ?? 'Status' ?></th>
-                                    <th class="p-3 text-left"><?= $t['action'] ?? 'Action' ?></th>
-                                </tr>
+                            <button
+                                @click="bulkEnable()"
+                                class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm cursor-pointer">
+                                Enable Selected
+                            </button>
 
-                            </thead>
+                        </div>
 
-                            <tbody>
+                        <!-- HEADER -->
+                        <div class="flex items-center justify-between px-5 py-4 border-b dark:border-gray-700">
 
-                                <template x-for="(item, index) in filtered" :key="item.id">
+                            <h2 class="font-semibold text-lg">
+                                <?= $t['menu_list'] ?? 'Menu List' ?>
+                            </h2>
 
-                                    <tr class="border-t hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                            <span class="text-xs text-gray-400" x-text="filtered.length + ' items'"></span>
 
-                                        <td class="p-3 text-gray-400" x-text="index+1"></td>
+                        </div>
 
-                                        <td class="p-3">
-                                            <img :src="item.image"
-                                                class="w-12 h-12 rounded-lg object-cover shadow">
-                                        </td>
+                        <!-- TABLE -->
+                        <div class="overflow-x-auto">
 
-                                        <td class="p-3 font-semibold" x-text="item.name"></td>
+                            <table class="w-full text-sm">
 
-                                        <td class="p-3">
-                                            <span class="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded"
-                                                x-text="item.category"></span>
-                                        </td>
+                                <thead class="bg-gray-50 dark:bg-gray-700 text-xs uppercase text-gray-500">
 
-                                        <td class="p-3 font-medium text-amber-500"
-                                            x-text="formatRupiah(item.price)">
-                                        </td>
-
-                                        <td class="p-3">
-                                            <span
-                                                class="text-xs px-2 py-1 rounded"
-                                                :class="item.status === 'active'
-                                    ? 'bg-green-100 text-green-600'
-                                    : 'bg-gray-200 text-gray-500'"
-                                                x-text="item.status">
-                                            </span>
-                                        </td>
-
-                                        <td class="p-3 space-x-2">
-
-                                            <button @click="edit(item)"
-                                                class="text-blue-500 hover:underline text-xs">
-                                                Edit
-                                            </button>
-
-                                            <button @click="remove(item.id)"
-                                                class="text-red-500 hover:underline text-xs">
-                                                Delete
-                                            </button>
-
-                                        </td>
-
+                                    <tr>
+                                        <th class="p-3 text-left">No.</th>
+                                        <th class="p-3 text-left"><?= $t['image'] ?? 'Image' ?></th>
+                                        <th class="p-3 text-left"><?= $t['menu'] ?? 'Menu' ?></th>
+                                        <th class="p-3 text-left"><?= $t['category'] ?? 'Category' ?></th>
+                                        <th class="p-3 text-left"><?= $t['price'] ?? 'Price' ?></th>
+                                        <th class="p-3 text-left"><?= $t['status'] ?? 'Status' ?></th>
+                                        <th class="p-3 text-left">Usage</th>
+                                        <th class="p-3 text-left"><?= $t['action'] ?? 'Action' ?></th>
+                                        <th class="p-3">
+                                            <input type="checkbox" @change="toggleAll($event)" class="cursor-pointer">
+                                        </th>
                                     </tr>
 
-                                </template>
+                                </thead>
 
-                                <!-- EMPTY STATE -->
-                                <tr x-show="filtered.length === 0">
-                                    <td colspan="7" class="text-center py-10 text-gray-400">
-                                        No menu found
-                                    </td>
-                                </tr>
+                                <tbody>
 
-                            </tbody>
+                                    <template x-for="(item, index) in filtered" :key="item.id">
 
-                        </table>
+                                        <tr
+                                            class="border-t hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300"
+                                            :class="{
+                                                'opacity-0 scale-95': item._removing,
+                                                'bg-green-50 dark:bg-green-900/20 scale-[1.01]': item._highlight
+                                            }">
+
+                                            <td class="p-3 text-gray-400" x-text="index+1"></td>
+
+                                            <td class="p-3">
+                                                <div class="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+
+                                                    <img
+                                                        x-show="item.image"
+                                                        :src="item.image"
+                                                        @error="item.image = null"
+                                                        class="w-full h-full object-cover">
+
+                                                    <template x-if="!item.image">
+                                                        <svg
+                                                            xmlns="http://www.w3.org/2000/svg"
+                                                            viewBox="0 0 100 100"
+                                                            class="w-6 h-6 text-gray-400">
+
+                                                            <rect x="25" y="35" width="40" height="30" rx="6" fill="currentColor" />
+                                                            <path d="M65 40 Q80 50 65 60" stroke="currentColor" stroke-width="4" fill="none" />
+                                                            <path d="M40 20 C35 10, 55 10, 50 20" stroke="currentColor" stroke-width="2" fill="none" />
+                                                            <path d="M50 20 C45 10, 65 10, 60 20" stroke="currentColor" stroke-width="2" fill="none" />
+                                                            <rect x="30" y="65" width="30" height="5" rx="2" fill="currentColor" />
+
+                                                        </svg>
+                                                    </template>
+
+                                                </div>
+                                            </td>
+
+                                            <td class="p-3 font-semibold flex items-center gap-2">
+
+                                                <span x-text="item.name"></span>
+
+                                                <!-- 🔥 BADGE DISABLED -->
+                                                <span
+                                                    x-show="item.status === 'inactive'"
+                                                    class="text-[10px] px-2 py-0.5 rounded bg-red-100 text-red-600">
+                                                    Disabled
+                                                </span>
+
+                                            </td>
+
+                                            <td class="p-3">
+                                                <span class="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded"
+                                                    x-text="item.category"></span>
+                                            </td>
+
+                                            <td class="p-3 font-medium text-amber-500"
+                                                x-text="formatRupiah(item.price)">
+                                            </td>
+
+                                            <td class="p-3">
+                                                <span
+                                                    class="text-xs px-2 py-1 rounded"
+                                                    :class="item.status === 'active' ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-500'"
+                                                    x-text="item.status">
+                                                </span>
+                                            </td>
+
+                                            <td class="p-3">
+                                                <span
+                                                    class="text-xs px-2 py-1 rounded"
+                                                    :class="item.used 
+                                                        ? 'bg-red-100 text-red-600' 
+                                                        : 'bg-gray-100 text-gray-600'">
+
+                                                    <span x-text="item.used ? 'Used' : 'Free'"></span>
+
+                                                </span>
+                                            </td>
+
+                                            <td class="p-3">
+                                                <?= btnActionGroup(
+                                                    "edit(item)",
+                                                    "confirmDelete(item)",
+                                                    "view(item)",
+                                                    "enableItem(item)"
+                                                ) ?>
+                                            </td>
+
+                                            <td class="p-3">
+                                                <input type="checkbox" x-model="item.selected" class="cursor-pointer">
+                                            </td>
+
+                                        </tr>
+
+                                    </template>
+
+                                    <!-- EMPTY STATE -->
+                                    <tr x-show="filtered.length === 0">
+                                        <td colspan="7" class="text-center py-10 text-gray-400">
+                                            <div class="flex flex-col items-center py-10 text-gray-400">
+                                                <i class="fa-solid fa-mug-hot text-3xl mb-2"></i>
+                                                <p class="font-medium">No menu found</p>
+                                                <p class="text-xs">Try adjusting search or filters</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                </tbody>
+
+                            </table>
+
+                            <!-- DELETE CONFIRM MODAL -->
+                            <div
+                                x-show="confirmModal"
+                                x-transition
+                                @keydown.escape.window="confirmModal = false; selectedItem = null; forceMode = false;"
+                                class="fixed inset-0 z-50 flex items-center justify-center">
+
+                                <!-- BACKDROP -->
+                                <div
+                                    class="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                                    @click="confirmModal = false">
+                                </div>
+
+                                <div
+                                    x-show="confirmModal"
+                                    x-transition.opacity.scale
+                                    @keydown.escape.window="confirmModal = false"
+                                    class="fixed inset-0 z-50 flex items-center justify-center">
+
+                                    <!-- BACKDROP -->
+                                    <div
+                                        class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
+                                        @click="confirmModal = false">
+                                    </div>
+
+                                    <!-- MODAL -->
+                                    <div
+                                        class="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md p-7 z-10 transform transition-all duration-300 scale-100">
+
+                                        <!-- ICON -->
+                                        <div class="flex items-center justify-center mb-5">
+                                            <div class="w-16 h-16 flex items-center justify-center rounded-full  bg-red-100 dark:bg-red-500/20 shadow-inner">
+
+                                                <i
+                                                    x-show="!forceMode"
+                                                    class="fa-solid fa-trash text-red-500 text-2xl">
+                                                </i>
+
+                                                <i
+                                                    x-show="forceMode"
+                                                    class="fa-solid fa-triangle-exclamation text-red-600 text-2xl animate-pulse">
+                                                </i>
+
+                                            </div>
+                                        </div>
+
+                                        <!-- TITLE -->
+                                        <h2 class="text-xl font-semibold text-center mb-1">
+                                            <span x-show="!forceMode">Delete Menu</span>
+                                            <span x-show="forceMode" class="text-red-600">Force Delete</span>
+                                        </h2>
+
+                                        <!-- SUBTEXT -->
+                                        <p class="text-sm text-gray-500 dark:text-gray-400 text-center mb-6 leading-relaxed">
+                                            <span x-show="!forceMode">
+                                                Are you sure you want to remove
+                                                <span class="font-semibold text-gray-800 dark:text-white" x-text="selectedItem?.name"></span> ?
+                                            </span>
+
+                                            <span x-show="forceMode" class="text-red-500 font-medium">
+                                                This action is irreversible and may affect transaction data.
+                                            </span>
+                                        </p>
+
+                                        <!-- ACTION -->
+                                        <div class="flex flex-col gap-4">
+
+                                            <!-- BUTTON GROUP -->
+                                            <div class="flex justify-center gap-3">
+
+                                                <!-- CANCEL -->
+                                                <button
+                                                    @click="confirmModal = false"
+                                                    class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200  dark:bg-gray-700 dark:hover:bg-gray-600 text-sm font-medium transition-all hover:scale-105 active:scale-95 cursor-pointer">
+
+                                                    <i class="fa-solid fa-ban"></i>
+
+                                                    Cancel
+                                                </button>
+
+                                                <!-- DELETE -->
+                                                <button
+                                                    @click="executeDelete()"
+                                                    class="px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-medium flex items-center gap-2 transition-all shadow-sm hover:shadow-md hover:scale-105 active:scale-95 cursor-pointer">
+
+                                                    <i x-show="deletingId !== selectedItem?.id" class="fa-solid fa-trash"></i>
+                                                    <i x-show="deletingId === selectedItem?.id" class="fa-solid fa-spinner fa-spin"></i>
+
+                                                    <span>Delete</span>
+                                                </button>
+
+                                                <!-- FORCE DELETE -->
+                                                <button
+                                                    x-show="forceMode"
+                                                    @click="executeDelete(true)"
+                                                    class="px-4 py-2 rounded-xl bg-red-700 hover:bg-red-800  text-white text-sm font-semibold transition-all shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer">
+
+                                                    <i class="fa-solid fa-bolt"></i>
+                                                    <span>Force</span>
+                                                </button>
+
+                                            </div>
+
+                                            <!-- WARNING BOX -->
+                                            <div
+                                                x-show="forceMode"
+                                                class="text-xs text-red-600 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg px-3 py-2 text-center">
+
+                                                ⚠️ This will not remove related transactions, but product history remains linked.
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <!-- QUICK ADD MODAL -->
+                            <div
+                                x-show="quickAddModal"
+                                x-transition.opacity
+                                x-cloak
+                                class="fixed inset-0 flex items-center justify-center z-50">
+
+                                <!-- BACKDROP -->
+                                <div
+                                    class="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                                    @click="quickAddModal = false">
+                                </div>
+
+                                <!-- MODAL -->
+                                <div
+                                    x-transition.scale
+                                    class="relative w-full max-w-md bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-6">
+
+                                    <!-- HEADER -->
+                                    <div class="flex items-center justify-between mb-4">
+
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 flex items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-500/20">
+                                                <i class="fa-solid fa-bolt text-amber-600 dark:text-amber-400"></i>
+                                            </div>
+
+                                            <div>
+                                                <h2 class="font-semibold text-lg">Quick Add</h2>
+                                                <p class="text-xs text-gray-500">Add menu instantly</p>
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            @click="quickAddModal=false"
+                                            class="text-gray-400 hover:text-red-600 dark:hover:text-red-500 cursor-pointer">
+                                            <i class="fa-solid fa-xmark"></i>
+                                        </button>
+
+                                    </div>
+
+                                    <!-- FORM -->
+                                    <div class="space-y-4">
+
+                                        <!-- NAME -->
+                                        <div>
+                                            <label class="text-xs text-gray-500">Menu Name</label>
+                                            <input
+                                                x-model="quickForm.name"
+                                                x-ref="quickName"
+                                                @keydown.enter.prevent="submitQuickAdd()"
+                                                placeholder="e.g. Cappuccino"
+                                                class="w-full mt-1 px-3 py-2 rounded-xl border focus:ring-2 focus:ring-amber-400 dark:bg-gray-700">
+                                        </div>
+
+                                        <!-- PRICE -->
+                                        <div>
+                                            <label class="text-xs text-gray-500">Price</label>
+                                            <input
+                                                type="text"
+                                                x-model="quickForm.price"
+                                                @input="formatInputPrice"
+                                                placeholder="25.000"
+                                                class="w-full mt-1 px-3 py-2 rounded-xl border focus:ring-2 focus:ring-amber-400 dark:bg-gray-700">
+                                        </div>
+
+                                        <!-- CATEGORY -->
+                                        <div>
+                                            <label class="text-xs text-gray-500">Category</label>
+                                            <select
+                                                x-model="quickForm.category_id"
+                                                class="w-full mt-1 px-3 py-2 rounded-xl border focus:ring-2 focus:ring-amber-400 dark:bg-gray-700">
+
+                                                <option value="">Select category</option>
+
+                                                <template x-for="cat in categories" :key="cat.id">
+                                                    <option :value="cat.id" x-text="cat.name"></option>
+                                                </template>
+
+                                            </select>
+                                        </div>
+
+                                    </div>
+
+                                    <!-- ACTION -->
+                                    <div class="flex justify-end gap-3 mt-6">
+
+                                        <button
+                                            @click="quickAddModal=false"
+                                            class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-sm transition cursor-pointer">
+                                            Cancel
+                                        </button>
+
+                                        <button
+                                            @click="submitQuickAdd()"
+                                            :disabled="loading"
+                                            class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm flex items-center gap-2 transition shadow-sm hover:shadow-md cursor-pointer">
+
+                                            <i x-show="!loading" class="fa-solid fa-save"></i>
+                                            <i x-show="loading" class="fa-solid fa-spinner fa-spin"></i>
+
+                                            Save
+                                        </button>
+
+                                    </div>
+
+                                </div>
+                            </div>
+
+                        </div>
 
                     </div>
-
-                </div>
 
             </main>
 
@@ -342,11 +707,14 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
     </div>
 
+    <!-- SCRIPT -->
     <script src="/rkd-cafe/public/assets/js/toast.js"></script>
     <script src="/rkd-cafe/public/assets/js/notifications.js"></script>
     <script src="/rkd-cafe/public/assets/js/header.js"></script>
     <script src="/rkd-cafe/public/assets/js/sidebar-tooltip.js"></script>
+    <script src="/rkd-cafe/public/assets/js/menu-manager.js"></script>
 
+    <!-- GLOBAL TOOLTIP -->
     <div
         id="global-tooltip"
         class="fixed hidden px-2 py-1 text-xs text-white bg-black rounded shadow-lg whitespace-nowrap z-[9999] pointer-events-none">
@@ -364,86 +732,6 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
     <?php unset($_SESSION['toast']);
     endif; ?>
-
-
-    <script>
-        function menuManager() {
-            return {
-
-                search: '',
-                category: '',
-                status: '',
-
-                data: [],
-                filtered: [],
-
-                init() {
-                    this.fetchMenu();
-                    this.$watch('search', () => this.applyFilter());
-                    this.$watch('category', () => this.applyFilter());
-                    this.$watch('status', () => this.applyFilter());
-                },
-
-                async fetchMenu() {
-
-                    try {
-                        const res = await fetch('/rkd-cafe/api/menu/menu.php');
-                        const json = await res.json();
-
-                        this.data = json;
-                        this.filtered = json;
-
-                    } catch (e) {
-                        console.error("Fetch menu error:", e);
-                    }
-                },
-
-                applyFilter() {
-
-                    this.filtered = this.data.filter(item => {
-
-                        const s = this.search.toLowerCase();
-
-                        const matchSearch = item.name.toLowerCase().includes(s);
-
-                        const matchCategory = this.category ?
-                            item.category === this.category :
-                            true;
-
-                        const matchStatus = this.status ?
-                            item.status === this.status :
-                            true;
-
-                        return matchSearch && matchCategory && matchStatus;
-                    });
-                },
-
-                formatRupiah(val) {
-                    return 'Rp ' + Number(val).toLocaleString('id-ID');
-                },
-
-                edit(item) {
-                    window.dispatchEvent(new CustomEvent('app:navigate', {
-                        detail: {
-                            url: `/rkd-cafe/pages/menu/edit.php?id=${item.id}`,
-                            message: 'Opening menu...'
-                        }
-                    }));
-                },
-
-                async remove(id) {
-
-                    if (!confirm('Delete this menu?')) return;
-
-                    await fetch(`/rkd-cafe/api/menu/menu_delete.php?id=${id}`);
-
-                    this.data = this.data.filter(i => i.id !== id);
-                    this.applyFilter();
-                }
-
-            }
-        }
-    </script>
 </body>
 
 </html>
