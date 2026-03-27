@@ -55,7 +55,7 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
     <!-- Load JS -->
     <script defer src="/rkd-cafe/public/assets/js/global-search.js"></script>
-    <script defer src="/rkd-cafe/public/assets/js/header.js"></script>
+    <script defer src="/rkd-cafe/public/assets/js/header.js?v=<?= time() ?>"></script>
 
     <style>
         [x-cloak] {

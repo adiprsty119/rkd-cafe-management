@@ -212,157 +212,157 @@ $breadcrumb = generateBreadcrumb($currentMenu);
                     <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 overflow-y-auto space-y-6">
 
 
-                    <!-- SEARCH -->
-                    <input
-                        type="text"
-                        placeholder="Search menu..."
-                        class="border rounded px-3 py-2 w-64 dark:bg-gray-700">
+                        <!-- SEARCH -->
+                        <input
+                            type="text"
+                            placeholder="Search menu..."
+                            class="border rounded px-3 py-2 w-64 dark:bg-gray-700">
 
 
-                    <!-- MENU GRID -->
-                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        <!-- MENU GRID -->
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
 
 
-                        <!-- MENU CARD -->
-                        <div
-                            @click="addItem('Latte',30000)"
-                            class="bg-white dark:bg-gray-800 rounded-xl shadow p-3 cursor-pointer hover:shadow-lg transition">
+                            <!-- MENU CARD -->
+                            <div
+                                @click="addItem('Latte',30000)"
+                                class="bg-white dark:bg-gray-800 rounded-xl shadow p-3 cursor-pointer hover:shadow-lg transition">
 
-                            <img
-                                src="/rkd-cafe/public/assets/images/latte.png"
-                                class="h-28 w-full object-cover rounded">
+                                <img
+                                    src="/rkd-cafe/public/assets/images/latte.png"
+                                    class="h-28 w-full object-cover rounded">
 
-                            <p class="font-semibold mt-2">
-                                Latte
-                            </p>
+                                <p class="font-semibold mt-2">
+                                    Latte
+                                </p>
 
-                            <p class="text-amber-600 font-bold">
-                                Rp 30.000
-                            </p>
-
-                        </div>
-
-
-                        <div
-                            @click="addItem('Espresso',25000)"
-                            class="bg-white dark:bg-gray-800 rounded-xl shadow p-3 cursor-pointer hover:shadow-lg transition">
-
-                            <img
-                                src="/rkd-cafe/public/assets/images/espresso.png"
-                                class="h-28 w-full object-cover rounded">
-
-                            <p class="font-semibold mt-2">
-                                Espresso
-                            </p>
-
-                            <p class="text-amber-600 font-bold">
-                                Rp 25.000
-                            </p>
-
-                        </div>
-
-
-                        <div
-                            @click="addItem('Croissant',22000)"
-                            class="bg-white dark:bg-gray-800 rounded-xl shadow p-3 cursor-pointer hover:shadow-lg transition">
-
-                            <img
-                                src="/rkd-cafe/public/assets/images/croissant.png"
-                                class="h-28 w-full object-cover rounded">
-
-                            <p class="font-semibold mt-2">
-                                Croissant
-                            </p>
-
-                            <p class="text-amber-600 font-bold">
-                                Rp 22.000
-                            </p>
-
-                        </div>
-
-
-                    </div>
-
-                </div>
-
-
-
-                <!-- CART SECTION -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 flex flex-col">
-
-
-                    <h2 class="font-semibold mb-4">
-                        Order Cart
-                    </h2>
-
-
-                    <!-- CART ITEMS -->
-                    <div class="flex-1 overflow-y-auto space-y-2">
-
-                        <template x-for="item in cart" :key="item.name">
-
-                            <div class="flex justify-between items-center border-b py-2">
-
-                                <div>
-
-                                    <p x-text="item.name"></p>
-
-                                    <p class="text-sm text-gray-500">
-                                        Rp <span x-text="item.price"></span>
-                                    </p>
-
-                                </div>
-
-                                <div class="flex items-center gap-2">
-
-                                    <button
-                                        @click="item.qty > 1 ? item.qty-- : removeItem(item)"
-                                        class="px-2 border rounded">
-                                        -
-                                    </button>
-
-                                    <span x-text="item.qty"></span>
-
-                                    <button
-                                        @click="item.qty++"
-                                        class="px-2 border rounded">
-                                        +
-                                    </button>
-
-                                </div>
+                                <p class="text-amber-600 font-bold">
+                                    Rp 30.000
+                                </p>
 
                             </div>
 
-                        </template>
+
+                            <div
+                                @click="addItem('Espresso',25000)"
+                                class="bg-white dark:bg-gray-800 rounded-xl shadow p-3 cursor-pointer hover:shadow-lg transition">
+
+                                <img
+                                    src="/rkd-cafe/public/assets/images/espresso.png"
+                                    class="h-28 w-full object-cover rounded">
+
+                                <p class="font-semibold mt-2">
+                                    Espresso
+                                </p>
+
+                                <p class="text-amber-600 font-bold">
+                                    Rp 25.000
+                                </p>
+
+                            </div>
+
+
+                            <div
+                                @click="addItem('Croissant',22000)"
+                                class="bg-white dark:bg-gray-800 rounded-xl shadow p-3 cursor-pointer hover:shadow-lg transition">
+
+                                <img
+                                    src="/rkd-cafe/public/assets/images/croissant.png"
+                                    class="h-28 w-full object-cover rounded">
+
+                                <p class="font-semibold mt-2">
+                                    Croissant
+                                </p>
+
+                                <p class="text-amber-600 font-bold">
+                                    Rp 22.000
+                                </p>
+
+                            </div>
+
+
+                        </div>
 
                     </div>
 
 
-                    <!-- TOTAL -->
-                    <div class="border-t pt-4 space-y-3">
 
-                        <div class="flex justify-between font-bold">
+                    <!-- CART SECTION -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 flex flex-col">
 
-                            <span>Total</span>
 
-                            <span>
-                                Rp <span x-text="total.toLocaleString('id-ID')"></span>
-                            </span>
+                        <h2 class="font-semibold mb-4">
+                            Order Cart
+                        </h2>
+
+
+                        <!-- CART ITEMS -->
+                        <div class="flex-1 overflow-y-auto space-y-2">
+
+                            <template x-for="item in cart" :key="item.name">
+
+                                <div class="flex justify-between items-center border-b py-2">
+
+                                    <div>
+
+                                        <p x-text="item.name"></p>
+
+                                        <p class="text-sm text-gray-500">
+                                            Rp <span x-text="item.price"></span>
+                                        </p>
+
+                                    </div>
+
+                                    <div class="flex items-center gap-2">
+
+                                        <button
+                                            @click="item.qty > 1 ? item.qty-- : removeItem(item)"
+                                            class="px-2 border rounded">
+                                            -
+                                        </button>
+
+                                        <span x-text="item.qty"></span>
+
+                                        <button
+                                            @click="item.qty++"
+                                            class="px-2 border rounded">
+                                            +
+                                        </button>
+
+                                    </div>
+
+                                </div>
+
+                            </template>
 
                         </div>
 
 
-                        <button
-                            @click="checkout()"
-                            class="w-full bg-amber-500 hover:bg-amber-600 text-white py-3 rounded font-semibold">
+                        <!-- TOTAL -->
+                        <div class="border-t pt-4 space-y-3">
 
-                            Checkout
+                            <div class="flex justify-between font-bold">
 
-                        </button>
+                                <span>Total</span>
+
+                                <span>
+                                    Rp <span x-text="total.toLocaleString('id-ID')"></span>
+                                </span>
+
+                            </div>
+
+
+                            <button
+                                @click="checkout()"
+                                class="w-full bg-amber-500 hover:bg-amber-600 text-white py-3 rounded font-semibold">
+
+                                Checkout
+
+                            </button>
+
+                        </div>
 
                     </div>
-
-                </div>
 
                 </div> <!-- END POS GRID -->
 
@@ -449,7 +449,7 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
     <script src="/rkd-cafe/public/assets/js/toast.js"></script>
     <script src="/rkd-cafe/public/assets/js/notifications.js"></script>
-    <script src="/rkd-cafe/public/assets/js/header.js"></script>
+    <script src="/rkd-cafe/public/assets/js/header.js?v=<?= time() ?>"></script>
     <script src="/rkd-cafe/public/assets/js/sidebar-tooltip.js"></script>
 
     <div
@@ -517,7 +517,7 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
                 processPayment() {
                     if (!this.canProcessPayment) return;
-                    
+
                     // Simulasi pemrosesan pembayaran
                     alert('Pembayaran berhasil diproses!');
                     this.cart = [];

@@ -21,6 +21,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* =========================
+       SANITIZER NAVBAR
+    ========================= */
+    function sanitizeNavbar() {
+        navbar.classList.remove(
+            "backdrop-blur-xl",
+            "backdrop-saturate-150"
+        );
+
+        if (header) {
+            header.classList.remove(
+                "bg-white/40",
+                "dark:bg-gray-900"
+            );
+        }
+    }
+
+
+    /* =========================
        CONFIGURATION
     ========================= */
     const CONFIG = {
@@ -46,67 +64,16 @@ document.addEventListener("DOMContentLoaded", () => {
     function update() {
 
         const scrollY = scrollContainer.scrollTop;
-
-        /* Breadcrumb Motion */
+        sanitizeNavbar();
         const move = clamp(scrollY, 0, CONFIG.maxMove);
-
-        /* Breadcrumb naik */
         breadcrumb.style.transform = `translate3d(0,-${move}px,0)`;
-
-        /* Content ikut naik */
         scrollContainer.style.marginTop = `-${move}px`;
-
-        /* =========================
-           BREADCRUMB FADE OUT
-        ========================= */
         const progress = move / CONFIG.maxMove;
 
         if (progress >= 0.85) {
             breadcrumb.style.opacity = "0";
         } else {
             breadcrumb.style.opacity = "1";
-        }
-
-        /* Navbar Blur Effect */
-        if (scrollY > CONFIG.glassThreshold) {
-
-            navbar.classList.add(
-                "backdrop-blur-xl",
-                "backdrop-saturate-150"
-            );
-
-        } else {
-
-            navbar.classList.remove(
-                "backdrop-blur-xl",
-                "backdrop-saturate-150"
-            );
-        }
-
-        /* Header Transparency */
-        if (scrollY > CONFIG.glassThreshold) {
-
-            header.classList.remove(
-                "bg-white/80",
-                "dark:bg-gray-800"
-            );
-
-            header.classList.add(
-                "bg-white/40",
-                "dark:bg-gray-900"
-            );
-
-        } else {
-
-            header.classList.remove(
-                "bg-white/40",
-                "dark:bg-gray-900"
-            );
-
-            header.classList.add(
-                "bg-white/80",
-                "dark:bg-gray-800"
-            );
         }
 
         /* Breadcrumb Indicator */

@@ -339,7 +339,7 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
     <script src="/rkd-cafe/public/assets/js/toast.js"></script>
     <script src="/rkd-cafe/public/assets/js/notifications.js"></script>
-    <script src="/rkd-cafe/public/assets/js/header.js"></script>
+    <script src="/rkd-cafe/public/assets/js/header.js?v=<?= time() ?>"></script>
     <script src="/rkd-cafe/public/assets/js/sidebar-tooltip.js"></script>
 
     <div

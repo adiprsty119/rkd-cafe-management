@@ -76,7 +76,7 @@ $businessInsight = getBusinessInsight("today") ?? [
     <!-- Notifications | Analytics Menu | Header -->
     <script defer src="/rkd-cafe/public/assets/js/notifications.js"></script>
     <script defer src="/rkd-cafe/public/assets/js/performance_analytics.js"></script>
-    <script defer src="/rkd-cafe/public/assets/js/header.js"></script>
+    <script defer src="/rkd-cafe/public/assets/js/header.js?v=<?= time() ?>"></script>
 
     <!-- Chart.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>

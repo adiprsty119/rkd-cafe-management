@@ -322,8 +322,14 @@
   .top-0 {
     top: calc(var(--spacing) * 0);
   }
+  .top-1 {
+    top: calc(var(--spacing) * 1);
+  }
   .top-1\/2 {
     top: calc(1 / 2 * 100%);
+  }
+  .top-3 {
+    top: calc(var(--spacing) * 3);
   }
   .top-3\.5 {
     top: calc(var(--spacing) * 3.5);
@@ -439,6 +445,9 @@
   .mx-2 {
     margin-inline: calc(var(--spacing) * 2);
   }
+  .mx-4 {
+    margin-inline: calc(var(--spacing) * 4);
+  }
   .mx-auto {
     margin-inline: auto;
   }
@@ -508,11 +517,17 @@
   .mb-16 {
     margin-bottom: calc(var(--spacing) * 16);
   }
+  .-ml-1 {
+    margin-left: calc(var(--spacing) * -1);
+  }
   .-ml-1\.5 {
     margin-left: calc(var(--spacing) * -1.5);
   }
   .-ml-24 {
     margin-left: calc(var(--spacing) * -24);
+  }
+  .ml-0 {
+    margin-left: calc(var(--spacing) * 0);
   }
   .ml-0\.5 {
     margin-left: calc(var(--spacing) * 0.5);
@@ -555,6 +570,9 @@
   }
   .table {
     display: table;
+  }
+  .h-1 {
+    height: calc(var(--spacing) * 1);
   }
   .h-1\.5 {
     height: calc(var(--spacing) * 1.5);
@@ -613,6 +631,9 @@
   .h-\[3px\] {
     height: 3px;
   }
+  .h-\[calc\(100vh-200px\)\] {
+    height: calc(100vh - 200px);
+  }
   .h-full {
     height: 100%;
   }
@@ -630,6 +651,9 @@
   }
   .w-0 {
     width: calc(var(--spacing) * 0);
+  }
+  .w-1 {
+    width: calc(var(--spacing) * 1);
   }
   .w-1\/2 {
     width: calc(1 / 2 * 100%);
@@ -724,8 +748,18 @@
   .flex-1 {
     flex: 1;
   }
+  .flex-shrink {
+    flex-shrink: 1;
+  }
   .flex-shrink-0 {
     flex-shrink: 0;
+  }
+  .border-collapse {
+    border-collapse: collapse;
+  }
+  .-translate-x-1 {
+    --tw-translate-x: calc(var(--spacing) * -1);
+    translate: var(--tw-translate-x) var(--tw-translate-y);
   }
   .-translate-x-1\/2 {
     --tw-translate-x: calc(calc(1 / 2 * 100%) * -1);
@@ -741,6 +775,10 @@
   }
   .translate-x-10 {
     --tw-translate-x: calc(var(--spacing) * 10);
+    translate: var(--tw-translate-x) var(--tw-translate-y);
+  }
+  .-translate-y-1 {
+    --tw-translate-y: calc(var(--spacing) * -1);
     translate: var(--tw-translate-x) var(--tw-translate-y);
   }
   .-translate-y-1\/2 {
@@ -800,6 +838,9 @@
   }
   .cursor-pointer {
     cursor: pointer;
+  }
+  .resize {
+    resize: both;
   }
   .auto-cols-\[240px\] {
     grid-auto-columns: 240px;
@@ -1012,6 +1053,9 @@
   .border-transparent {
     border-color: transparent;
   }
+  .border-white {
+    border-color: var(--color-white);
+  }
   .border-white\/40 {
     border-color: color-mix(in srgb, #fff 40%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
@@ -1054,6 +1098,9 @@
   .bg-blue-100 {
     background-color: var(--color-blue-100);
   }
+  .bg-blue-400 {
+    background-color: var(--color-blue-400);
+  }
   .bg-blue-400\/30 {
     background-color: color-mix(in srgb, oklch(70.7% 0.165 254.624) 30%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
@@ -1093,6 +1140,9 @@
   .bg-green-100 {
     background-color: var(--color-green-100);
   }
+  .bg-green-400 {
+    background-color: var(--color-green-400);
+  }
   .bg-green-400\/30 {
     background-color: color-mix(in srgb, oklch(79.2% 0.209 151.711) 30%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
@@ -1126,6 +1176,9 @@
   .bg-purple-100 {
     background-color: var(--color-purple-100);
   }
+  .bg-purple-400 {
+    background-color: var(--color-purple-400);
+  }
   .bg-purple-400\/30 {
     background-color: color-mix(in srgb, oklch(71.4% 0.203 305.504) 30%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
@@ -1137,6 +1190,9 @@
   }
   .bg-red-100 {
     background-color: var(--color-red-100);
+  }
+  .bg-red-400 {
+    background-color: var(--color-red-400);
   }
   .bg-red-400\/30 {
     background-color: color-mix(in srgb, oklch(70.4% 0.191 22.216) 30%, transparent);
@@ -1325,6 +1381,9 @@
   .p-8 {
     padding: calc(var(--spacing) * 8);
   }
+  .px-1 {
+    padding-inline: calc(var(--spacing) * 1);
+  }
   .px-1\.5 {
     padding-inline: calc(var(--spacing) * 1.5);
   }
@@ -1342,6 +1401,9 @@
   }
   .px-6 {
     padding-inline: calc(var(--spacing) * 6);
+  }
+  .py-0 {
+    padding-block: calc(var(--spacing) * 0);
   }
   .py-0\.5 {
     padding-block: calc(var(--spacing) * 0.5);
@@ -1396,6 +1458,9 @@
   }
   .pb-6 {
     padding-bottom: calc(var(--spacing) * 6);
+  }
+  .pl-1 {
+    padding-left: calc(var(--spacing) * 1);
   }
   .pl-1\.5 {
     padding-left: calc(var(--spacing) * 1.5);
@@ -1605,6 +1670,9 @@
   .uppercase {
     text-transform: uppercase;
   }
+  .underline {
+    text-decoration-line: underline;
+  }
   .antialiased {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -1665,6 +1733,10 @@
     --tw-shadow: 0 20px 25px -5px var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 8px 10px -6px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
+  .outline {
+    outline-style: var(--tw-outline-style);
+    outline-width: 1px;
+  }
   .blur-3xl {
     --tw-blur: blur(var(--blur-3xl));
     filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
@@ -1699,6 +1771,10 @@
   }
   .backdrop-saturate-150 {
     --tw-backdrop-saturate: saturate(150%);
+    -webkit-backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,);
+    backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,);
+  }
+  .backdrop-filter {
     -webkit-backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,);
     backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,);
   }
@@ -3132,6 +3208,11 @@ canvas.chart-ready {
   inherits: false;
   initial-value: 0 0 #0000;
 }
+@property --tw-outline-style {
+  syntax: "*";
+  inherits: false;
+  initial-value: solid;
+}
 @property --tw-blur {
   syntax: "*";
   inherits: false;
@@ -3299,6 +3380,7 @@ canvas.chart-ready {
       --tw-ring-offset-width: 0px;
       --tw-ring-offset-color: #fff;
       --tw-ring-offset-shadow: 0 0 #0000;
+      --tw-outline-style: solid;
       --tw-blur: initial;
       --tw-brightness: initial;
       --tw-contrast: initial;
