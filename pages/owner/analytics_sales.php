@@ -165,7 +165,7 @@ if (($previous['total_revenue'] ?? 0) > 0) {
                     id="dashboardNavbar"
                     class="relative z-50 transition-all duration-300">
 
-                    <div class="w-full px-4 mt-3 transition-all duration-300 bg-gray-100 dark:bg-gray-800">
+                    <div class="w-full px-4 mt-3 transition-all duration-300 bg-transparent">
                         <?php require __DIR__ . '/../../resources/components/navbar.php'; ?>
                     </div>
 

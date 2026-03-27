@@ -8,7 +8,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const breadcrumb = document.getElementById("breadcrumbContainer");
     const scrollContainer = document.getElementById("dashboardScroll");
     const indicator = document.getElementById("breadcrumbIndicator");
-
     const header = navbar ? navbar.querySelector("header") : null;
 
     if (

@@ -27,6 +27,7 @@ if (empty($_SESSION['csrf'])) {
     $_SESSION['csrf'] = bin2hex(random_bytes(32));
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="id"
     x-data="{dark: localStorage.theme === 'dark', loading:false,  mode: localStorage.authMode || 'login'}"

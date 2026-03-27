@@ -76,7 +76,6 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
     <div class="flex min-h-screen bg-gradient-to-br from-gray-200 via-gray-100 to-gray-300 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition">
 
-
         <!-- SIDEBAR -->
         <aside
             :class="sidebarOpen ? 'w-64' : 'w-20'"
@@ -118,7 +117,7 @@ $breadcrumb = generateBreadcrumb($currentMenu);
                     id="dashboardNavbar"
                     class="relative z-50 transition-all duration-300">
 
-                    <div class="w-full px-4 mt-3 transition-all duration-300 bg-gray-100 dark:bg-gray-800">
+                    <div class="w-full px-4 mt-3 transition-all duration-300 bg-transparent">
                         <?php require __DIR__ . '/../../resources/components/navbar.php'; ?>
                     </div>
 

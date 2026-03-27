@@ -106,8 +106,6 @@ $breadcrumb = generateBreadcrumb($currentMenu);
             class="fixed inset-0 bg-black/40 z-30 md:hidden">
         </div>
 
-
-
         <!-- MAIN CONTENT -->
         <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
 
@@ -123,7 +121,7 @@ $breadcrumb = generateBreadcrumb($currentMenu);
                     id="dashboardNavbar"
                     class="relative z-50 transition-all duration-300">
 
-                    <div class="w-full px-4 mt-3 transition-all duration-300 bg-gray-100 dark:bg-gray-800">
+                    <div class="w-full px-4 mt-3 transition-all duration-300 bg-transparent">
                         <?php require __DIR__ . '/../../resources/components/navbar.php'; ?>
                     </div>
 
