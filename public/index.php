@@ -1,7 +1,20 @@
 <?php
 
 define('APP_INIT', true);
+
 require __DIR__ . '/../middleware/AuthMiddleware.php';
+
+/* MENCEGAH CACHE LOGIN PAGE */
+header("Cache-Control: no-store, no-cache, must-revalidate");
+header("Pragma: no-cache");
+header("X-Frame-Options: SAMEORIGIN");
+header("X-Content-Type-Options: nosniff");
+header("Referrer-Policy: strict-origin-when-cross-origin");
+
+/* CSRF TOKEN */
+if (empty($_SESSION['csrf'])) {
+    $_SESSION['csrf'] = bin2hex(random_bytes(32));
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">

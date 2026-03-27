@@ -23,8 +23,8 @@ if (!empty($_SESSION['user_id'])) {
 }
 
 /* CSRF TOKEN */
-if (empty($_SESSION['csrf'])) {
-    $_SESSION['csrf'] = bin2hex(random_bytes(32));
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 ?>
 
@@ -135,7 +135,7 @@ if (empty($_SESSION['csrf'])) {
                             method="POST"
                             @submit.prevent="loading=true; $el.submit()">
 
-                            <input type="hidden" name="csrf" value="<?= $_SESSION['csrf'] ?>">
+                            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
 
                             <!-- USERNAME -->
                             <div class="mb-5">
@@ -332,7 +332,7 @@ if (empty($_SESSION['csrf'])) {
                                 }
                             }">
 
-                            <input type="hidden" name="csrf" value="<?= $_SESSION['csrf'] ?>">
+                            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
 
                             <input type="text"
                                 name="fullname"

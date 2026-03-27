@@ -116,10 +116,9 @@ switch ($action) {
 function validateCSRF()
 {
     if (
-        !isset($_POST['csrf'], $_SESSION['csrf']) ||
-        !hash_equals($_SESSION['csrf'], $_POST['csrf'])
+        !isset($_POST['csrf_token'], $_SESSION['csrf_token']) ||
+        !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])
     ) {
-        unset($_SESSION['csrf']);
         http_response_code(403);
         exit("CSRF token tidak valid");
     }
@@ -351,10 +350,9 @@ function login($userModel)
     ]);
 
     session_regenerate_id(true);
+    unset($_SESSION['csrf_token']);
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
     clearLoginAttempts($username);
-
-    // var_dump($user['role_name']);
-    // exit;
 
     /* ==========================
        SESSION BINDING
@@ -750,7 +748,7 @@ function findAccount($userModel)
     }
 
     validateCSRF();
-    unset($_SESSION['csrf']);
+    unset($_SESSION['csrf_token']);
 
     if (!isset($_POST['form_time'])) {
         exit("Invalid request");
