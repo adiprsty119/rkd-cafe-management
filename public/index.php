@@ -2,19 +2,19 @@
 
 define('APP_INIT', true);
 
-require __DIR__ . '/../middleware/AuthMiddleware.php';
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+require_once __DIR__ . '/../app/helpers/auth_helper.php';
+guestOnly();
 
 /* MENCEGAH CACHE LOGIN PAGE */
-header("Cache-Control: no-store, no-cache, must-revalidate");
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Pragma: no-cache");
 header("X-Frame-Options: SAMEORIGIN");
 header("X-Content-Type-Options: nosniff");
 header("Referrer-Policy: strict-origin-when-cross-origin");
-
-/* CSRF TOKEN */
-if (empty($_SESSION['csrf'])) {
-    $_SESSION['csrf'] = bin2hex(random_bytes(32));
-}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -320,6 +320,28 @@ if (empty($_SESSION['csrf'])) {
 
     </footer>
 
+    <?php
+    $toastMap = [
+        "login_required" => ["type" => "warning", "message" => "Silakan login terlebih dahulu"],
+        "session_invalid" => ["type" => "error", "message" => "Sesi tidak valid"],
+        "no_access" => ["type" => "error", "message" => "Anda tidak memiliki akses"],
+    ];
+    ?>
+
+    <?php require '../resources/components/toast.php'; ?>
+    <?php if (isset($_SESSION['toast'])): ?>
+
+        <script>
+            window.toastData = {
+                type: "<?= $_SESSION['toast']['type'] ?>",
+                message: "<?= htmlspecialchars($_SESSION['toast']['message']) ?>"
+            };
+        </script>
+
+    <?php unset($_SESSION['toast']);
+    endif; ?>
+
+    <script src="/rkd-cafe/public/assets/js/toast.js"></script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script src="/rkd-cafe/public/assets/js/landing.js"></script>
 

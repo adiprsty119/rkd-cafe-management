@@ -3,12 +3,15 @@
 define('APP_INIT', true);
 
 require_once __DIR__ . '/../../../app/bootstrap.php';
+require_once __DIR__ . '/../../../app/helpers/auth_helper.php';
 
 ini_set('session.cookie_httponly', 1);
 ini_set('session.use_strict_mode', 1);
 ini_set('session.cookie_secure', isset($_SERVER['HTTPS'])); // aktif jika HTTPS
 
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 /* MENCEGAH CACHE LOGIN PAGE */
 header("Cache-Control: no-store, no-cache, must-revalidate");
@@ -17,10 +20,7 @@ header("X-Frame-Options: SAMEORIGIN");
 header("X-Content-Type-Options: nosniff");
 header("Referrer-Policy: strict-origin-when-cross-origin");
 
-if (!empty($_SESSION['user_id'])) {
-    header("Location: /rkd-cafe/public/index.php");
-    exit();
-}
+guestOnly();
 
 /* CSRF TOKEN */
 if (empty($_SESSION['csrf_token'])) {
@@ -30,8 +30,8 @@ if (empty($_SESSION['csrf_token'])) {
 
 <!DOCTYPE html>
 <html lang="id"
-    x-data="{dark: localStorage.theme === 'dark', loading:false,  mode: localStorage.authMode || 'login'}"
-    x-init="$watch('dark', val => {localStorage.theme = val ? 'dark' : 'light'; document.documentElement.classList.toggle('dark', val)}); $watch('mode', val => {localStorage.authMode = val});"
+    x-data="{dark: localStorage.theme === 'dark', loading:false}"
+    x-init="$watch('dark', val => {localStorage.theme = val ? 'dark' : 'light'; document.documentElement.classList.toggle('dark', val)});"
     :class="{ 'dark': dark }">
 
 <head>
@@ -56,14 +56,13 @@ if (empty($_SESSION['csrf_token'])) {
 
 </head>
 
-<body class="min-h-screen flex scroll-smooth bg-gradient-to-br from-gray-200 via-gray-100 to-gray-300 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition">
+<body class="min-h-screen flex bg-gradient-to-br from-gray-200 via-gray-100 to-gray-300 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition">
 
     <div class="relative flex w-full min-h-screen overflow-hidden">
 
         <!-- IMAGE -->
         <div
-            class="hidden lg:flex w-1/2 bg-cover bg-center transition-all duration-700 animate__animated animate__fadeInLeft"
-            :class="mode === 'login' ? 'order-1' : 'order-2'"
+            class="hidden lg:flex w-1/2 bg-cover bg-center transition-all duration-700"
             style="background-image:url('https://images.unsplash.com/photo-1509042239860-f550ce710b93');">
 
             <div class="w-full h-full bg-black/40 flex items-center justify-center">
@@ -78,8 +77,7 @@ if (empty($_SESSION['csrf_token'])) {
 
         <!-- AUTH CARD -->
         <div
-            class="flex w-full lg:w-1/2 items-center justify-center p-6 transition-all duration-700"
-            :class="mode === 'login' ? 'order-2' : 'order-1'">
+            class="flex w-full lg:w-1/2 items-center justify-center p-6 transition-all duration-700">
 
             <div class="w-full max-w-md">
 
@@ -99,13 +97,10 @@ if (empty($_SESSION['csrf_token'])) {
 
                 <!-- CARD -->
                 <div
-                    class="animate__animated animate__fadeInUp backdrop-blur-xl bg-white/70 dark:bg-gray-800/70 border border-white/40 rounded-2xl p-6 sm:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.15)] dark:shadow-[0_0_35px_rgba(252,211,77,0.35)] hover:dark:shadow-amber-300 transition-all duration-500 ease-in-out <?= isset($_SESSION['error']) ? 'shake' : '' ?>"
-                    :class="mode === 'register' ? 'translate-x-4 scale-[1.02]' : ''">
+                    class="backdrop-blur-xl bg-white/70 dark:bg-gray-800/70 border border-white/40 rounded-2xl p-5 sm:p-6 overflow-y-auto shadow-[0_20px_50px_rgba(0,0,0,0.15)] dark:shadow-[0_0_35px_rgba(252,211,77,0.35)] hover:dark:shadow-amber-300 transition-all duration-500 ease-in-out <?= isset($_SESSION['error']) ? 'shake' : '' ?>">
 
                     <!-- LOGIN -->
-                    <div x-show="mode === 'login'"
-                        x-transition
-                        x-bind:class="mode==='login' ? 'animate__animated animate__fadeIn' : 'animate__animated animate__fadeOut'">
+                    <div>
 
                         <h2 class="text-3xl font-bold text-center mb-8 text-gray-700 dark:text-white">
                             Masuk ke Akun
@@ -255,208 +250,12 @@ if (empty($_SESSION['csrf_token'])) {
                             Belum punya akun?
 
                             <button
-                                @click="mode='register'"
+                                type="button"
+                                data-url="/rkd-cafe/resources/views/auth/register.php"
+                                onclick="window.location.href=this.dataset.url"
                                 class="text-blue-500 hover:underline cursor-pointer">
 
                                 Registrasi
-
-                            </button>
-
-                        </p>
-
-                    </div>
-
-
-                    <!-- REGISTER -->
-                    <div x-show="mode === 'register'"
-                        x-transition
-                        x-bind:class="mode==='register'
-                        ? 'animate__animated animate__fadeIn'
-                        : 'animate__animated animate__fadeOut'">
-
-                        <h2 class="text-3xl font-bold text-center mb-8 text-gray-700 dark:text-white">
-                            Buat Akun
-                        </h2>
-
-                        <button
-                            onclick="window.location.href='/rkd-cafe/app/controllers/AuthController.php?action=registerGoogle'"
-                            type="button"
-                            class="w-full border rounded-xl py-4 flex items-center justify-center gap-3 text-lg hover:bg-gray-50 dark:bg-gray-600 dark:hover:bg-gray-700 transition cursor-pointer">
-
-                            <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-6">
-
-                            <span class="font-medium text-gray-700 dark:text-white">
-                                Registrasi dengan Google
-                            </span>
-
-                        </button>
-
-                        <div class="flex items-center gap-4 my-8">
-                            <div class="flex-1 h-px bg-gray-300"></div>
-                            <span class="text-gray-500 dark:text-gray-300 text-sm">Atau registrasi dengan akun</span>
-                            <div class="flex-1 h-px bg-gray-300"></div>
-                        </div>
-
-                        <form
-                            action="/rkd-cafe/app/controllers/AuthController.php?action=register"
-                            method="POST"
-
-                            x-data="{
-                                password:'',
-                                confirm:'',
-                                showPassword:false,
-                                showConfirm:false,
-
-                                rules:{
-                                    length:false,
-                                    lower:false,
-                                    upper:false,
-                                    number:false,
-                                    symbol:false
-                                },
-
-                                check(){
-                                    this.rules.length = this.password.length >= 8
-                                    this.rules.lower = /[a-z]/.test(this.password)
-                                    this.rules.upper = /[A-Z]/.test(this.password)
-                                    this.rules.number = /[0-9]/.test(this.password)
-                                    this.rules.symbol = /[^A-Za-z0-9]/.test(this.password)
-                                },
-
-                                strength(){
-                                    return Object.values(this.rules).filter(Boolean).length
-                                },
-
-                                valid(){
-                                    return Object.values(this.rules).every(Boolean) && this.password === this.confirm
-                                }
-                            }">
-
-                            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
-
-                            <input type="text"
-                                name="fullname"
-                                placeholder="Nama Lengkap"
-                                required
-                                autofocus
-                                class="w-full border rounded-xl px-4 py-3 mb-4 focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
-
-                            <input type="email"
-                                name="email"
-                                placeholder="Email"
-                                required
-                                class="w-full border rounded-xl px-4 py-3 mb-4 focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
-
-                            <input type="text"
-                                name="username"
-                                placeholder="Username"
-                                required
-                                class="w-full border rounded-xl px-4 py-3 mb-4 focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
-
-
-                            <!-- PASSWORD -->
-                            <div class="relative">
-
-                                <input
-                                    :type="showPassword ? 'text' : 'password'"
-                                    name="password"
-                                    x-model="password"
-                                    @input="check()"
-                                    placeholder="Password"
-                                    required
-                                    class="w-full border rounded-xl px-4 py-3 mb-1 focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
-
-                                <i
-                                    @click="showPassword=!showPassword"
-                                    class="fa-solid absolute right-4 top-4 cursor-pointer"
-                                    :class="showPassword ? 'fa-eye-slash text-blue-500':'fa-eye text-gray-500'">
-                                </i>
-
-                            </div>
-
-
-                            <!-- STRENGTH BAR -->
-                            <div class="flex gap-1 mb-2">
-
-                                <div class="h-2 flex-1 rounded"
-                                    :class="strength() >=1 ? 'bg-red-500' : 'bg-gray-200 dark:bg-gray-600'"></div>
-
-                                <div class="h-2 flex-1 rounded"
-                                    :class="strength() >=3 ? 'bg-yellow-400' : 'bg-gray-200 dark:bg-gray-600'"></div>
-
-                                <div class="h-2 flex-1 rounded"
-                                    :class="strength() >=5 ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-600'"></div>
-
-                            </div>
-
-
-                            <!-- RULE CHECKLIST -->
-                            <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs mb-4">
-
-                                <span :class="rules.length ? 'text-green-500' : 'text-gray-400'">✓ 8 karakter</span>
-
-                                <span :class="rules.lower ? 'text-green-500' : 'text-gray-400'">✓ huruf kecil</span>
-
-                                <span :class="rules.upper ? 'text-green-500' : 'text-gray-400'">✓ huruf besar</span>
-
-                                <span :class="rules.number ? 'text-green-500' : 'text-gray-400'">✓ angka</span>
-
-                                <span :class="rules.symbol ? 'text-green-500' : 'text-gray-400'">✓ simbol</span>
-
-                            </div>
-
-
-                            <!-- CONFIRM PASSWORD -->
-                            <div class="relative">
-
-                                <input
-                                    :type="showConfirm ? 'text' : 'password'"
-                                    name="confirm_password"
-                                    x-model="confirm"
-                                    placeholder="Konfirmasi Password"
-                                    required
-                                    class="w-full border rounded-xl px-4 py-3 mb-1 focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
-
-                                <i
-                                    @click="showConfirm=!showConfirm"
-                                    class="fa-solid absolute right-4 top-4 cursor-pointer"
-                                    :class="showConfirm ? 'fa-eye-slash text-blue-500':'fa-eye text-gray-500'">
-                                </i>
-
-                            </div>
-
-
-                            <p x-show="confirm && confirm !== password" class="text-red-500 text-xs">
-                                Password tidak cocok
-                            </p>
-
-                            <p x-show="confirm && confirm === password" class="text-green-500 text-xs">
-                                Password cocok ✓
-                            </p>
-
-
-                            <button
-                                type="submit"
-                                :disabled="!valid()"
-                                class="w-full bg-green-600 text-white py-3 rounded-xl hover:bg-green-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed mt-4">
-
-                                Registrasi
-
-                            </button>
-
-                        </form>
-
-
-                        <p class="text-center mt-6 text-gray-600 dark:text-gray-300">
-
-                            Sudah mempunyai akun?
-
-                            <button
-                                @click="mode='login'"
-                                class="text-blue-500 hover:underline cursor-pointer transition transform hover:scale-105">
-
-                                Masuk
-
                             </button>
 
                         </p>
@@ -472,7 +271,6 @@ if (empty($_SESSION['csrf_token'])) {
     </div>
 
     <?php require '../../components/toast.php'; ?>
-
     <?php if (isset($_SESSION['toast'])): ?>
 
         <script>

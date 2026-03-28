@@ -4,7 +4,11 @@ if (!defined('APP_INIT')) {
     exit('No direct access allowed');
 }
 
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+require_once __DIR__ . '/../app/helpers/auth_helper.php';
 
 /* ==========================
    SESSION TIMEOUT (RINGAN)
@@ -31,10 +35,16 @@ if (
     }
 
     session_destroy();
+    redirectToLogin("Sesi Anda telah berakhir, silakan login kembali");
 }
 
 require_once __DIR__ . '/../config/database.php';
-$pdo = getPDO();
+try {
+    $pdo = getPDO();
+} catch (Exception $e) {
+    session_destroy();
+    redirectToLogin("Terjadi kesalahan sistem");
+}
 
 /* ==========================
    AUTO LOGIN VIA REMEMBER
@@ -90,6 +100,8 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember'])) {
             $_SESSION['username'] = $user['username'];
             $_SESSION['role_id'] = $user['role_id'];
             $_SESSION['role'] = $user['role_name'] ?? 'guest';
+            $_SESSION['is_remember_login'] = true;
+            $_SESSION['login_verified'] = false;
             $_SESSION['sidebar_collapsed'] = $user['sidebar_collapsed'];
 
             /* ==========================
@@ -142,38 +154,13 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember'])) {
 /* ==========================
    CEK LOGIN WAJIB
 ========================== */
-if (!isset($_SESSION['user_id'])) {
-    header("Location: /rkd-cafe/resources/views/auth/login.php");
-    exit();
-}
+requireLogin();
 
 /* ==========================
    UPDATE LAST ACTIVITY
 ========================== */
 $_SESSION['last_activity'] = time();
 
-/* ==========================
-   SESSION HIJACKING CHECK
-========================== */
-$currentIp = $_SERVER['REMOTE_ADDR'] ?? '';
-$ipParts = explode('.', $currentIp);
-$ipPartial = count($ipParts) >= 2
-    ? $ipParts[0] . '.' . $ipParts[1]
-    : $currentIp;
-
-$currentFingerprint = hash(
-    'sha256',
-    $ipPartial . ($_SERVER['HTTP_USER_AGENT'] ?? '')
-);
-
-if (
-    isset($_SESSION['fingerprint']) &&
-    $_SESSION['fingerprint'] !== $currentFingerprint
-) {
-    session_destroy();
-    header("Location: /rkd-cafe/resources/views/auth/login.php");
-    exit();
-}
 
 /* ==========================
    CSRF TOKEN
@@ -206,14 +193,12 @@ $currentUser = $stmt->fetch(PDO::FETCH_ASSOC);
 if ($currentUser) {
     $_SESSION['username'] = $currentUser['username'];
     $_SESSION['role_id'] = $currentUser['role_id'];
-    $_SESSION['role'] = $currentUser['role_name'];
+    $_SESSION['role'] = $_SESSION['role'] ?? 'guest';
     $_SESSION['sidebar_collapsed'] = $currentUser['sidebar_collapsed'];
-
     $sidebarCollapsed = (bool) $currentUser['sidebar_collapsed'];
 } else {
     session_destroy();
-    header("Location: /rkd-cafe/resources/views/auth/login.php");
-    exit();
+    requireLogin();
 }
 
 /* ==========================
@@ -249,14 +234,4 @@ if (!empty($_SESSION['permissions'])) {
 ========================== */
 if (!isset($_SESSION['menu_config'])) {
     $_SESSION['menu_config'] = require __DIR__ . '/../config/sidebar_menu.php';
-}
-
-function hasPermission($permission): bool
-{
-    $permissions = $_SESSION['permissions'] ?? [];
-
-    return in_array(
-        strtolower(str_replace(' ', '_', $permission)),
-        $permissions
-    );
 }

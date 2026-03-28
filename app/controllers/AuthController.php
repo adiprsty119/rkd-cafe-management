@@ -13,7 +13,9 @@ ini_set('session.cookie_httponly', 1);
 ini_set('session.cookie_secure', (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'));
 ini_set('session.cookie_samesite', 'Lax');
 
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 /* ==========================
    REQUIRE FILES
@@ -22,41 +24,16 @@ session_start();
 require_once __DIR__ . '/../../config/env.php';
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../models/User.php';
+require_once __DIR__ . '/../helpers/auth_helper.php';
 
-$pdo = getPDO();
-
-$userModel = new User($pdo);
-
-
-/* ==========================
-   ROLE REDIRECT
-========================== */
-
-function redirectByRole($roleName)
-{
-    switch ($roleName) {
-
-        case 'admin':
-            header("Location: /rkd-cafe/resources/views/dashboard/admin.php");
-            break;
-
-        case 'kasir':
-            header("Location: /rkd-cafe/resources/views/dashboard/kasir.php");
-            break;
-
-        case 'owner':
-            header("Location: /rkd-cafe/resources/views/dashboard/owner.php");
-            break;
-
-        default:
-            session_destroy();
-            header("Location: /rkd-cafe/resources/views/auth/login.php");
-            break;
-    }
-
-    exit;
+try {
+    $pdo = getPDO();
+} catch (Exception $e) {
+    session_destroy();
+    redirectToLogin("Terjadi kesalahan sistem");
 }
 
+$userModel = new User($pdo);
 
 /* ==========================
    ROUTER
@@ -362,7 +339,15 @@ function login($userModel)
     $_SESSION['username'] = $user['username'];
     $_SESSION['role_id'] = $user['role_id'];
     $_SESSION['role'] = $user['role_name'];
-    $_SESSION['fingerprint'] = hash('sha256', $ip . $ua);
+    $_SESSION['is_remember_login'] = false;
+    $_SESSION['login_verified'] = true;
+
+    $ipParts = explode('.', $ip);
+    $ipPartial = count($ipParts) >= 2
+        ? $ipParts[0] . '.' . $ipParts[1]
+        : $ip;
+
+    $_SESSION['fingerprint'] = hash('sha256', $ipPartial . $ua);
 
     // LOAD PERMISSIONS
     $stmt = $pdo->prepare("SELECT p.name FROM permissions p JOIN role_permissions rp ON rp.permission_id = p.id WHERE rp.role_id = ?");
@@ -372,6 +357,8 @@ function login($userModel)
     /* ==========================
        REMEMBER ME (DUAL TOKEN)
     ========================== */
+
+    setcookie("remember", "", time() - 3600, "/");
 
     if (!empty($_POST['remember'])) {
 
@@ -397,7 +384,7 @@ function login($userModel)
             [
                 'expires' => time() + (86400 * 30),
                 'path' => '/',
-                'secure' => true,
+                'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
                 'httponly' => true,
                 'samesite' => 'Strict'
             ]
@@ -409,6 +396,20 @@ function login($userModel)
         "message" => "Login berhasil!"
     ];
 
+    /* ==========================
+        REDIRECT INTENDED URL
+    ========================== */
+    $redirect = $_SESSION['intended_url'] ?? null;
+    unset($_SESSION['intended_url']);
+
+    if ($redirect && strpos($redirect, '/rkd-cafe/') === 0) {
+        header("Location: $redirect");
+        exit;
+    }
+
+    /* ==========================
+        DEFAULT REDIRECT (ROLE)
+    ========================== */
     redirectByRole($user['role_name']);
 }
 
@@ -477,7 +478,6 @@ function register($userModel)
     }
 
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-
     $userModel->createUser($name, $username, $email, $hashedPassword);
 
     $_SESSION['toast'] = [
@@ -554,9 +554,7 @@ function callbackGoogle($userModel)
     }
 
     $code = $_GET['code'];
-
     $token_url = "https://oauth2.googleapis.com/token";
-
     $redirect_uri = $_ENV['GOOGLE_REDIRECT_URI'];
 
     $data = [
@@ -592,7 +590,6 @@ function callbackGoogle($userModel)
     curl_close($ch);
 
     $token = json_decode($response, true);
-
     $access_token = $token['access_token'] ?? null;
 
     if (!$access_token) {
@@ -604,7 +601,6 @@ function callbackGoogle($userModel)
     ========================== */
 
     $userinfo_url = "https://www.googleapis.com/oauth2/v2/userinfo";
-
     $ch = curl_init($userinfo_url);
 
     curl_setopt_array($ch, [
@@ -626,7 +622,6 @@ function callbackGoogle($userModel)
     curl_close($ch);
 
     $userinfo = json_decode($userinfo_response, true);
-
     $email = $userinfo['email'] ?? null;
     $name = $userinfo['name'] ?? 'User';
     $picture = $userinfo['picture'] ?? null;
@@ -651,7 +646,6 @@ function callbackGoogle($userModel)
 
         $username = strtolower(preg_replace('/[^a-z0-9]/', '', $name));
         $username .= bin2hex(random_bytes(3));
-
         $userModel->createGoogleUser($name, $username, $email, $picture);
     }
 
@@ -719,6 +713,8 @@ function callbackGoogle($userModel)
     $_SESSION['username'] = $user['username'];
     $_SESSION['role_id'] = $user['role_id'];
     $_SESSION['role'] = $user['role_name'];
+    $_SESSION['is_remember_login'] = false;
+    $_SESSION['login_verified'] = true;
 
     $stmt = $pdo->prepare("SELECT p.name FROM permissions p JOIN role_permissions rp ON rp.permission_id = p.id WHERE rp.role_id = ?");
     $stmt->execute([$user['role_id']]);

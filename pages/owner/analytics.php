@@ -1,7 +1,11 @@
 <?php
 define('APP_INIT', true);
 
-require $_SERVER['DOCUMENT_ROOT'] . '/rkd-cafe/middleware/AuthMiddleware.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/rkd-cafe/middleware/AuthMiddleware.php';
+
+/* MENCEGAH CACHE LOGIN PAGE */
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Pragma: no-cache");
 
 $lang = $_GET['lang'] ?? 'id';
 
@@ -27,13 +31,11 @@ $currentMenu = findMenuByRoute($allMenus);
 $pageTitle = $currentMenu['menu']['title'] ?? 'Analytics Dashboard';
 $breadcrumb = generateBreadcrumb($currentMenu);
 
-
 /* ==========================
    ANALYTICS DATA
 ========================== */
 
 $analytics = getDashboardAnalytics("today");
-
 $totalRevenue = $analytics['total_revenue'] ?? 0;
 $totalOrders = $analytics['total_orders'] ?? 0;
 $activeCustomers = $analytics['active_customers'] ?? 0;
@@ -50,7 +52,6 @@ $customerGrowth = getCustomerGrowth("today");
 $businessInsight = getBusinessInsight("today") ?? [
     "insights" => []
 ];
-
 ?>
 
 <!DOCTYPE html>

@@ -222,3 +222,38 @@ canvas.chart-ready {
 .bell-alert {
   animation: bell 0.6s ease;
 }
+
+/* ==========================
+   INPUT STYLES
+========================== */
+
+.input-modern {
+  @apply w-full border rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500;
+}
+
+.label {
+  font-size: 12px;
+  margin-bottom: 4px;
+  color: #6b7280;
+}
+
+.input-modern {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  padding: 10px 12px;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.input-modern:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+.dark .input-modern {
+  background: #374151;
+  border-color: #4b5563;
+  color: white;
+}
