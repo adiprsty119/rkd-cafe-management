@@ -100,6 +100,7 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember'])) {
             $_SESSION['username'] = $user['username'];
             $_SESSION['role_id'] = $user['role_id'];
             $_SESSION['role'] = $user['role_name'] ?? 'guest';
+            $_SESSION['status'] = $user['status'];
             $_SESSION['is_remember_login'] = true;
             $_SESSION['login_verified'] = false;
             $_SESSION['sidebar_collapsed'] = $user['sidebar_collapsed'];
@@ -157,6 +158,25 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember'])) {
 requireLogin();
 
 /* ==========================
+   VALIDASI STATUS AKUN
+========================== */
+if (($_SESSION['status'] ?? null) !== 'active') {
+    session_destroy();
+    redirectToLogin("Akun belum aktif");
+}
+
+/* ==========================
+   VALIDASI BUSINESS (NON ADMIN)
+========================== */
+if (
+    strtolower($_SESSION['role'] ?? '') !== 'admin' &&
+    empty($_SESSION['business_id'])
+) {
+    session_destroy();
+    redirectToLogin("Akun tidak terhubung dengan bisnis");
+}
+
+/* ==========================
    UPDATE LAST ACTIVITY
 ========================== */
 $_SESSION['last_activity'] = time();
@@ -180,7 +200,13 @@ if (
 $userId = $_SESSION['user_id'];
 
 $stmt = $pdo->prepare("
-    SELECT u.username, u.role_id, r.name AS role_name, u.sidebar_collapsed
+    SELECT 
+        u.username,
+        u.role_id,
+        r.name AS role_name,
+        u.sidebar_collapsed,
+        u.business_id,
+        u.status
     FROM users u
     LEFT JOIN roles r ON u.role_id = r.id
     WHERE u.id = :id
@@ -194,6 +220,8 @@ if ($currentUser) {
     $_SESSION['username'] = $currentUser['username'];
     $_SESSION['role_id'] = $currentUser['role_id'];
     $_SESSION['role'] = $_SESSION['role'] ?? 'guest';
+    $_SESSION['business_id'] = $currentUser['business_id'];
+    $_SESSION['status'] = $currentUser['status'];
     $_SESSION['sidebar_collapsed'] = $currentUser['sidebar_collapsed'];
     $sidebarCollapsed = (bool) $currentUser['sidebar_collapsed'];
 } else {

@@ -49,7 +49,7 @@ switch ($action) {
         break;
 
     case 'register':
-        register($userModel);
+        forward('RegisterController', 'register');
         break;
 
     case 'loginGoogle':
@@ -267,6 +267,20 @@ function login($userModel)
         exit;
     }
 
+    if (
+        ($user['role_name'] ?? '') !== 'admin' &&
+        empty($user['business_id'])
+    ) {
+
+        $_SESSION['toast'] = [
+            "type" => "error",
+            "message" => "Akun tidak terhubung dengan bisnis"
+        ];
+
+        header("Location: /rkd-cafe/resources/views/auth/login.php");
+        exit;
+    }
+
     if ($user['locked_until'] && strtotime($user['locked_until']) > time()) {
 
         $_SESSION['toast'] = [
@@ -339,6 +353,8 @@ function login($userModel)
     $_SESSION['username'] = $user['username'];
     $_SESSION['role_id'] = $user['role_id'];
     $_SESSION['role'] = $user['role_name'];
+    $_SESSION['business_id'] = $user['business_id'];
+    $_SESSION['status'] = $user['status'];
     $_SESSION['is_remember_login'] = false;
     $_SESSION['login_verified'] = true;
 
@@ -414,78 +430,14 @@ function login($userModel)
 }
 
 /* ==========================
-   REGISTER
+   REGISTER FUNCTION
 ========================== */
-
-function register($userModel)
+function forward($controller, $method)
 {
+    require_once __DIR__ . "/$controller.php";
 
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        http_response_code(405);
-        exit("Method not allowed");
-    }
-
-    validateCSRF();
-
-    $name = trim($_POST['fullname'] ?? '');
-    $email = trim($_POST['email'] ?? '');
-    $username = trim($_POST['username'] ?? '');
-    $password = $_POST['password'] ?? '';
-    $confirm  = $_POST['confirm_password'] ?? '';
-
-    if ($name === '' || $username === '' || $password === '') {
-
-        $_SESSION['toast'] = [
-            "type" => "error",
-            "message" => "Semua field wajib diisi."
-        ];
-
-        header("Location: /rkd-cafe/resources/views/auth/login.php");
-        exit;
-    }
-
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-
-        $_SESSION['toast'] = [
-            "type" => "error",
-            "message" => "Format email tidak valid"
-        ];
-
-        header("Location: /rkd-cafe/resources/views/auth/login.php");
-        exit;
-    }
-
-    if ($userModel->findByUsername($username) || $userModel->findByEmail($email)) {
-
-        $_SESSION['toast'] = [
-            "type" => "error",
-            "message" => "Username atau email sudah digunakan."
-        ];
-
-        header("Location: /rkd-cafe/resources/views/auth/login.php");
-        exit;
-    }
-
-    if ($password !== $confirm) {
-
-        $_SESSION['toast'] = [
-            "type" => "error",
-            "message" => "Konfirmasi password tidak cocok."
-        ];
-
-        header("Location: /rkd-cafe/resources/views/auth/login.php");
-        exit;
-    }
-
-    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-    $userModel->createUser($name, $username, $email, $hashedPassword);
-
-    $_SESSION['toast'] = [
-        "type" => "success",
-        "message" => "Registrasi berhasil! Silakan login."
-    ];
-
-    header("Location: /rkd-cafe/resources/views/auth/login.php");
+    $instance = new $controller();
+    $instance->$method();
     exit;
 }
 

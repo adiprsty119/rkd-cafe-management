@@ -5,6 +5,9 @@ function registerFlow() {
 
         steps: ['Usaha', 'Owner', 'Akun', 'Kasir'],
 
+        addressSuggestions: [],
+        isSearchingAddress: false,
+
         form: {
             business_name: '',
             business_phone: '',
@@ -14,8 +17,6 @@ function registerFlow() {
             business_address: '',
             latitude: '',
             longitude: '',
-            addressSuggestions: [],
-            isSearchingAddress: false,
 
             owner_name: '',
             owner_email: '',
@@ -23,7 +24,7 @@ function registerFlow() {
 
             username: '',
             password: '',
-            confirm: '',
+            confirmPassword: '',
 
             cashiers: []
         },
@@ -38,9 +39,7 @@ function registerFlow() {
                         this.form.business_phone.length >= 9 &&
                         this.form.business_category !== '' &&
                         (this.form.business_category !== 'other' || this.form.business_category_other.trim() !== '') &&
-                        this.form.business_address.trim() !== '' &&
-                        this.form.latitude !== '' &&  
-                        this.form.longitude !== '' 
+                        this.form.business_address.trim() !== ''
 
                 case 1:
                     return this.form.owner_name.trim() !== '' &&
@@ -59,7 +58,7 @@ function registerFlow() {
                     return k.name.trim() !== '' &&
                         k.username.trim() !== '' &&
                         this.isValidPassword(k.password) &&
-                        k.password === k.confirm
+                        k.password === k.confirmPassword
 
                 default:
                     return false
@@ -84,27 +83,82 @@ function registerFlow() {
         },
 
         nextStep() {
-            if (!this.canProceed()) return
+            console.log("=== NEXT STEP CLICKED ===")
+            const canProceed = this.canProceed()
+            console.log("STEP:", this.step)
+            console.log("CAN PROCEED:", canProceed)
 
+            // 🔍 DETAIL DEBUG PER STEP
+            if (this.step === 0) {
+                console.log("STEP 0 DATA:", {
+                    business_name: this.form.business_name,
+                    business_phone: this.form.business_phone,
+                    business_category: this.form.business_category,
+                    business_category_other: this.form.business_category_other,
+                    business_address: this.form.business_address,
+                    latitude: this.form.latitude,
+                    longitude: this.form.longitude
+                })
+            }
+
+            if (this.step === 1) {
+                console.log("STEP 1 DATA:", {
+                    owner_name: this.form.owner_name,
+                    owner_email: this.form.owner_email,
+                    owner_phone: this.form.owner_phone,
+                    valid_email: this.isValidEmail(this.form.owner_email),
+                    valid_phone: this.isValidPhone(this.form.owner_phone)
+                })
+            }
+
+            if (this.step === 2) {
+                console.log("STEP 2 DATA:", {
+                    username: this.form.username,
+                    password: this.form.password,
+                    confirmPassword: this.form.confirmPassword,
+                    password_valid: this.isValidPassword(this.form.password),
+                    password_match: this.isPasswordMatch()
+                })
+            }
+
+            if (this.step === 3) {
+                console.log("STEP 3 DATA:", {
+                    cashiers: this.form.cashiers
+                })
+            }
+
+            // ❌ STOP JIKA VALIDASI GAGAL
+            if (!canProceed) {
+                console.warn("❌ VALIDATION FAILED - STOP HERE")
+                return
+            }
+
+            // 🔄 PINDAH STEP
             if (this.step < 3) {
+                console.log("➡️ GO TO NEXT STEP:", this.step + 1)
                 this.step++
                 return
             }
 
+            // 🚀 SUBMIT
+            console.log("🚀 SUBMIT FORM TRIGGERED")
             this.submitForm()
         },
 
         async submitForm() {
+            console.log("📡 SUBMIT STARTED")
+
             this.isLoading = true
 
             const controller = new AbortController()
-            const timeout = setTimeout(() => controller.abort(), 5000)
+            const timeout = setTimeout(() => controller.abort(), 15000)
 
             try {
-                const formEl = this.$el.querySelector('form')
+                const formEl = this.$refs.form
                 const formData = new FormData(formEl)
+                const BASE_URL = '/rkd-cafe'
 
-                const res = await fetch('/register', {
+                const res = await fetch(`${BASE_URL}/app/controllers/AuthController.php?action=register`, {
                     method: 'POST',
                     body: formData,
                     signal: controller.signal
@@ -112,13 +166,20 @@ function registerFlow() {
 
                 clearTimeout(timeout)
 
-                if (!res.ok) throw new Error('Gagal submit')
+                const data = await res.json()
 
-                window.location.href = '/login'
+                if (!res.ok || !data.success) {
+                    throw new Error(data.message || 'Registrasi gagal')
+                }
+
+                window.location.href = `${BASE_URL}/resources/views/auth/login.php`
 
             } catch (err) {
                 console.error(err)
-                alert('Timeout / error, coba lagi')
+                window.toastData = {
+                    type: "error",
+                    message: err.message || "Terjadi kesalahan"
+                }
                 this.isLoading = false
             }
         },
@@ -223,9 +284,9 @@ function registerFlow() {
         },
 
         isPasswordMatch() {
-            return this.form.password &&
-                this.form.confirm &&
-                this.form.password === this.form.confirm
+            return this.form.password.trim() &&
+                this.form.confirmPassword.trim() &&
+                this.form.password.trim() === this.form.confirmPassword.trim()
         },
 
         passwordScore() {
@@ -262,8 +323,7 @@ function registerFlow() {
         isPasswordMatchKasir() {
             if (this.form.cashiers.length === 0) return true
             const k = this.form.cashiers[0]
-            if (!k) return false
-            return k.password && k.confirm && k.password === k.confirm
+            return k.password && k.confirmPassword && k.password === k.confirmPassword
         },
 
         hasMinLengthKasir() {
@@ -298,7 +358,7 @@ function registerFlow() {
                 name: '',
                 username: '',
                 password: '',
-                confirm: ''
+                confirmPassword: ''
             })
 
             this.$nextTick(() => {

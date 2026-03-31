@@ -174,23 +174,66 @@ if (
                 </div>
 
                 <!-- CARD -->
-                <form method="POST" action="/register" autocomplete="off" @submit.prevent="submitForm">
+                <form x-ref="form" method="POST" action="/register" autocomplete="off" @submit.prevent="submitForm">
                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
 
                     <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-700">
 
                         <!-- HEADER -->
-                        <div class="mb-6">
-                            <h2 class="text-xl font-semibold text-gray-800 dark:text-white"
-                                x-text="steps[step] === 'Usaha' ? 'Identitas Usaha' :
+                        <div class="mb-6 space-y-2">
+
+                            <!-- TOP ROW -->
+                            <div class="flex items-center justify-between">
+
+                                <!-- LEFT: ICON + TITLE -->
+                                <div class="flex items-center gap-3">
+
+                                    <!-- ICON BADGE -->
+                                    <div class="w-10 h-10 flex items-center justify-center rounded-xl
+                        bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md">
+
+                                        <i class="fa-solid"
+                                            :class="{
+                                                'fa-store': step === 0,
+                                                'fa-user': step === 1,
+                                                'fa-lock': step === 2,
+                                                'fa-users': step === 3
+                                            }">
+                                        </i>
+
+                                    </div>
+
+                                    <!-- TITLE -->
+                                    <div>
+                                        <h2 class="text-lg font-semibold text-gray-800 dark:text-white leading-tight"
+                                            x-text="steps[step] === 'Usaha' ? 'Identitas Usaha' :
                             steps[step] === 'Owner' ? 'Identitas Owner' :
                             steps[step] === 'Akun' ? 'Akun Owner' :
                             'Tambah Kasir (Opsional)'">
-                            </h2>
+                                        </h2>
 
-                            <p class="text-sm text-gray-500 mt-1">
+                                        <!-- STEP INFO -->
+                                        <p class="text-xs text-gray-400 mt-0.5">
+                                            Step <span x-text="step + 1"></span> dari <span x-text="steps.length"></span>
+                                        </p>
+                                    </div>
+
+                                </div>
+
+                                <!-- RIGHT: MINI BADGE -->
+                                <span class="text-[11px] px-2.5 py-1 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300 font-medium">
+
+                                    <span x-text="steps[step]"></span>
+
+                                </span>
+
+                            </div>
+
+                            <!-- DESCRIPTION -->
+                            <p class="text-sm text-gray-500 dark:text-gray-400 pl-[52px]">
                                 Isi data dengan benar untuk melanjutkan proses
                             </p>
+
                         </div>
 
                         <!-- STAGE CONTENT -->
@@ -552,11 +595,11 @@ if (
 
                                         <input
                                             type="password"
-                                            x-model="form.confirm"
-                                            @input="form.confirm = form.confirm.trim()"
+                                            x-model="form.confirmPassword"
+                                            @input="form.confirmPassword = form.confirmPassword.trim()"
                                             name="owner[confirmPassword]"
                                             :class="{
-                                            'border-red-500 focus:ring-red-500': form.confirm && !isPasswordMatch(),
+                                            'border-red-500 focus:ring-red-500': form.confirmPassword && !isPasswordMatch(),
                                             'border-green-500 focus:ring-green-500': isPasswordMatch()
                                         }"
                                             class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-3 pr-10 text-sm focus:ring-2 outline-none transition">
@@ -660,15 +703,15 @@ if (
 
                                                 <input
                                                     type="password"
-                                                    x-model="form.cashiers[0].confirm"
-                                                    name="cashiers[0][confirm]"
+                                                    x-model="form.cashiers[0].confirmPassword"
+                                                    name="cashiers[0][confirmPassword]"
                                                     :class="{
-                                                    'border-red-500': form.cashiers[0].confirm && !isPasswordMatchKasir(),
+                                                    'border-red-500': form.cashiers[0].confirmPassword && !isPasswordMatchKasir(),
                                                     'border-green-500': isPasswordMatchKasir()
                                                 }"
                                                     class="input-modern">
 
-                                                <p x-show="form.cashiers[0].confirm && !isPasswordMatchKasir()"
+                                                <p x-show="form.cashiers[0].confirmPassword && !isPasswordMatchKasir()"
                                                     class="text-red-500 text-xs">
                                                     Password tidak cocok
                                                 </p>
@@ -759,6 +802,8 @@ if (
                     </div>
 
                 </form>
+
+                <span x-text="canProceed()"></span>
 
                 <!-- LOGIN LINK -->
                 <p class="text-center mt-6 text-gray-600 dark:text-gray-300 text-sm">
