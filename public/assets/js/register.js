@@ -172,14 +172,26 @@ function registerFlow() {
                     throw new Error(data.message || 'Registrasi gagal')
                 }
 
-                window.location.href = `${BASE_URL}/resources/views/auth/login.php`
+                if (data.success) {
+                    sessionStorage.setItem("toast", JSON.stringify({
+                        type: "success",
+                        message: data.message
+                    }));
 
+                    window.location.href = `${BASE_URL}/resources/views/auth/login.php`;
+                }
             } catch (err) {
                 console.error(err)
+
                 window.toastData = {
                     type: "error",
                     message: err.message || "Terjadi kesalahan"
-                }
+                };
+
+                window.dispatchEvent(new CustomEvent("toast", {
+                    detail: window.toastData
+                }));
+
                 this.isLoading = false
             }
         },

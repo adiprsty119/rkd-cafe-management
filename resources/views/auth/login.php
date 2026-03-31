@@ -271,17 +271,28 @@ if (empty($_SESSION['csrf_token'])) {
     </div>
 
     <?php require '../../components/toast.php'; ?>
-    <?php if (isset($_SESSION['toast'])): ?>
 
-        <script>
-            window.toastData = {
-                type: "<?= $_SESSION['toast']['type'] ?>",
-                message: "<?= htmlspecialchars($_SESSION['toast']['message']) ?>"
-            };
-        </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
 
-    <?php unset($_SESSION['toast']);
-    endif; ?>
+            // PRIORITAS 1: SESSION (server-side)
+            <?php if (isset($_SESSION['toast'])): ?>
+                window.toastData = {
+                    type: "<?= $_SESSION['toast']['type'] ?>",
+                    message: "<?= htmlspecialchars($_SESSION['toast']['message']) ?>"
+                };
+                <?php unset($_SESSION['toast']); ?>
+            <?php endif; ?>
+
+            // PRIORITAS 2: sessionStorage (AJAX)
+            const storedToast = sessionStorage.getItem("toast");
+
+            if (storedToast) {
+                window.toastData = JSON.parse(storedToast);
+                sessionStorage.removeItem("toast");
+            }
+        });
+    </script>
 
     <script src="/rkd-cafe/public/assets/js/toast.js"></script>
 </body>

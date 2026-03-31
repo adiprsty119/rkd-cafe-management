@@ -189,8 +189,7 @@ if (
                                 <div class="flex items-center gap-3">
 
                                     <!-- ICON BADGE -->
-                                    <div class="w-10 h-10 flex items-center justify-center rounded-xl
-                        bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md">
+                                    <div class="w-10 h-10 flex items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md">
 
                                         <i class="fa-solid"
                                             :class="{
@@ -206,10 +205,7 @@ if (
                                     <!-- TITLE -->
                                     <div>
                                         <h2 class="text-lg font-semibold text-gray-800 dark:text-white leading-tight"
-                                            x-text="steps[step] === 'Usaha' ? 'Identitas Usaha' :
-                            steps[step] === 'Owner' ? 'Identitas Owner' :
-                            steps[step] === 'Akun' ? 'Akun Owner' :
-                            'Tambah Kasir (Opsional)'">
+                                            x-text="steps[step] === 'Usaha' ? 'Identitas Usaha' : steps[step] === 'Owner' ? 'Identitas Owner' : steps[step] === 'Akun' ? 'Akun Owner' : 'Tambah Kasir (Opsional)'">
                                         </h2>
 
                                         <!-- STEP INFO -->
@@ -720,6 +716,7 @@ if (
                                         </div>
 
                                     </div>
+
                                 </template>
 
                                 <!-- EMPTY STATE -->
@@ -802,8 +799,6 @@ if (
                     </div>
 
                 </form>
-
-                <span x-text="canProceed()"></span>
 
                 <!-- LOGIN LINK -->
                 <p class="text-center mt-6 text-gray-600 dark:text-gray-300 text-sm">

@@ -1,5 +1,14 @@
 <?php
 
+namespace App\Services;
+
+use PDO;
+use Exception;
+use Throwable;
+
+use function getPDO;
+use function sendApprovalEmail;
+
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/MailService.php';
 
@@ -92,5 +101,28 @@ class UserService
 
             throw $e;
         }
+    }
+
+    public function getAllUsersWithRequest()
+    {
+        $pdo = getPDO();
+
+        $stmt = $pdo->prepare("
+            SELECT 
+                u.id,
+                u.name,
+                u.email,
+                u.status,
+                r.id AS request_id,
+                r.status AS request_status
+            FROM users u
+            LEFT JOIN registration_requests r 
+                ON r.user_id = u.id
+            ORDER BY u.id DESC
+        ");
+
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

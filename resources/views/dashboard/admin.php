@@ -32,7 +32,6 @@ $menus = getMenusByRole($role);
 $currentMenu = findMenuByRoute($allMenus);
 $pageTitle = $currentMenu['menu']['title'] ?? 'Dashboard';
 $breadcrumb = generateBreadcrumb($currentMenu);
-
 ?>
 
 <!DOCTYPE html>
@@ -352,8 +351,8 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
 
                     <!-- =========================
-        RIGHT: RECENT ORDERS
-    ========================= -->
+                        RIGHT: RECENT ORDERS
+                    ========================= -->
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden flex flex-col">
 
                         <div class="p-4 border-b font-semibold dark:bg-gray-800">

@@ -103,6 +103,13 @@ $menuConfig = [
                 ]
 
             ]
+        ],
+
+        [
+            'title' => 'Manage Users',
+            'icon' => 'fa-solid fa-users-gear"',
+            'url' => '/rkd-cafe/pages/admin/manage_users.php',
+            'permission' => 'manage_users'
         ]
 
     ],
