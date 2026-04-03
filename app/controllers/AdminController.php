@@ -2,6 +2,8 @@
 
 require_once '../services/UserService.php';
 
+use App\Services\UserService;
+
 class AdminController
 {
     public function approve()

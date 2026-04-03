@@ -68,6 +68,7 @@ $breadcrumb = generateBreadcrumb($currentMenu);
     x-data="{ dark: localStorage.theme === 'dark', loading:false, loadingTheme:false, sidebarOpen:<?= isset($sidebarCollapsed) && $sidebarCollapsed ? 'false' : 'true' ?> }"
     @toggle-theme.window="loadingTheme = true; setTimeout(() => {let newTheme = !dark; localStorage.theme = newTheme ? 'dark' : 'light'; location.reload();}, 800)"
     x-init=" document.documentElement.classList.toggle('dark', dark)"
+    x-effect="document.documentElement.classList.toggle('dark', dark)"
     :class="{ 'dark': dark }"
     class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-white transition-colors duration-300">
 
@@ -302,11 +303,11 @@ $breadcrumb = generateBreadcrumb($currentMenu);
                                                     <div
                                                         class="w-9 h-9 flex items-center justify-center rounded-xl text-xs font-bold"
                                                         :class="{
-                                            'bg-gradient-to-br from-yellow-300 to-yellow-500 text-white': (colIndex*3 + index) === 0,
-                                            'bg-gray-300 text-gray-700': (colIndex*3 + index) === 1,
-                                            'bg-orange-300 text-white': (colIndex*3 + index) === 2,
-                                            'bg-gray-200 text-gray-600': (colIndex*3 + index) > 2
-                                        }">
+                                                            'bg-gradient-to-br from-yellow-300 to-yellow-500 text-white': (colIndex*3 + index) === 0,
+                                                            'bg-gray-300 text-gray-700': (colIndex*3 + index) === 1,
+                                                            'bg-orange-300 text-white': (colIndex*3 + index) === 2,
+                                                            'bg-gray-200 text-gray-600': (colIndex*3 + index) > 2
+                                                        }">
 
                                                         <span x-text="colIndex * 3 + index + 1"></span>
 

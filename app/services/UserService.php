@@ -112,14 +112,41 @@ class UserService
                 u.id,
                 u.name,
                 u.email,
-                u.status,
+                COALESCE(u.status, 'inactive') AS status,
                 r.id AS request_id,
                 r.status AS request_status
             FROM users u
             LEFT JOIN registration_requests r 
                 ON r.user_id = u.id
-            ORDER BY u.id DESC
+                AND r.id = (
+                    SELECT MAX(id)
+                    FROM registration_requests
+                    WHERE user_id = u.id
+                )
         ");
+
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getPendingRequests()
+    {
+        $pdo = getPDO();
+
+        $stmt = $pdo->prepare("
+        SELECT 
+            u.id,
+            u.name,
+            u.email,
+            r.id AS request_id,
+            r.status AS request_status,
+            r.created_at
+        FROM registration_requests r
+        JOIN users u ON u.id = r.user_id
+        WHERE r.status = 'pending'
+        ORDER BY r.created_at DESC
+    ");
 
         $stmt->execute();
 

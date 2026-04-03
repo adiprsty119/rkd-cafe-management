@@ -1,7 +1,10 @@
 <?php
 
 define('APP_INIT', true);
+
 require_once __DIR__ . '/../bootstrap.php';
+require_once __DIR__ . '/UserManagementController.php';
+require_once __DIR__ . '/../models/User.php';
 
 /* ==========================
    SESSION SECURITY
@@ -23,8 +26,11 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/../../config/env.php';
 require_once __DIR__ . '/../../config/database.php';
-require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../helpers/auth_helper.php';
+
+/* ==========================
+   DATABASE INIT
+========================== */
 
 try {
     $pdo = getPDO();
@@ -33,7 +39,7 @@ try {
     redirectToLogin("Terjadi kesalahan sistem");
 }
 
-$userModel = new User($pdo);
+$userModel = new App\Models\User($pdo);
 
 /* ==========================
    ROUTER
@@ -80,9 +86,21 @@ switch ($action) {
         resendOtp($userModel);
         break;
 
+    case 'getUsers':
+        (new App\Controllers\UserManagementController())->getUsers();
+        break;
+
+    case 'getPendingRequests':
+        (new App\Controllers\UserManagementController())->getPendingRequests();
+        break;
+
     default:
         http_response_code(404);
-        exit("Action not found");
+        echo json_encode([
+            "error" => "Action not found",
+            "action" => $action
+        ]);
+        exit;
 }
 
 

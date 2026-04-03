@@ -29,7 +29,6 @@ $menus = getMenusByRole($role);
 $currentMenu = findMenuByRoute($allMenus);
 $pageTitle = $currentMenu['menu']['title'] ?? 'Dashboard';
 $breadcrumb = generateBreadcrumb($currentMenu);
-
 ?>
 
 <!DOCTYPE html>
@@ -166,7 +165,8 @@ $breadcrumb = generateBreadcrumb($currentMenu);
             </div>
 
 
-            <main id="dashboardScroll"
+            <main
+                id="dashboardScroll"
                 class="flex-1 p-4 md:p-6 overflow-y-auto space-y-6 scrollbar-hide">
 
 

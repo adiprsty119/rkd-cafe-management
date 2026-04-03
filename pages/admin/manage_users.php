@@ -46,11 +46,15 @@ $breadcrumb = generateBreadcrumb($currentMenu);
     <!-- Tailwind CSS -->
     <link href="/rkd-cafe/public/assets/css/output.css" rel="stylesheet">
 
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- FontAwesome -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <!-- Alpine.js -->
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <!-- Global Seacrh [global-search.js] -->
+    <script defer src="/rkd-cafe/public/assets/js/global-search.js"></script>
 
     <style>
         [x-cloak] {
@@ -60,9 +64,10 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 </head>
 
 <body
-    x-data="{ dark: localStorage.theme === 'dark', loading:false, loadingTheme:false, sidebarOpen:<?= isset($sidebarCollapsed) && $sidebarCollapsed ? 'false' : 'true' ?>, usersPage() }"
+    x-data="{ dark: localStorage.theme === 'dark', loadingTheme:false, sidebarOpen:<?= isset($sidebarCollapsed) && $sidebarCollapsed ? 'false' : 'true' ?>, ...usersPage() }"
     @toggle-theme.window="loadingTheme = true; setTimeout(() => {let newTheme = !dark; localStorage.theme = newTheme ? 'dark' : 'light'; location.reload();}, 800)"
-    x-init=" document.documentElement.classList.toggle('dark', dark)"
+    x-init=" init(); document.documentElement.classList.toggle('dark', dark)"
+    x-effect="document.documentElement.classList.toggle('dark', dark)"
     :class="{ 'dark': dark }"
     class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-white">
 
@@ -134,8 +139,6 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
             </div>
 
-
-
             <!-- =========================
                 BREADCRUMB CONTAINER
             ========================= -->
@@ -155,31 +158,53 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
             <!-- CONTENT -->
             <main
-                x-data="dashboard()"
-                x-init="init()"
                 id="dashboardScroll"
                 class="flex-1 p-4 md:p-6 overflow-y-auto space-y-6 scrollbar-hide">
 
                 <!-- HEADER -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow px-6 py-5 flex justify-between items-center">
+                <div class="flex flex-col mb-12 md:flex-row md:items-center md:justify-between gap-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm px-6 py-5">
 
+                    <!-- LEFT -->
                     <div class="flex items-center gap-4">
-                        <div class="w-11 h-11 flex items-center justify-center bg-blue-100 dark:bg-blue-500/20 rounded-lg">
-                            <i class="fa-solid fa-users text-blue-600"></i>
+
+                        <!-- PAGE ICON -->
+                        <div class="w-11 h-11 flex items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-500/20">
+
+                            <i class="fa-solid fa-users text-blue-600 dark:text-blue-400"></i>
+
                         </div>
 
+                        <!-- TITLE -->
                         <div>
-                            <h1 class="text-xl font-semibold"><?= $pageTitle ?></h1>
-                            <p class="text-sm text-gray-500">Kelola semua user dalam sistem</p>
+
+                            <h1 class="text-xl md:text-2xl font-semibold tracking-tight">
+                                <?= htmlspecialchars($pageTitle) ?>
+                            </h1>
+
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                Kelola semua user dalam sistem
+                            </p>
+
                         </div>
+
                     </div>
 
-                    <button
-                        @click="fetchUsers()"
-                        class="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg text-sm hover:bg-gray-200 transition">
+                    <!-- RIGHT ACTION -->
+                    <div x-data="{loading:false}" class="flex items-center gap-3">
 
-                        <i class="fa-solid fa-rotate"></i>
-                    </button>
+                        <button
+                            @click="loading=true; setTimeout(()=>window.location.reload(),400)"
+                            class="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition cursor-pointer">
+
+                            <i
+                                class="fa-solid fa-rotate"
+                                :class="loading ? 'animate-spin' : ''"></i>
+
+                            <span x-text="loading ? 'Refreshing...' : 'Refresh'"></span>
+
+                        </button>
+
+                    </div>
 
                 </div>
 
@@ -192,13 +217,15 @@ $breadcrumb = generateBreadcrumb($currentMenu);
                         placeholder="Cari nama / email..."
                         class="flex-1 px-4 py-2 rounded-lg border dark:bg-gray-700">
 
-                    <select x-model="statusFilter"
+                    <select
+                        x-model="statusFilter"
                         class="px-4 py-2 rounded-lg border dark:bg-gray-700">
 
                         <option value="">Semua Status</option>
                         <option value="pending">Pending</option>
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
+                        <option value="request_pending">Pending Approval</option>
 
                     </select>
 
@@ -209,52 +236,116 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
                     <table class="w-full text-sm">
 
-                        <thead class="bg-gray-50 dark:bg-gray-700">
+                        <thead class="bg-gray-50 dark:bg-gray-700 text-xs uppercase tracking-wide">
                             <tr>
-                                <th class="p-3 text-left">Nama</th>
-                                <th class="p-3 text-left">Email</th>
+                                <th class="p-3 text-left">User</th>
                                 <th class="p-3 text-left">Status</th>
+                                <th class="p-3 text-left">Request</th>
                                 <th class="p-3 text-left">Aksi</th>
                             </tr>
                         </thead>
 
                         <tbody>
 
-                            <template x-for="user in filteredUsers()" :key="user.id">
+                            <!-- LOADING SKELETON -->
+                            <template x-if="loading">
+                                <tr>
+                                    <td colspan="4" class="p-6">
+                                        <div class="space-y-3 animate-pulse">
+                                            <div class="h-4 bg-gray-200 rounded w-1/3"></div>
+                                            <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                                            <div class="h-4 bg-gray-200 rounded w-1/4"></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
 
-                                <tr class="border-t hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                            <!-- EMPTY STATE -->
+                            <template x-if="!loading && filtered().length === 0">
+                                <tr>
+                                    <td colspan="4" class="p-6 text-center text-gray-400">
+                                        <div class="flex flex-col items-center gap-2">
+                                            <i class="fa-solid fa-users-slash text-2xl"></i>
+                                            <span x-text="search ? 'User tidak ditemukan' : 'Tidak ada data user'"></span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
 
-                                    <td class="p-3 font-medium" x-text="user.name"></td>
+                            <!-- DATA -->
+                            <template x-for="user in filtered()" :key="user.id">
 
-                                    <td class="p-3 text-gray-500" x-text="user.email"></td>
+                                <tr
+                                    class="border-t transition duration-150"
+                                    :class="{
+                                        'bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400': user.request_status === 'pending',
+                                        'hover:bg-gray-50 dark:hover:bg-gray-700': true
+                                    }">
+
+                                    <!-- USER INFO -->
+                                    <td class="p-3">
+                                        <div class="flex flex-col">
+                                            <span class="font-semibold" x-text="user.name"></span>
+                                            <span class="text-xs text-gray-400" x-text="user.email"></span>
+                                        </div>
+                                    </td>
 
                                     <!-- STATUS -->
                                     <td class="p-3">
                                         <span
-                                            class="px-2 py-1 text-xs rounded"
-                                            :class="statusClass(user.status)"
+                                            class="px-2 py-1 text-xs rounded font-medium"
+                                            :class="{
+                                                'bg-green-100 text-green-700': user.status === 'active',
+                                                'bg-gray-200 text-gray-600': user.status === 'inactive',
+                                                'bg-yellow-100 text-yellow-700': user.status === 'pending'
+                                            }"
                                             x-text="user.status">
                                         </span>
                                     </td>
 
+                                    <!-- REQUEST -->
+                                    <td class="p-3">
+                                        <span
+                                            class="px-2 py-1 text-xs rounded font-medium"
+                                            :class="{
+                                                'bg-yellow-100 text-yellow-700': user.request_status === 'pending',
+                                                'bg-green-100 text-green-700': user.request_status === 'approved',
+                                                'bg-red-100 text-red-700': user.request_status === 'rejected'
+                                            }"
+                                            x-text="user.request_status || '-'">
+                                        </span>
+                                    </td>
+
                                     <!-- ACTION -->
-                                    <td class="p-3 flex gap-2">
+                                    <td class="p-3">
+                                        <div class="flex items-center gap-2">
 
-                                        <button
-                                            x-show="user.status === 'pending'"
-                                            @click="approve(user.request_id)"
-                                            class="px-3 py-1 text-xs bg-green-500 text-white rounded">
+                                            <!-- APPROVE -->
+                                            <button
+                                                x-show="user.request_status === 'pending'"
+                                                @click="approve(user.request_id)"
+                                                :disabled="_approvingMap?.[user.request_id]"
+                                                class="flex items-center gap-1 px-3 py-1 text-xs bg-green-500 hover:bg-green-600 text-white rounded disabled:opacity-50 transition">
 
-                                            Approve
-                                        </button>
+                                                <i class="fa-solid fa-check"></i>
 
-                                        <button
-                                            @click="deleteUser(user.id)"
-                                            class="px-3 py-1 text-xs bg-red-500 text-white rounded">
+                                                <span x-show="!_approvingMap?.[user.request_id]">Approve</span>
+                                                <span x-show="_approvingMap?.[user.request_id]">...</span>
+                                            </button>
 
-                                            Delete
-                                        </button>
+                                            <!-- DELETE -->
+                                            <button
+                                                @click="deleteUser(user.id)"
+                                                :disabled="_deletingMap?.[user.id]"
+                                                class="flex items-center gap-1 px-3 py-1 text-xs bg-red-500 hover:bg-red-600 text-white rounded disabled:opacity-50 transition">
 
+                                                <i class="fa-solid fa-trash"></i>
+
+                                                <span x-show="!_deletingMap?.[user.id]">Delete</span>
+                                                <span x-show="_deletingMap?.[user.id]">...</span>
+                                            </button>
+
+                                        </div>
                                     </td>
 
                                 </tr>
@@ -297,35 +388,183 @@ $breadcrumb = generateBreadcrumb($currentMenu);
     endif; ?>
 
     <script>
+        window.csrfToken = "<?= $_SESSION['csrf_token'] ?? '' ?>";
+    </script>
+
+    <script>
         function usersPage() {
             return {
                 users: [],
                 search: '',
                 statusFilter: '',
 
+                loading: false,
+                actionLoading: false,
+
+                _approvingMap: {},
+                _deletingMap: {},
+
+                /* =========================
+                   INIT
+                ========================= */
                 async init() {
                     await this.fetchUsers()
                 },
 
+                /* =========================
+                   FETCH USERS
+                ========================= */
                 async fetchUsers() {
-                    const res = await fetch('/auth?action=getUsers')
-                    this.users = await res.json()
+                    this.loading = true
+
+                    const startTime = performance.now()
+
+                    console.group('[FETCH USERS] 🚀')
+
+                    try {
+                        const url = '/rkd-cafe/app/controllers/AuthController.php?action=getUsers'
+
+                        console.log('➡️ Requesting:', url)
+
+                        const res = await fetch(url, {
+                            credentials: 'same-origin'
+                        })
+
+                        console.log('📡 HTTP Status:', res.status, res.statusText)
+
+                        if (!res.ok) {
+                            throw new Error(`HTTP Error ${res.status}`)
+                        }
+
+                        // 🔥 ambil raw dulu
+                        const rawText = await res.text()
+
+                        console.log('📦 RAW RESPONSE:', rawText)
+
+                        let data
+
+                        try {
+                            data = JSON.parse(rawText)
+                        } catch (parseError) {
+                            console.error('❌ JSON PARSE ERROR:', parseError)
+                            throw new Error('Response bukan JSON valid (kemungkinan error backend / redirect)')
+                        }
+
+                        console.log('✅ PARSED DATA:', data)
+
+                        if (data.error) {
+                            throw new Error(data.error)
+                        }
+
+                        if (!Array.isArray(data)) {
+                            console.warn('⚠️ Data bukan array:', data)
+                        }
+
+                        /* =========================
+                           🔥 NORMALISASI DATA
+                        ========================= */
+                        const normalized = (Array.isArray(data) ? data : []).map(u => {
+                            const clean = {
+                                id: u.id ?? null,
+                                name: u.name?.trim() || 'Unknown User',
+                                email: u.email?.trim() || '-',
+                                status: u.status?.trim() || 'inactive',
+                                request_id: u.request_id ?? null,
+                                request_status: u.request_status?.trim() || null
+                            }
+
+                            // DEBUG per item (opsional, tapi powerful)
+                            if (!u.name || !u.email || !u.status) {
+                                console.warn('⚠️ DATA TIDAK NORMAL:', u, '→', clean)
+                            }
+
+                            return clean
+                        })
+
+                        console.log('🧹 NORMALIZED DATA:', normalized)
+
+                        /* =========================
+                           SET STATE
+                        ========================= */
+                        this.users = normalized
+
+                        console.log('🧠 STATE users:', this.users)
+
+                    } catch (err) {
+                        console.error('[FETCH USERS ERROR] ❌', err)
+
+                        window.dispatchEvent(new CustomEvent("toast", {
+                            detail: {
+                                type: "error",
+                                message: err.message || "Terjadi kesalahan saat mengambil data"
+                            }
+                        }))
+
+                    } finally {
+                        const endTime = performance.now()
+                        console.log(`⏱️ Execution time: ${(endTime - startTime).toFixed(2)} ms`)
+
+                        console.groupEnd()
+
+                        this.loading = false
+                    }
                 },
 
+                /* =========================
+                   FILTER USERS
+                ========================= */
                 filteredUsers() {
-                    return this.users.filter(u => {
+                    const search = (this.search || '').toLowerCase().trim()
 
-                        let matchSearch =
-                            u.name.toLowerCase().includes(this.search.toLowerCase()) ||
-                            u.email.toLowerCase().includes(this.search.toLowerCase())
+                    return (this.users || []).filter(u => {
 
-                        let matchStatus = !this.statusFilter || u.status === this.statusFilter
+                        // 🔥 NORMALISASI FIELD (SUPER IMPORTANT)
+                        const name = (u.name ?? '').toLowerCase().trim()
+                        const email = (u.email ?? '').toLowerCase().trim()
+                        const status = (u.status ?? 'inactive').toLowerCase().trim()
+                        const requestStatus = (u.request_status ?? '').toLowerCase().trim()
+
+                        /* =========================
+                           SEARCH MATCH
+                        ========================= */
+                        const matchSearch = !search ||
+                            name.includes(search) ||
+                            email.includes(search)
+
+                        /* =========================
+                           STATUS MATCH (SAFE & CLEAN)
+                        ========================= */
+                        let matchStatus = true
+
+                        if (this.statusFilter) {
+                            if (this.statusFilter === 'request_pending') {
+                                matchStatus = requestStatus === 'pending'
+                            } else {
+                                matchStatus = status === this.statusFilter
+                            }
+                        }
+
+                        /* =========================
+                           DEBUG EDGE CASE
+                        ========================= */
+                        if (!u.id) {
+                            console.warn('⚠️ INVALID USER ID:', u)
+                        }
 
                         return matchSearch && matchStatus
                     })
                 },
 
+                filtered() {
+                    return this.filteredUsers()
+                },
+
+                /* =========================
+                   STATUS BADGE
+                ========================= */
                 statusClass(status) {
+                    status = status || 'inactive'
+
                     return {
                         'bg-yellow-100 text-yellow-600': status === 'pending',
                         'bg-green-100 text-green-600': status === 'active',
@@ -333,30 +572,165 @@ $breadcrumb = generateBreadcrumb($currentMenu);
                     }
                 },
 
+                /* =========================
+                   APPROVE USER
+                ========================= */
                 async approve(id) {
-                    await fetch('/auth?action=approve', {
-                        method: 'POST',
-                        body: new URLSearchParams({
-                            request_id: id,
-                            csrf_token: window.csrfToken
-                        })
-                    })
+                    if (!id) return
 
-                    this.fetchUsers()
+                    // 🔥 per-item locking (bukan global)
+                    this._approvingMap = this._approvingMap || {}
+
+                    if (this._approvingMap[id]) {
+                        console.warn('⚠️ Duplicate approve blocked:', id)
+                        return
+                    }
+
+                    this._approvingMap[id] = true
+
+                    const controller = new AbortController()
+                    const timeout = setTimeout(() => controller.abort(), 10000) // 10s timeout
+
+                    console.group(`[APPROVE USER] 🚀 ID=${id}`)
+
+                    try {
+                        const url = '/auth?action=approve'
+
+                        console.log('➡️ Requesting:', url)
+
+                        const res = await fetch(url, {
+                            method: 'POST',
+                            body: new URLSearchParams({
+                                request_id: id,
+                                csrf_token: window.csrfToken
+                            }),
+                            signal: controller.signal
+                        })
+
+                        console.log('📡 HTTP Status:', res.status)
+
+                        const raw = await res.text()
+                        console.log('📦 RAW RESPONSE:', raw)
+
+                        let data
+                        try {
+                            data = JSON.parse(raw)
+                        } catch (e) {
+                            throw new Error('Response bukan JSON valid')
+                        }
+
+                        if (!res.ok || data.error) {
+                            throw new Error(data.error || `HTTP ${res.status}`)
+                        }
+
+                        // 🔥 OPTIMISTIC UPDATE (lebih cepat dari refetch)
+                        this.users = this.users.map(u => {
+                            if (u.request_id === id) {
+                                return {
+                                    ...u,
+                                    request_status: 'approved',
+                                    status: 'active'
+                                }
+                            }
+                            return u
+                        })
+
+                        this.toast('success', 'User berhasil di-approve')
+
+                        // 🔥 optional: sync ulang (biar tetap konsisten)
+                        await this.fetchUsers()
+
+                    } catch (err) {
+                        if (err.name === 'AbortError') {
+                            console.error('⏱️ Request timeout')
+                            this.toast('error', 'Request timeout')
+                        } else {
+                            console.error('[APPROVE ERROR] ❌', err)
+                            this.toast('error', err.message)
+                        }
+                    } finally {
+                        clearTimeout(timeout)
+                        delete this._approvingMap[id]
+
+                        console.groupEnd()
+                    }
                 },
 
+                /* =========================
+                   DELETE USER
+                ========================= */
                 async deleteUser(id) {
+                    if (!id) return
+
                     if (!confirm("Yakin hapus user?")) return
 
-                    await fetch('/auth?action=deleteUser', {
-                        method: 'POST',
-                        body: new URLSearchParams({
-                            user_id: id,
-                            csrf_token: window.csrfToken
-                        })
-                    })
+                    this._deletingMap = this._deletingMap || {}
 
-                    this.fetchUsers()
+                    if (this._deletingMap[id]) {
+                        console.warn('⚠️ Duplicate delete blocked:', id)
+                        return
+                    }
+
+                    this._deletingMap[id] = true
+
+                    const controller = new AbortController()
+                    const timeout = setTimeout(() => controller.abort(), 10000)
+
+                    console.group(`[DELETE USER] 🗑️ ID=${id}`)
+
+                    try {
+                        const res = await fetch('/auth?action=deleteUser', {
+                            method: 'POST',
+                            body: new URLSearchParams({
+                                user_id: id,
+                                csrf_token: window.csrfToken
+                            }),
+                            signal: controller.signal
+                        })
+
+                        const raw = await res.text()
+                        console.log('📦 RAW RESPONSE:', raw)
+
+                        let data
+                        try {
+                            data = JSON.parse(raw)
+                        } catch {
+                            throw new Error('Response bukan JSON valid')
+                        }
+
+                        if (!res.ok || data.error) {
+                            throw new Error(data.error || 'Gagal menghapus user')
+                        }
+
+                        // 🔥 OPTIMISTIC DELETE
+                        this.users = this.users.filter(u => u.id !== id)
+
+                        this.toast('success', 'User berhasil dihapus')
+
+                    } catch (err) {
+                        if (err.name === 'AbortError') {
+                            this.toast('error', 'Request timeout')
+                        } else {
+                            console.error('[DELETE ERROR]', err)
+                            this.toast('error', err.message)
+                        }
+                    } finally {
+                        clearTimeout(timeout)
+                        delete this._deletingMap[id]
+                        console.groupEnd()
+                    }
+                },
+
+                /* =========================
+                   TOAST HELPER
+                ========================= */
+                toast(type, message) {
+                    window.dispatchEvent(new CustomEvent("toast", {
+                        detail: {
+                            type,
+                            message
+                        }
+                    }))
                 }
             }
         }

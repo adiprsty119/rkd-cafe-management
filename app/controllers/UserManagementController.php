@@ -1,8 +1,12 @@
 <?php
 
+namespace App\Controllers;
+
 require_once __DIR__ . '/../services/UserService.php';
 
 use App\Services\UserService;
+// use Exception;
+use Throwable;
 
 class UserManagementController
 {
@@ -12,11 +16,14 @@ class UserManagementController
 
         try {
 
-            session_start();
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
 
-            if ($_SESSION['role'] !== 'admin') {
+            if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
                 http_response_code(403);
-                throw new Exception("Unauthorized");
+                echo json_encode(['error' => 'Unauthorized']);
+                return;
             }
 
             $service = new UserService();
@@ -30,6 +37,28 @@ class UserManagementController
             echo json_encode([
                 'error' => $e->getMessage()
             ]);
+        }
+    }
+
+    public function getPendingRequests()
+    {
+        header('Content-Type: application/json');
+
+        session_start();
+
+        if ($_SESSION['role'] !== 'admin') {
+            http_response_code(403);
+            echo json_encode(['error' => 'Unauthorized']);
+            return;
+        }
+
+        $service = new UserService();
+        try {
+            $data = $service->getPendingRequests();
+            echo json_encode($data);
+        } catch (Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
         }
     }
 }
