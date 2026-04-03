@@ -236,21 +236,23 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
                     <table class="w-full text-sm">
 
-                        <thead class="bg-gray-50 dark:bg-gray-700 text-xs uppercase tracking-wide">
+                        <thead class="bg-gray-100 dark:bg-gray-700 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300 border-b sticky top-0 z-10">
                             <tr>
                                 <th class="p-3 text-left">User</th>
+                                <th class="p-3 text-left">Login</th>
                                 <th class="p-3 text-left">Status</th>
                                 <th class="p-3 text-left">Request</th>
+                                <th class="p-3 text-left">Joined</th>
                                 <th class="p-3 text-left">Aksi</th>
                             </tr>
                         </thead>
 
                         <tbody>
 
-                            <!-- LOADING SKELETON -->
+                            <!-- LOADING -->
                             <template x-if="loading">
                                 <tr>
-                                    <td colspan="4" class="p-6">
+                                    <td colspan="6" class="p-6">
                                         <div class="space-y-3 animate-pulse">
                                             <div class="h-4 bg-gray-200 rounded w-1/3"></div>
                                             <div class="h-4 bg-gray-200 rounded w-1/2"></div>
@@ -260,10 +262,10 @@ $breadcrumb = generateBreadcrumb($currentMenu);
                                 </tr>
                             </template>
 
-                            <!-- EMPTY STATE -->
+                            <!-- EMPTY -->
                             <template x-if="!loading && filtered().length === 0">
                                 <tr>
-                                    <td colspan="4" class="p-6 text-center text-gray-400">
+                                    <td colspan="6" class="p-6 text-center text-gray-400">
                                         <div class="flex flex-col items-center gap-2">
                                             <i class="fa-solid fa-users-slash text-2xl"></i>
                                             <span x-text="search ? 'User tidak ditemukan' : 'Tidak ada data user'"></span>
@@ -282,12 +284,44 @@ $breadcrumb = generateBreadcrumb($currentMenu);
                                         'hover:bg-gray-50 dark:hover:bg-gray-700': true
                                     }">
 
-                                    <!-- USER INFO -->
+                                    <!-- USER -->
                                     <td class="p-3">
-                                        <div class="flex flex-col">
-                                            <span class="font-semibold" x-text="user.name"></span>
-                                            <span class="text-xs text-gray-400" x-text="user.email"></span>
+                                        <div class="flex items-center gap-3">
+
+                                            <div class="w-9 h-9 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center text-xs font-bold">
+
+                                                <template x-if="user.foto">
+                                                    <img :src="user.foto" class="w-full h-full object-cover">
+                                                </template>
+
+                                                <template x-if="!user.foto">
+                                                    <span x-text="(user.name || '?').trim().charAt(0) || '?'"></span>
+                                                </template>
+
+                                            </div>
+
+                                            <div class="flex flex-col">
+                                                <span class="font-semibold" x-text="user.name"></span>
+
+                                                <span class="text-xs text-gray-400"
+                                                    :class="user.email === '-' ? 'italic' : ''"
+                                                    x-text="user.email || '-'">
+                                                </span>
+                                            </div>
+
                                         </div>
+                                    </td>
+
+                                    <!-- LOGIN METHOD -->
+                                    <td class="p-3">
+                                        <span
+                                            class="px-2 py-1 text-xs rounded font-medium"
+                                            :class="{
+                                                'bg-blue-100 text-blue-700': user.login_method === 'google',
+                                                'bg-gray-100 text-gray-600': user.login_method !== 'google'
+                                            }"
+                                            x-text="user.login_method === 'google' ? 'Google' : 'Manual'">
+                                        </span>
                                     </td>
 
                                     <!-- STATUS -->
@@ -311,8 +345,19 @@ $breadcrumb = generateBreadcrumb($currentMenu);
                                                 'bg-yellow-100 text-yellow-700': user.request_status === 'pending',
                                                 'bg-green-100 text-green-700': user.request_status === 'approved',
                                                 'bg-red-100 text-red-700': user.request_status === 'rejected'
-                                            }"
-                                            x-text="user.request_status || '-'">
+                                            }">
+
+                                            <span x-show="!user.request_status">-</span>
+                                            <span x-show="user.request_status" x-text="user.request_status"></span>
+
+                                        </span>
+                                    </td>
+
+                                    <!-- JOINED -->
+                                    <td class="p-3 text-xs text-gray-500">
+                                        <span x-text="user.created_at 
+                                            ? new Date(user.created_at).toLocaleDateString() 
+                                            : '-'">
                                         </span>
                                     </td>
 
@@ -328,7 +373,6 @@ $breadcrumb = generateBreadcrumb($currentMenu);
                                                 class="flex items-center gap-1 px-3 py-1 text-xs bg-green-500 hover:bg-green-600 text-white rounded disabled:opacity-50 transition">
 
                                                 <i class="fa-solid fa-check"></i>
-
                                                 <span x-show="!_approvingMap?.[user.request_id]">Approve</span>
                                                 <span x-show="_approvingMap?.[user.request_id]">...</span>
                                             </button>
@@ -340,7 +384,6 @@ $breadcrumb = generateBreadcrumb($currentMenu);
                                                 class="flex items-center gap-1 px-3 py-1 text-xs bg-red-500 hover:bg-red-600 text-white rounded disabled:opacity-50 transition">
 
                                                 <i class="fa-solid fa-trash"></i>
-
                                                 <span x-show="!_deletingMap?.[user.id]">Delete</span>
                                                 <span x-show="_deletingMap?.[user.id]">...</span>
                                             </button>
@@ -368,6 +411,7 @@ $breadcrumb = generateBreadcrumb($currentMenu);
     <script src="/rkd-cafe/public/assets/js/notifications.js"></script>
     <script src="/rkd-cafe/public/assets/js/header.js?v=<?= time() ?>"></script>
     <script src="/rkd-cafe/public/assets/js/sidebar-tooltip.js"></script>
+    <script src="/rkd-cafe/public/assets/js/users-page.js?v=<?= time() ?>"></script>
 
     <div
         id="global-tooltip"
@@ -389,351 +433,6 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
     <script>
         window.csrfToken = "<?= $_SESSION['csrf_token'] ?? '' ?>";
-    </script>
-
-    <script>
-        function usersPage() {
-            return {
-                users: [],
-                search: '',
-                statusFilter: '',
-
-                loading: false,
-                actionLoading: false,
-
-                _approvingMap: {},
-                _deletingMap: {},
-
-                /* =========================
-                   INIT
-                ========================= */
-                async init() {
-                    await this.fetchUsers()
-                },
-
-                /* =========================
-                   FETCH USERS
-                ========================= */
-                async fetchUsers() {
-                    this.loading = true
-
-                    const startTime = performance.now()
-
-                    console.group('[FETCH USERS] 🚀')
-
-                    try {
-                        const url = '/rkd-cafe/app/controllers/AuthController.php?action=getUsers'
-
-                        console.log('➡️ Requesting:', url)
-
-                        const res = await fetch(url, {
-                            credentials: 'same-origin'
-                        })
-
-                        console.log('📡 HTTP Status:', res.status, res.statusText)
-
-                        if (!res.ok) {
-                            throw new Error(`HTTP Error ${res.status}`)
-                        }
-
-                        // 🔥 ambil raw dulu
-                        const rawText = await res.text()
-
-                        console.log('📦 RAW RESPONSE:', rawText)
-
-                        let data
-
-                        try {
-                            data = JSON.parse(rawText)
-                        } catch (parseError) {
-                            console.error('❌ JSON PARSE ERROR:', parseError)
-                            throw new Error('Response bukan JSON valid (kemungkinan error backend / redirect)')
-                        }
-
-                        console.log('✅ PARSED DATA:', data)
-
-                        if (data.error) {
-                            throw new Error(data.error)
-                        }
-
-                        if (!Array.isArray(data)) {
-                            console.warn('⚠️ Data bukan array:', data)
-                        }
-
-                        /* =========================
-                           🔥 NORMALISASI DATA
-                        ========================= */
-                        const normalized = (Array.isArray(data) ? data : []).map(u => {
-                            const clean = {
-                                id: u.id ?? null,
-                                name: u.name?.trim() || 'Unknown User',
-                                email: u.email?.trim() || '-',
-                                status: u.status?.trim() || 'inactive',
-                                request_id: u.request_id ?? null,
-                                request_status: u.request_status?.trim() || null
-                            }
-
-                            // DEBUG per item (opsional, tapi powerful)
-                            if (!u.name || !u.email || !u.status) {
-                                console.warn('⚠️ DATA TIDAK NORMAL:', u, '→', clean)
-                            }
-
-                            return clean
-                        })
-
-                        console.log('🧹 NORMALIZED DATA:', normalized)
-
-                        /* =========================
-                           SET STATE
-                        ========================= */
-                        this.users = normalized
-
-                        console.log('🧠 STATE users:', this.users)
-
-                    } catch (err) {
-                        console.error('[FETCH USERS ERROR] ❌', err)
-
-                        window.dispatchEvent(new CustomEvent("toast", {
-                            detail: {
-                                type: "error",
-                                message: err.message || "Terjadi kesalahan saat mengambil data"
-                            }
-                        }))
-
-                    } finally {
-                        const endTime = performance.now()
-                        console.log(`⏱️ Execution time: ${(endTime - startTime).toFixed(2)} ms`)
-
-                        console.groupEnd()
-
-                        this.loading = false
-                    }
-                },
-
-                /* =========================
-                   FILTER USERS
-                ========================= */
-                filteredUsers() {
-                    const search = (this.search || '').toLowerCase().trim()
-
-                    return (this.users || []).filter(u => {
-
-                        // 🔥 NORMALISASI FIELD (SUPER IMPORTANT)
-                        const name = (u.name ?? '').toLowerCase().trim()
-                        const email = (u.email ?? '').toLowerCase().trim()
-                        const status = (u.status ?? 'inactive').toLowerCase().trim()
-                        const requestStatus = (u.request_status ?? '').toLowerCase().trim()
-
-                        /* =========================
-                           SEARCH MATCH
-                        ========================= */
-                        const matchSearch = !search ||
-                            name.includes(search) ||
-                            email.includes(search)
-
-                        /* =========================
-                           STATUS MATCH (SAFE & CLEAN)
-                        ========================= */
-                        let matchStatus = true
-
-                        if (this.statusFilter) {
-                            if (this.statusFilter === 'request_pending') {
-                                matchStatus = requestStatus === 'pending'
-                            } else {
-                                matchStatus = status === this.statusFilter
-                            }
-                        }
-
-                        /* =========================
-                           DEBUG EDGE CASE
-                        ========================= */
-                        if (!u.id) {
-                            console.warn('⚠️ INVALID USER ID:', u)
-                        }
-
-                        return matchSearch && matchStatus
-                    })
-                },
-
-                filtered() {
-                    return this.filteredUsers()
-                },
-
-                /* =========================
-                   STATUS BADGE
-                ========================= */
-                statusClass(status) {
-                    status = status || 'inactive'
-
-                    return {
-                        'bg-yellow-100 text-yellow-600': status === 'pending',
-                        'bg-green-100 text-green-600': status === 'active',
-                        'bg-gray-200 text-gray-600': status === 'inactive'
-                    }
-                },
-
-                /* =========================
-                   APPROVE USER
-                ========================= */
-                async approve(id) {
-                    if (!id) return
-
-                    // 🔥 per-item locking (bukan global)
-                    this._approvingMap = this._approvingMap || {}
-
-                    if (this._approvingMap[id]) {
-                        console.warn('⚠️ Duplicate approve blocked:', id)
-                        return
-                    }
-
-                    this._approvingMap[id] = true
-
-                    const controller = new AbortController()
-                    const timeout = setTimeout(() => controller.abort(), 10000) // 10s timeout
-
-                    console.group(`[APPROVE USER] 🚀 ID=${id}`)
-
-                    try {
-                        const url = '/auth?action=approve'
-
-                        console.log('➡️ Requesting:', url)
-
-                        const res = await fetch(url, {
-                            method: 'POST',
-                            body: new URLSearchParams({
-                                request_id: id,
-                                csrf_token: window.csrfToken
-                            }),
-                            signal: controller.signal
-                        })
-
-                        console.log('📡 HTTP Status:', res.status)
-
-                        const raw = await res.text()
-                        console.log('📦 RAW RESPONSE:', raw)
-
-                        let data
-                        try {
-                            data = JSON.parse(raw)
-                        } catch (e) {
-                            throw new Error('Response bukan JSON valid')
-                        }
-
-                        if (!res.ok || data.error) {
-                            throw new Error(data.error || `HTTP ${res.status}`)
-                        }
-
-                        // 🔥 OPTIMISTIC UPDATE (lebih cepat dari refetch)
-                        this.users = this.users.map(u => {
-                            if (u.request_id === id) {
-                                return {
-                                    ...u,
-                                    request_status: 'approved',
-                                    status: 'active'
-                                }
-                            }
-                            return u
-                        })
-
-                        this.toast('success', 'User berhasil di-approve')
-
-                        // 🔥 optional: sync ulang (biar tetap konsisten)
-                        await this.fetchUsers()
-
-                    } catch (err) {
-                        if (err.name === 'AbortError') {
-                            console.error('⏱️ Request timeout')
-                            this.toast('error', 'Request timeout')
-                        } else {
-                            console.error('[APPROVE ERROR] ❌', err)
-                            this.toast('error', err.message)
-                        }
-                    } finally {
-                        clearTimeout(timeout)
-                        delete this._approvingMap[id]
-
-                        console.groupEnd()
-                    }
-                },
-
-                /* =========================
-                   DELETE USER
-                ========================= */
-                async deleteUser(id) {
-                    if (!id) return
-
-                    if (!confirm("Yakin hapus user?")) return
-
-                    this._deletingMap = this._deletingMap || {}
-
-                    if (this._deletingMap[id]) {
-                        console.warn('⚠️ Duplicate delete blocked:', id)
-                        return
-                    }
-
-                    this._deletingMap[id] = true
-
-                    const controller = new AbortController()
-                    const timeout = setTimeout(() => controller.abort(), 10000)
-
-                    console.group(`[DELETE USER] 🗑️ ID=${id}`)
-
-                    try {
-                        const res = await fetch('/auth?action=deleteUser', {
-                            method: 'POST',
-                            body: new URLSearchParams({
-                                user_id: id,
-                                csrf_token: window.csrfToken
-                            }),
-                            signal: controller.signal
-                        })
-
-                        const raw = await res.text()
-                        console.log('📦 RAW RESPONSE:', raw)
-
-                        let data
-                        try {
-                            data = JSON.parse(raw)
-                        } catch {
-                            throw new Error('Response bukan JSON valid')
-                        }
-
-                        if (!res.ok || data.error) {
-                            throw new Error(data.error || 'Gagal menghapus user')
-                        }
-
-                        // 🔥 OPTIMISTIC DELETE
-                        this.users = this.users.filter(u => u.id !== id)
-
-                        this.toast('success', 'User berhasil dihapus')
-
-                    } catch (err) {
-                        if (err.name === 'AbortError') {
-                            this.toast('error', 'Request timeout')
-                        } else {
-                            console.error('[DELETE ERROR]', err)
-                            this.toast('error', err.message)
-                        }
-                    } finally {
-                        clearTimeout(timeout)
-                        delete this._deletingMap[id]
-                        console.groupEnd()
-                    }
-                },
-
-                /* =========================
-                   TOAST HELPER
-                ========================= */
-                toast(type, message) {
-                    window.dispatchEvent(new CustomEvent("toast", {
-                        detail: {
-                            type,
-                            message
-                        }
-                    }))
-                }
-            }
-        }
     </script>
 
 </body>

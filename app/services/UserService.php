@@ -110,19 +110,40 @@ class UserService
         $stmt = $pdo->prepare("
             SELECT 
                 u.id,
-                u.name,
-                u.email,
-                COALESCE(u.status, 'inactive') AS status,
+                TRIM(u.name) AS name,
+                TRIM(u.email) AS email,
+
+                CASE 
+                    WHEN u.status IS NULL OR u.status = '' THEN 'inactive'
+                    ELSE LOWER(TRIM(u.status))
+                END AS status,
+
+                u.login_method,
+                u.foto,
+                u.created_at,
+
                 r.id AS request_id,
-                r.status AS request_status
+
+                CASE 
+                    WHEN r.status IS NULL OR r.status = '' THEN NULL
+                    ELSE LOWER(TRIM(r.status))
+                END AS request_status
+
             FROM users u
-            LEFT JOIN registration_requests r 
-                ON r.user_id = u.id
-                AND r.id = (
-                    SELECT MAX(id)
+
+            LEFT JOIN (
+                SELECT rr1.*
+                FROM registration_requests rr1
+                INNER JOIN (
+                    SELECT user_id, MAX(id) as max_id
                     FROM registration_requests
-                    WHERE user_id = u.id
-                )
+                    GROUP BY user_id
+                ) rr2 
+                ON rr1.user_id = rr2.user_id 
+                AND rr1.id = rr2.max_id
+            ) r ON r.user_id = u.id
+
+            ORDER BY u.id DESC
         ");
 
         $stmt->execute();
