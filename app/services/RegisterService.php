@@ -1,5 +1,10 @@
 <?php
 
+namespace App\Services;
+
+use Exception;
+use Throwable;
+
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../repositories/BusinessRepository.php';
 require_once __DIR__ . '/../repositories/UserRepository.php';
@@ -72,8 +77,14 @@ class RegisterService
                INSERT REQUEST
             ========================= */
             $stmt = $pdo->prepare("
-                INSERT INTO registration_requests (user_id, business_id)
-                VALUES (:user_id, :business_id)
+                SELECT 
+                    u.*,
+                    rr.id AS request_id,
+                    rr.status AS request_status
+                FROM users u
+                LEFT JOIN registration_requests rr 
+                    ON rr.user_id = u.id
+                    AND rr.status = 'pending'
             ");
 
             $stmt->execute([

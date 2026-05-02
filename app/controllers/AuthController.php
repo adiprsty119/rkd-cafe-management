@@ -376,12 +376,9 @@ function login($userModel)
     $_SESSION['is_remember_login'] = false;
     $_SESSION['login_verified'] = true;
 
-    $ipParts = explode('.', $ip);
-    $ipPartial = count($ipParts) >= 2
-        ? $ipParts[0] . '.' . $ipParts[1]
-        : $ip;
-
-    $_SESSION['fingerprint'] = hash('sha256', $ipPartial . $ua);
+    $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+    $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
+    $_SESSION['fingerprint'] = hash('sha256', $ua);
 
     // LOAD PERMISSIONS
     $stmt = $pdo->prepare("SELECT p.name FROM permissions p JOIN role_permissions rp ON rp.permission_id = p.id WHERE rp.role_id = ?");
@@ -445,6 +442,9 @@ function login($userModel)
         DEFAULT REDIRECT (ROLE)
     ========================== */
     redirectByRole($user['role_name']);
+
+    var_dump($_SESSION);
+    exit;
 }
 
 /* ==========================
@@ -653,7 +653,7 @@ function callbackGoogle($userModel)
 
     $ip = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'];
     $ip = explode(',', $ip)[0];
-    $ua = substr($_SERVER['HTTP_USER_AGENT'] ?? 'unknown', 0, 255);
+    $ua = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
 
     /* ==========================
        UPDATE LOGIN METADATA

@@ -85,24 +85,18 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember'])) {
 
             unset($_SESSION['csrf_token']);
 
-            $ip = $_SERVER['REMOTE_ADDR'] ?? '';
-            $ipParts = explode('.', $ip);
-            $ipPartial = count($ipParts) >= 2
-                ? $ipParts[0] . '.' . $ipParts[1]
-                : $ip;
+            $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
+            $currentFingerprint = hash('sha256', $ua);
 
-            $_SESSION['fingerprint'] = hash(
-                'sha256',
-                $ipPartial . ($_SERVER['HTTP_USER_AGENT'] ?? '')
-            );
-
+            $_SESSION['fingerprint'] = $currentFingerprint;
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
             $_SESSION['role_id'] = $user['role_id'];
             $_SESSION['role'] = $user['role_name'] ?? 'guest';
             $_SESSION['status'] = $user['status'];
+            $_SESSION['business_id'] = $user['business_id'];
             $_SESSION['is_remember_login'] = true;
-            $_SESSION['login_verified'] = false;
+            $_SESSION['login_verified'] = true;
             $_SESSION['sidebar_collapsed'] = $user['sidebar_collapsed'];
 
             /* ==========================
@@ -219,14 +213,14 @@ $currentUser = $stmt->fetch(PDO::FETCH_ASSOC);
 if ($currentUser) {
     $_SESSION['username'] = $currentUser['username'];
     $_SESSION['role_id'] = $currentUser['role_id'];
-    $_SESSION['role'] = $_SESSION['role'] ?? 'guest';
+    $_SESSION['role'] = $currentUser['role_name'] ?? 'guest';
     $_SESSION['business_id'] = $currentUser['business_id'];
     $_SESSION['status'] = $currentUser['status'];
     $_SESSION['sidebar_collapsed'] = $currentUser['sidebar_collapsed'];
     $sidebarCollapsed = (bool) $currentUser['sidebar_collapsed'];
 } else {
-    session_destroy();
-    requireLogin();
+    clearAuthSession();
+    redirectToLogin("User tidak ditemukan");
 }
 
 /* ==========================

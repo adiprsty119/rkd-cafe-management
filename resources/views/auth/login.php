@@ -7,7 +7,10 @@ require_once __DIR__ . '/../../../app/helpers/auth_helper.php';
 
 ini_set('session.cookie_httponly', 1);
 ini_set('session.use_strict_mode', 1);
-ini_set('session.cookie_secure', isset($_SERVER['HTTPS'])); // aktif jika HTTPS
+ini_set(
+    'session.cookie_secure',
+    (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+);
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();

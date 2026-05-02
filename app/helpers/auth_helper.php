@@ -151,23 +151,18 @@ function validateFingerprint(): void
 {
     ensureSession();
 
-    $ip = $_SERVER['REMOTE_ADDR'] ?? '';
     $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
+    $currentFingerprint = hash('sha256', $ua);
 
-    $ipParts = explode('.', $ip);
-    $ipPartial = count($ipParts) >= 2
-        ? $ipParts[0] . '.' . $ipParts[1]
-        : $ip;
+    // ✅ FIRST LOGIN / BELUM ADA
+    if (empty($_SESSION['fingerprint'])) {
+        $_SESSION['fingerprint'] = $currentFingerprint;
+        return;
+    }
 
-    $currentFingerprint = hash('sha256', $ipPartial . $ua);
-
-    if (
-        empty($_SESSION['fingerprint']) ||
-        !hash_equals($_SESSION['fingerprint'], $currentFingerprint)
-    ) {
-        clearAuthSession();
-
-        redirectToLogin("Sesi tidak valid, silakan login kembali");
+    // ⚠️ JIKA BERBEDA → UPDATE, JANGAN LOGOUT
+    if (!hash_equals($_SESSION['fingerprint'], $currentFingerprint)) {
+        $_SESSION['fingerprint'] = $currentFingerprint;
     }
 }
 
@@ -203,6 +198,13 @@ function guestOnly(): void
     ensureSession();
 
     if (!empty($_SESSION['user_id'])) {
+
+        // optional: clear dulu kalau fingerprint invalid
+        if (empty($_SESSION['fingerprint'])) {
+            clearAuthSession();
+            return;
+        }
+
         redirectByRole();
     }
 }

@@ -51,10 +51,10 @@ $breadcrumb = generateBreadcrumb($currentMenu);
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <!-- Alpine.js -->
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js?v=<?= time() ?>"></script>
 
     <!-- Global Seacrh [global-search.js] -->
-    <script defer src="/rkd-cafe/public/assets/js/global-search.js"></script>
+    <script defer src="/rkd-cafe/public/assets/js/global-search.js?v=<?= time() ?>"></script>
 
     <style>
         [x-cloak] {
@@ -231,6 +231,42 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
                 </div>
 
+                <!-- BULK ACTION -->
+                <div
+                    x-show="selectedUsers.length > 0"
+                    x-transition
+                    class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-3 rounded-lg flex items-center justify-between">
+
+                    <span class="text-sm">
+                        <strong x-text="selectedUsers.length"></strong> user dipilih
+                    </span>
+
+                    <div class="flex gap-2">
+
+                        <!-- ACTIVATE -->
+                        <button
+                            @click="bulkUpdate('active')"
+                            class="px-3 py-1 text-xs bg-green-500 hover:bg-green-600 text-white rounded cursor-pointer">
+                            Activate
+                        </button>
+
+                        <!-- DEACTIVATE -->
+                        <button
+                            @click="bulkUpdate('inactive')"
+                            class="px-3 py-1 text-xs bg-gray-500 hover:bg-gray-600 text-white rounded cursor-pointer">
+                            Deactivate
+                        </button>
+
+                        <!-- CLEAR -->
+                        <button
+                            @click="selectedUsers = []"
+                            class="px-3 py-1 text-xs bg-red-500 hover:bg-red-600 text-white rounded cursor-pointer">
+                            Clear
+                        </button>
+
+                    </div>
+                </div>
+
                 <!-- TABLE -->
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow overflow-hidden">
 
@@ -238,6 +274,13 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
                         <thead class="bg-gray-100 dark:bg-gray-700 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300 border-b sticky top-0 z-10">
                             <tr>
+                                <th class="p-3 text-left">
+                                    <input
+                                        type="checkbox"
+                                        x-ref="selectAll"
+                                        @change="toggleAll($event)"
+                                        class="w-4 h-4 cursor-pointer">
+                                </th>
                                 <th class="p-3 text-left">User</th>
                                 <th class="p-3 text-left">Login</th>
                                 <th class="p-3 text-left">Status</th>
@@ -252,7 +295,7 @@ $breadcrumb = generateBreadcrumb($currentMenu);
                             <!-- LOADING -->
                             <template x-if="loading">
                                 <tr>
-                                    <td colspan="6" class="p-6">
+                                    <td colspan="7" class="p-6">
                                         <div class="space-y-3 animate-pulse">
                                             <div class="h-4 bg-gray-200 rounded w-1/3"></div>
                                             <div class="h-4 bg-gray-200 rounded w-1/2"></div>
@@ -265,7 +308,7 @@ $breadcrumb = generateBreadcrumb($currentMenu);
                             <!-- EMPTY -->
                             <template x-if="!loading && filtered().length === 0">
                                 <tr>
-                                    <td colspan="6" class="p-6 text-center text-gray-400">
+                                    <td colspan="7" class="p-6 text-center text-gray-400">
                                         <div class="flex flex-col items-center gap-2">
                                             <i class="fa-solid fa-users-slash text-2xl"></i>
                                             <span x-text="search ? 'User tidak ditemukan' : 'Tidak ada data user'"></span>
@@ -283,6 +326,15 @@ $breadcrumb = generateBreadcrumb($currentMenu);
                                         'bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400': user.request_status === 'pending',
                                         'hover:bg-gray-50 dark:hover:bg-gray-700': true
                                     }">
+
+                                    <!-- CHECKBOX -->
+                                    <td class="p-3">
+                                        <input
+                                            type="checkbox"
+                                            :value="user.id"
+                                            x-model="selectedUsers"
+                                            class="w-4 h-4 cursor-pointer">
+                                    </td>
 
                                     <!-- USER -->
                                     <td class="p-3">
@@ -367,25 +419,48 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
                                             <!-- APPROVE -->
                                             <button
-                                                x-show="user.request_status === 'pending'"
-                                                @click="approve(user.request_id)"
-                                                :disabled="_approvingMap?.[user.request_id]"
-                                                class="flex items-center gap-1 px-3 py-1 text-xs bg-green-500 hover:bg-green-600 text-white rounded disabled:opacity-50 transition">
+                                                x-show="user.request_status === 'pending' && user.request_id"
+                                                @click.stop="approve(user.request_id)"
+                                                :disabled="Boolean(_approvingMap[user.request_id])"
+                                                class="flex items-center gap-1 px-3 py-1 text-xs font-medium bg-green-500 hover:bg-green-600 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed transition cursor-pointer">
 
-                                                <i class="fa-solid fa-check"></i>
-                                                <span x-show="!_approvingMap?.[user.request_id]">Approve</span>
-                                                <span x-show="_approvingMap?.[user.request_id]">...</span>
+                                                <!-- ICON -->
+                                                <i class="fa-solid"
+                                                    :class="_approvingMap?.[user.request_id] 
+                                                        ? 'fa-spinner animate-spin' 
+                                                        : 'fa-check'">
+                                                </i>
+
+                                                <!-- TEXT -->
+                                                <span x-text="_approvingMap?.[user.request_id] 
+                                                    ? 'Processing...' 
+                                                    : 'Approve'">
+                                                </span>
+
                                             </button>
 
-                                            <!-- DELETE -->
+                                            <!-- TOGGLE STATUS -->
                                             <button
-                                                @click="deleteUser(user.id)"
-                                                :disabled="_deletingMap?.[user.id]"
-                                                class="flex items-center gap-1 px-3 py-1 text-xs bg-red-500 hover:bg-red-600 text-white rounded disabled:opacity-50 transition">
+                                                @click.stop="toggleStatus(user)"
+                                                :disabled="Boolean(_togglingMap[user.id])"
+                                                class="flex items-center gap-1 px-3 py-1 text-xs font-medium rounded transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                                                :class="user.status === 'active' 
+                                                    ? 'bg-gray-500 hover:bg-gray-600 text-white' 
+                                                    : 'bg-green-500 hover:bg-green-600 text-white'">
 
-                                                <i class="fa-solid fa-trash"></i>
-                                                <span x-show="!_deletingMap?.[user.id]">Delete</span>
-                                                <span x-show="_deletingMap?.[user.id]">...</span>
+                                                <!-- ICON -->
+                                                <i class="fa-solid"
+                                                    :class="_togglingMap[user.id] 
+                                                        ? 'fa-spinner animate-spin' 
+                                                        : (user.status === 'active' ? 'fa-ban' : 'fa-check')">
+                                                </i>
+
+                                                <!-- TEXT -->
+                                                <span x-text="_togglingMap[user.id]
+                                                    ? 'Processing...'
+                                                    : (user.status === 'active' ? 'Deactivate' : 'Activate')">
+                                                </span>
+
                                             </button>
 
                                         </div>
@@ -407,10 +482,10 @@ $breadcrumb = generateBreadcrumb($currentMenu);
 
     </div>
 
-    <script src="/rkd-cafe/public/assets/js/toast.js"></script>
-    <script src="/rkd-cafe/public/assets/js/notifications.js"></script>
+    <script src="/rkd-cafe/public/assets/js/toast.js?v=<?= time() ?>"></script>
+    <script src="/rkd-cafe/public/assets/js/notifications.js?v=<?= time() ?>"></script>
     <script src="/rkd-cafe/public/assets/js/header.js?v=<?= time() ?>"></script>
-    <script src="/rkd-cafe/public/assets/js/sidebar-tooltip.js"></script>
+    <script src="/rkd-cafe/public/assets/js/sidebar-tooltip.js?v=<?= time() ?>"></script>
     <script src="/rkd-cafe/public/assets/js/users-page.js?v=<?= time() ?>"></script>
 
     <div

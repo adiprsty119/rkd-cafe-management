@@ -2,6 +2,8 @@
 
 require_once '../services/RegisterService.php';
 
+use App\Services\RegisterService;
+
 class RegisterController
 {
     public function register()
@@ -22,7 +24,6 @@ class RegisterController
                 return;
             }
 
-            // session_start();
 
             /* ========================
                 VALIDASI STRUKTUR DATA

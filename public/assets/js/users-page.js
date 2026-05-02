@@ -8,6 +8,10 @@ function usersPage() {
 
         _approvingMap: {},
         _deletingMap: {},
+        _togglingMap: {},
+
+        selectedUsers: [],
+        _bulkLoading: false,
 
         /* =========================
            INIT
@@ -114,14 +118,20 @@ function usersPage() {
         async approve(id) {
             if (!id || this._approvingMap[id]) return
 
-            this._approvingMap[id] = true
+            this._approvingMap = {
+                ...this._approvingMap,
+                [id]: true
+            }
 
             const controller = new AbortController()
             const timeout = setTimeout(() => controller.abort(), 10000)
 
             try {
-                const res = await fetch('/auth?action=approve', {
+                const res = await fetch('/rkd-cafe/api/admin/approve_request.php', {
                     method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
                     body: new URLSearchParams({
                         request_id: id,
                         csrf_token: window.csrfToken
@@ -129,85 +139,173 @@ function usersPage() {
                     signal: controller.signal
                 })
 
-                const text = await res.text()
+                const data = await res.json().catch(() => null)
 
-                let data
-                try {
-                    data = JSON.parse(text)
-                } catch {
-                    throw new Error('Response tidak valid')
+                if (!res.ok || !data || data.error) {
+                    throw new Error(data?.error || 'Gagal approve')
                 }
 
-                if (!res.ok || data.error) {
-                    throw new Error(data.error || 'Gagal approve')
-                }
-
-                // Optimistic update
+                // ✅ OPTIMISTIC UPDATE
                 this.users = this.users.map(u =>
                     u.request_id === id
                         ? { ...u, request_status: 'approved', status: 'active' }
                         : u
                 )
 
-                this.toast('success', 'User berhasil di-approve')
+                this.toast('success', data.message)
 
             } catch (err) {
-                this.toast('error', err.name === 'AbortError'
-                    ? 'Request timeout'
-                    : err.message)
+                this.toast(
+                    'error',
+                    err.name === 'AbortError'
+                        ? 'Request timeout'
+                        : err.message
+                )
             } finally {
                 clearTimeout(timeout)
-                delete this._approvingMap[id]
+
+                const { [id]: _, ...rest } = this._approvingMap
+                this._approvingMap = rest
             }
         },
 
         /* =========================
            DELETE
         ========================= */
-        async deleteUser(id) {
-            if (!id || this._deletingMap[id]) return
-            if (!confirm('Yakin hapus user?')) return
+        async toggleStatus(user) {
+            if (!user?.id || this._togglingMap[user.id]) return
 
-            this._deletingMap[id] = true
+            const newStatus = user.status === 'active' ? 'inactive' : 'active'
+
+            if (!confirm(`Ubah status menjadi ${newStatus}?`)) return
+
+            // ✅ reactive set
+            this._togglingMap = {
+                ...this._togglingMap,
+                [user.id]: true
+            }
 
             const controller = new AbortController()
             const timeout = setTimeout(() => controller.abort(), 10000)
 
             try {
-                const res = await fetch('/auth?action=deleteUser', {
+                const res = await fetch('/rkd-cafe/api/admin/toggle_user_status.php', {
                     method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
                     body: new URLSearchParams({
-                        user_id: id,
+                        user_id: user.id,
+                        status: newStatus,
                         csrf_token: window.csrfToken
                     }),
                     signal: controller.signal
                 })
 
-                const text = await res.text()
+                const data = await res.json().catch(() => null)
 
-                let data
-                try {
-                    data = JSON.parse(text)
-                } catch {
-                    throw new Error('Response tidak valid')
+                if (!res.ok || !data || data.error) {
+                    throw new Error(data?.error || 'Gagal update status')
                 }
 
-                if (!res.ok || data.error) {
-                    throw new Error(data.error || 'Gagal hapus user')
-                }
+                // ✅ update UI langsung
+                this.users = this.users.map(u =>
+                    u.id === user.id
+                        ? { ...u, status: newStatus }
+                        : u
+                )
 
-                // Optimistic delete
-                this.users = this.users.filter(u => u.id !== id)
-
-                this.toast('success', 'User berhasil dihapus')
+                this.toast('success', data.message)
 
             } catch (err) {
-                this.toast('error', err.name === 'AbortError'
-                    ? 'Request timeout'
-                    : err.message)
+                this.toast(
+                    'error',
+                    err.name === 'AbortError'
+                        ? 'Request timeout'
+                        : err.message
+                )
             } finally {
                 clearTimeout(timeout)
-                delete this._deletingMap[id]
+
+                const { [user.id]: _, ...rest } = this._togglingMap
+                this._togglingMap = rest
+            }
+        },
+
+        /* =========================
+           TOGGLE BULK ACTIONS
+        ========================= */
+        toggleAll(e) {
+            if (e.target.checked) {
+                this.selectedUsers = this.filtered().map(u => u.id)
+            } else {
+                this.selectedUsers = []
+            }
+        },
+
+        /* =========================
+           BULK UPDATE
+        ========================= */
+        async bulkUpdate(status) {
+            if (!this.selectedUsers.length || this._bulkLoading) return
+
+            if (!confirm(`Ubah ${this.selectedUsers.length} user menjadi ${status}?`)) return
+
+            this._bulkLoading = true
+
+            const controller = new AbortController()
+            const timeout = setTimeout(() => controller.abort(), 10000)
+
+            try {
+                const res = await fetch('/rkd-cafe/api/admin/bulk_user_status.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams({
+                        user_ids: JSON.stringify(this.selectedUsers),
+                        status: status,
+                        csrf_token: window.csrfToken
+                    }),
+                    signal: controller.signal
+                })
+
+                const data = await res.json().catch(() => null)
+
+                if (!res.ok || !data || data.error) {
+                    throw new Error(data?.error || 'Gagal bulk update')
+                }
+
+                // ✅ update UI
+                this.users = this.users.map(u =>
+                    this.selectedUsers.includes(u.id)
+                        ? { ...u, status }
+                        : u
+                )
+
+                this.toast('success', data.message || 'Bulk update berhasil')
+
+                // reset selection
+                this.selectedUsers = []
+
+                this.$nextTick(() => {
+                    this.selectedUsers = []
+                    
+                    if (this.$refs.selectAll) {
+                        this.$refs.selectAll.checked = false
+                    }
+                })
+
+            } catch (err) {
+                this.toast(
+                    'error',
+                    err.name === 'AbortError'
+                        ? 'Request timeout'
+                        : err.message
+                )
+            } finally {
+                clearTimeout(timeout)
+                this._bulkLoading = false
             }
         },
 

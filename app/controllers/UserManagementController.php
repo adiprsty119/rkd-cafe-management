@@ -5,7 +5,6 @@ namespace App\Controllers;
 require_once __DIR__ . '/../services/UserService.php';
 
 use App\Services\UserService;
-// use Exception;
 use Throwable;
 
 class UserManagementController
